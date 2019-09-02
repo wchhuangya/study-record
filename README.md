@@ -1,3 +1,4 @@
-# Initial page
+# 我那些年学过的习
 
-只是进行一个初始化操作
+## JS
+1. [JavaScript](./web/js/JavaScript.md)
