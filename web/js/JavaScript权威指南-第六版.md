@@ -1048,3 +1048,10 @@ c === F									// => true; 对于任意函数 F.prototype.constructor === F
 构造函数是类的公共标识，但原型是唯一的标识。
 
 使用 `isPropertyOf()` 方法检测对象的原型链上是否存在某个特定的原型对象
+
+### contrustor 属性
+
+另一种识别对象是否属于某个类的方法是使用 `constructor` 属性，因为构造函数是类的公共标识
+
+
+
