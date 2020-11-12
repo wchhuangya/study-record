@@ -83,15 +83,65 @@ Java Virtual Machine，Java 虚拟机，目的是为了解析 Java 语言
 2. 安装 Java 开发环境
 3. 配置 Java 环境变量
 
-## 第二章 语法基础
+## 第二章 数据类型与运算符
 
 ### HelloWorld
 
+```java
+class Hello {
+    public static void main(String[] args) {
+        System.out.println("Hello World！");
+    }
+}
+```
+
+这一段代码要注意的点：
+
+* 目前我们所接触到的代码都是写在类 class 中的
+* 类名与文件名称相同
+* 文件后缀是：`.java`
+* main 方法的写法是固定写法
+* 语句后面用分号结尾
+* 注意代码的缩进和必要的空格，这样可以让代码保持良好的阅读性
+
+编译&运行代码：
+
+* 使用 `> javac Hello.java` 命令将刚刚写的源代码编译为相应的字节码
+* 使用 `> java Hello` 命令将上一步生成的字节码文件生成可执行的二进行文件并运行
+* 在控制台上，你将看到 `> Hello World!` 的输出内容
+
 ### IntelliJ IDEA
+
+使用 `IDEA` 编写 `HelloWorld` ：
+
+* 从 [官网]() 下载 `IntelliJ IDEA`，注意：只下载 `2020.2.3` 这一版本，主要是为了后面的破解
+* 点击安装
+* 打开 `IDEA` ，选择 `Create Project` ，在 `New Project` 界面的左侧，选择 `Java` ，确保右边的 `Project SDK` 是电脑上已经安装好的 `JDK 1.8`
+* 创建项目名称，指定项目存放的位置
 
 ### 标识符
 
+代码中使用的一些名字，例如：
+
+* 变量名
+* 方法名
+* 接口名
+* 类名
+* ……
+
 #### 命名规范
+
+* 标识符可以使用的字符范围：a～z，A～Z，0-9，_
+* 标识符必须以英文字母开头
+* 标识符严格区分大小写
+* 标识符需要做到：见名知义
+* 标识符需要用到驼峰命名法：
+  
+  * 大驼峰：所有单词的首字母都要大写；一般适用于 class 类名
+  * 小驼峰：首字母小写，之后的每一个单词的首字母大写；一般适用于变量名、方法名
+* 已经被 `Java` 或者系统占有的标识符不能使用，关键字和保留字不能使用
+  
+  > 例如 HelloWorld 程序中，变颜色的单词都不能使用
 
 ### 基本数据类型
 
@@ -117,39 +167,272 @@ Java Virtual Machine，Java 虚拟机，目的是为了解析 Java 语言
 
 ### 变量
 
+变量是计算机内存中的一块存储空间，是存储数据的基本单元
+
+格式：`数据类型 变量名 = 初始化数据;` 
+
+> 变量名里面保存的数据，可以在程序的运行过程中发生改变
+
+数据类型：约束当前变量是什么类型
+
+变量名：方便操作变量的名字
+
+= 赋值号：把赋值号右侧的数据赋值给左侧变量名
+
+初始化数据：给变量赋值相应数据类型的值
+
+```java
+class Demo1 {
+    public static void main(String[] args) {
+        // 定义一个 int 类型的变量
+        int nums = 100;
+        System.out.println(nums);
+    }
+}
+```
+
+### 数据类型转换
+
+主要是为了满足数据类型一致化的问题，在不同数据类型之间做数据的转换操作的一种方式。
+
+#### 自动类型转换
+
+核心思想就是小数据类型转换为大数据类型。
+
+算数运算的规则：
+
+1. 两个操作数有一个是 double，计算结果提升为 double
+2. 两个操作数没有 double，但是有一个 `float`，计算结果提升为 `float`
+3. 如果操作数中没有 `float`，有一个为 `long`，计算结果提升为 `long`
+4. ……
+5. 你看出来什么规律了吗？
+
+> 1. 如果操作数中只有 short 或者 byte，那么最终的结果会被提升为 int
+> 2. 任何类型与 String 类型相加时（+），实际为拼接，其结果自动提升为 String
+
+```java
+byte num1 = 10;
+int num2 = 20;
+
+num2 = num1 + num2;
+// 问：最终，num2 是什么数据类型，为什么？
+```
+
+#### 强制类型转换
+
+核心思想就是将大数据类型转换为小数据类型
+
+```java
+float num1 = 3.14F;
+int num2 = 10;
+
+num2 = num1 + num2; // 这里会有编译报错
+
+// 正确的写法是：
+num2 = (int) (num1 + num2);
+
+// 问：最终 num2 是什么数据类型，值为多少？
+```
+
+* 利：可以满足数据类型的一致性要求
+* 弊：原数据类型的强制转换过程中，会导致数据精度丢失，而且这样的丢失是不可逆的
+
 ### 运算符
 
 #### 赋值运算符
 
-#### 算术运算符
-
-##### 自增、自减
+`=` ：把左边的值赋值给右边的变量
 
 #### 复合赋值运算符
 
+`+=  -=  *=  /=  %=`
+
+#### 算术运算符
+
+`+、-、*、/、%、()` ：加、减、乘、除，求余 
+
+规则：
+
+* 从左到右
+* 先乘除，后加减
+* 除数不能为0
+* 有括号先处理括号里的内容
+
+`%` 针对的是两个整数，获得的结果是不能整除后的余数，如果可以整除，结果为 0 
+
+```java
+class Demo {
+    public static void main(String[] args) {
+        int num1 = 10;
+        int num2 = 20;
+
+        num1 = num1 + num2; // num1 = ? num2 = ?
+        num1 = num1 - num2; // num1 = ? num2 = ?
+        num1 = num1 * num2; // num1 = ? num2 = ?
+        num1 = num1 / num2; // num1 = ? num2 = ?
+        num1 = num1 % num2; // num1 = ? num2 = ?
+    }
+}
+```
+
+`+=、-=、*=、/=、%=` ：这些是复合运算符，作用是简化书写
+
+```java
+int num1 = 1, num2 = 2;
+
+num1 += num2; // => num1 = num1 + num2
+```
+
+##### 自增、自减
+
+> 1. 该运算符很好用，但是容易引起阅读者的理解困难，或者引起初学者的困惑，小心使用
+> 2. 这两个都是 一元运算符
+
+`++` 、`--` ：
+
+* 放在变量之后，首先执行当前语句，然后再执行自增、自减操作
+* 放在变量之前，首先执行自增、自减操作，然后再执行当前语句
+
+```java
+int num1 = 1, num2 = 2;
+System.out.println(num1++ + ++num2); // 最后结果是什么？为什么？
+// 现在 n1 和 n2 的值又变成了什么
+System.out.println(num1);
+System.out.println(num2);
+```
+
 #### 比较运算符
+
+`>  >=  <  <=  !=  ==`    这是 Java 中的写法
+
+$>$   $ \geq $    $ < $    $ \leq $     $ \neq $      $ = $    这是数学中的表示法
+
+关系运算符的结果是 **布尔值**
+
+```java
+System.out.println(4 > 3); // 结果是？
+System.out.println(5 < 4); // 结果是？
+System.out.println(3 >= 3); // 结果是？
+System.out.println(6 != 8); // 结果是？
+System.out.println(9 == 9); // 结果是？
+```
 
 #### 位运算符
 
+`& | ^ ～ << >> >>>`  ：
+
+* 按位与：同1为1，不同为0
+* 按位或：有1为1，无1为0
+* 按位异或：相同为0，不同为1
+* 按位非：0变1，1变0（单目运算符）
+* 左移：向左移动X位（在右边补X个0，单目运算符）
+* 右移：向右移动X位（在左边补X个0，单目运算符）
+* 无符号右移：不管符号位，其余与右移一样
+
 #### 逻辑运算符
+
+`&&` ：逻辑与，同真为真，有假为假
+
+`||` ：逻辑或，有真即真，同假为假
+
+`!` ：取反
+
+```java
+System.out.println(4 > 3 && 5 > 4);
+System.out.println(4 > 3 || 5 > 6);
+System.out.println(!(false));
+```
 
 ##### 逻辑与的断路原则
 
+```java
+int num1 = 1, num2 = 2;
+boolean res = num1 > 3 && num2++ > 10;
+
+System.out.println(num1); // 结果？
+System.out.println(num2); // 结果？
+```
+
 ##### 逻辑或断路原则
+
+```java
+int num1 = 1, num2 = 2;
+boolean res = num1 > 0 || num2++ > 10;
+
+System.out.println(num1); // 结果？
+System.out.println(num2); // 结果？
+```
 
 #### 三元运算符
 
-### 数据类型转换
+`? : ` ：将判断后的结果赋值给变量
 
-#### 自动类型转换
-
-#### 强制类型转换
+```java
+boolean res = 3 > 5 ? false : true;
+```
 
 ### 控制台输入
 
-### 表达式
+程序运行以后，在控制台输入一定的数据，然后程序继续运行
+
+1. 导入工具包：`import 包名.类名`
+2. 声明变量： `Scanner scanner = new Scanner(System.in);`
+3. 使用 `Scanner` 中的方法
+
+```java
+import java.util.Scanner
+
+class HaHa {
+    public static void main(String[] argss) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("请输入内容：");
+        int num = scanner.nextInt();
+        System.out.println("你输入的内容是：" + num);
+    }
+}
+```
+
+> Scanner 的三个常用方法：
+>
+> * nextInt()
+> * nextDouble()
+> * next()
+
+## 第三章 选择结构与分支结构
+
+### 选择结构 If
 
 
 
+### 分支结构 switch
 
+
+
+### 循环结构
+
+
+
+#### 循环的主要构成
+
+
+
+#### do while
+
+
+
+#### for
+
+
+
+### 流程控制语句
+
+#### break
+
+
+
+#### continue
+
+
+
+### 嵌套循环
 
