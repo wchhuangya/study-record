@@ -996,3 +996,115 @@ int x6 = 0x5_2;
 2. 调用本类中的其它构造方法
   
    1. 构造方法中调用其它构造方法要注意，必须是第一条语句，且只能调用一次
+
+### 三大特性
+
+面向对象的核心
+
+#### 封装
+
+在对象的外部，为对象的属性赋值，可能存在非法数据的录入。
+
+**概念：**
+
+尽可能的隐藏对象的内部实现细节，控制对象的修改及访问的权限。
+
+**实现：**
+
+将对象的属性改为 `private`（私有的），同时添加属性公共的访问方法，在访问方法中对属性的赋值的合理性做控制
+
+```java
+class Student {
+    private String name;
+    private int age;
+    private String sex;
+    
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public String getName() {
+        return this.name;
+    }
+    
+    public void setAge(int age) {
+        if (age >0 && age <= 100) {
+            this.age = age;
+        } else {
+            this.age = 18;
+        }
+    }
+    
+    public int getAge() {
+        return this.age;
+    }
+    
+    public void setSex(String sex) {
+        if ("男".equals(sex) || "女".equals(sex)) {
+            this.sex = sex;
+        } else {
+            this.sex = "男";
+        }
+    }
+}
+```
+
+**总结：**
+
+`get、set` 方法是外界访问对象私有属性的唯一通道，方法内部可以对数据朝廷检测和过滤
+
+#### 继承
+
+两个类之间的继承关系，必须满足 `is a` 的关系
+
+被继承的类：**父类（超类）**
+
+继承的类：**子类（派生类）**
+
+**父类的抽象：**
+
+可以根据程序需要使用到的多个具体类，进行共性抽取，进而定义父类
+
+##### 语法
+
+`class 子类 extends 父类 {}  // 定义子类时，显式继续父类`
+
+产生继续关系后，子类可以使用父类的属性和方法，也可以定义子类独有的属性和方法
+
+好处：提高代码的复用性，又可以提高代码的可扩展性
+
+`java` 中的继承为单继承，即每个类只能有一个直接父类，但是可以多级继承，属性和方法逐级叠加
+
+```java
+class Animal {
+    String breed;
+    String name;
+    
+    public void sleep() {
+        System.out.println("Sleeping ...");
+    }
+    
+    public void eat() {
+        System.out.println("Eating ...");
+    }
+}
+
+class Dog extends Animal {
+    // 就算 Dog 类中什么都不写，此时也继承了父类 Animal 中可以继承的（具体见访问修饰符表）属性和方法
+}
+```
+
+**类中不可以被继承的内容**
+
+* 构造方法
+* `private` 修饰的属性和方法
+* 父子类不在同一个 `package` 中，`default` 修饰的属性和方法
+
+**访问修饰符（可见性：✓可见，✕不可见）：**
+
+|               | 本类 | 同包 | 非同包子类 | 其它 |
+| ------------- | :--: | :--: | :--------: | :--: |
+| **private**   |  ✓   |  ✕   |     ✕      |  ✕   |
+| **default**   |  ✓   |  ✓   |     ✕      |  ✕   |
+| **protected** |  ✓   |  ✓   |     ✓      |  ✕   |
+| **public**    |  ✓   |  ✓   |     ✓      |  ✓   |
