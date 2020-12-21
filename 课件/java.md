@@ -1504,39 +1504,170 @@ interface MyInterface {
 * 更容易搭建程序框架
 * 更容易更换具体实现
 
+### 创建、使用类和对象（归纳）
+
+一个类的声明包括：类的名称和用 `{}` 包裹起来的类体，类名称前面可以有访问修饰符。类体包含有：字段、方法和构造函数。类的字段用于保存状态信息，类的方法用于实现各种行为。构造器名称与类名称相同，结构与方法类似，但没有返回值类型，主要用来实例化一个类的新实例。
+
+类和类成员控制访问权限的方法一样：都是通过访问修饰符（例如：`public` 等），在声明时来进行控制的。
+
+可以在定义变量和方法时，通过添加 `static` 关键字来把变量和方法变成与类相关的变量和方法。没有使用 `static` 关键字修饰的变量和方法是与类的某个实例相关联的。类变量和类方法被类的所有实例所共享，可以通过类名直接获取。每个类实例都会有一份实例变量的拷贝，该拷贝可以通过实例引用来获取。
+
+可以通过 `new` 操作符和构造器一起，创建一个类的对象，`new` 操作符执行完成后会返回一个指向刚刚创建对象的引用，可以把这个引用赋值给一个变量，或者直接使用它。
+
+可以在变量和方法声明的类外部，通过一个名字，对实例变量和方法进行改变和调用，一个实例变量的限定名称类似于下面：
+
+`objectReference.variableName`
+
+一个方法的限定名字如下所示：
+
+`objectReference.methodName(argumentList)`
+
+或者
+
+`objectReference.methodName()`
+
+垃圾回收机制会**自动清理**不再使用的对象。如果程序再没有使用该对象的引用，那就说这个对象是没有用的。你可以通过将 `null` 值赋值给变量的方法，显式地将一个引用丢弃。
+
 ### 内部类
 
 #### 成员内部类
 
 ##### 概念
 
-
+* 在一个类的内部再定义一个完整的类，与实例变量、实例方法同级别
+* 外部类的一个实例部分，创建内部类对象时，必须依赖外部类对象
 
 ##### 特点
 
-
+* 编译之后可以生成独立的字节码文件
+* 内部类可以直接访问外部类的私有成员，而不破坏封装
+* 可为外部类提供必要的内部功能组件
 
 ##### 实例化
 
+```java
+public class Outer {
+    private String name;
+    private int age;
 
+    class Inner {
+        public void show() {
+            System.out.println(name + "\n" + age);
+        }
+    }
+}
+
+public class TestOuter {
+    public static void main(String[] args) {
+        // 第一种实例化方法
+        Outer outer = new Outer();
+        Innter inner = outer.new Inner();
+
+        // 第二种实例化方法
+        Inner inner = new Outer().new Inner();
+
+        // 调用内部类的方法
+        inner.show();
+    }
+}
+```
 
 ##### 内部类访问外部类的同名属性
 
+当外部类与内部类存在同名属性时，会优先访问内部属性，要访问同名的外部属性，使用下面的语法：
 
+`外部类名.this.属性名`
 
 ##### 注意
 
-
+成员内部类里面不能定义静态成员，但是可以定义静态常量
 
 #### 静态内部类
 
+不依赖外部类对象，可以直接创建或通过类名访问，可声明静态成员
 
+```java
+public class Outer {
+    private int age = 10;
+    private String name = "哈哈";
+
+    static class Inner {
+        private String sex = "男";
+        // 静态内部类中可以定义静态变量
+        private static String phone = "123234";
+
+        public void show() {
+            // 访问外部类的变量
+            System.out.println(new Outer().age);
+
+            // 调用静态内部类的变量
+            System.out.println(sex);
+
+            // 调用静态内部类的静态变量
+            System.out.println(Inner.phone);
+        }
+    }
+}
+```
+
+> **只有内部类可以被 static 修饰**，普通类是不能被 `static` 修饰的
 
 #### 局部内部类
 
+定义在外部类的方法当中，作用范围和创建对象范围仅限于当前方法
 
+```java
+public class Outer {
+
+    private String name = "haha";
+    private int age = 20;
+
+    public void test() {
+        String hehe = "hehe";
+
+        class Inner {
+            private String phone = "12342349";
+            private String sex = "顶起";
+
+            public void show() {
+                // 访问外部类成员
+                System.out.println(Outer.this.name);
+                System.out.println(age);
+
+                // 访问内部类成员
+                System.out.println(phone);
+                System.out.println(this.sex);
+
+                // 访问方法内的局部变量
+                // 注意：局部内部类要访问所在方法中的变量时，要保证该变量是 final 类型的常量
+                //      1. JDK 1.7 及以前，需要显式写 final，JDK 1.8 及以后，只要发生这种访问，系统会自动添加
+                //      2. 使用常量的原因是：方法该用完成后，方法里的变量立即会消失，但是类不会，因此，需要使用 final 常量。final 常量在内存中记录的不是变量地址，而是变量值
+                System.out.println(hehe);
+            }
+        }
+
+        // 调用局部类对象方法
+        Inner inner = new Inner();
+        inner.show();
+    }
+
+    public static void main(String[] args) {
+        Outer outer = new Outer();
+        outer.test();
+    }
+}
+```
+
+> 局部内部类访问外部类当前方法中的局部变量时，因无法保障变量的生命周期与自身相同，变量必须修饰为 final
 
 #### 匿名内部类
+
+没有类名的局部内部类（一切特征都与局部内部类相同）
+
+* 必须继承一个父类或者实现一个接口
+* 定义类、实现类、创建对象的语法合并，只能创建一个该类的对象
+* 优点：减少代码量
+* 缺点：可读性差
 
 
 
