@@ -2,6 +2,8 @@
 
 [Toc]
 
+> [Java 官方在线 API](https://docs.oracle.com/javase/8/docs/api/)
+
 ## 第一章 语言概述
 
 ### 软件开发
@@ -312,6 +314,8 @@ int num1 = 1, num2 = 2;
 
 num1 += num2; // => num1 = num1 + num2
 ```
+
+> 如果在除法中需要得到浮点类型的结果，把参与除法的任一操作数改为 double 类型的就可以了
 
 ##### 自增、自减
 
@@ -1669,5 +1673,250 @@ public class Outer {
 * 优点：减少代码量
 * 缺点：可读性差
 
+## 第七章 Object
 
+* 它是所有父类的直接或间接父类，位于继承树的最顶层
+* 任何类，如果没有书写 `extends` 显式继承某个类，都默认直接继承 `Object` 类
+* `Object` 类中定义的方法，是所有对象都具备的方法
+* `Object` 类型可以存储任何对象
+
+### 方法
+
+#### getClass()
+
+* 声明：`public final Class<?> getClass() {}`
+* 返回：返回引用中存储的实际类型对象
+* 应用：通常用于判断两个引用中实际存储对象类型是否一致
+
+#### hashCode()
+
+* 声明：`public int hashCode() {}`
+* 返回：对象的哈希码值
+  
+  * 哈希值根据对象的地址、或字符串、或数字使用 `hash` 算法算出来的 `int` 类型的数值
+* 说明：一般情况下相同对象返回相同哈希码值
+* 应用：用来判断两个对象是否为同一个对象
+
+#### toString()
+
+* 声明：`public String toString() {}`
+* 返回：对象的字符串表示（表现形式）
+* 应用：可以根据程序需求覆盖该方法，如：展示对象各个属性值
+
+#### equals()
+
+* 声明：`public boolean equals(Object obj) {}`
+* 返回：两个对象是否相等
+* 说明：默认实现为：`this == obj`，比较两个对象地址是否相同
+* 注意：可以覆盖，比较两个对象的内容是否相同，很多类都对该方法进行了覆盖，使用时一定要注意
+
+#### finalize()
+
+* 说明：当对象被判定为垃圾对象时，由 `JVM` 自动调用此方法，用以标记垃圾对象，进入回收队列
+  
+  * 垃圾对象：没有有效引用指向对象时，此对象为垃圾对象
+  * 垃圾回收：由 `GC` 销毁垃圾对象，释放数据存储空间
+  * 自动回收机制：`JVM` 的内存耗尽，一次性回收所有垃圾对象
+  * 手动回收机制：使用 `System.gc()`，通知 `JVM` 执行垃圾回收
+    
+    > 注意：一般情况下，不会手动进行垃圾回收
+
+## 第八章 包装类
+
+基本数据类型所对应的引用数据类型就是包装类。
+
+| 基本数据类型 | 包装数据类型 |
+| ------------ | ------------ |
+| **byte**     | **Byte**     |
+| **short**    | **Short**    |
+| **int**      | **Integer**  |
+| **long**     | **Long**     |
+| **float**    | **Float**    |
+| **double**   | **Double**   |
+| **boolean**  | **Boolean**  |
+| **char**     | **Char**     |
+
+### 类型转换与装箱、拆箱
+
+`8` 种包装类提供不同类型之间的转换方式
+
+> JDK 1.5 之后，提供了自动装箱和拆箱
+
+### parseXXX() 静态方法
+
+`XXX` 代表一种基本类型。该类静态方法实现了字符串转换为基本类型
+
+### valueOf() 静态方法
+
+实现引用类型转与基本类型之间的转换
+
+> 注意：需要保证转换的类型兼容，否则抛出 NumberFormatException 异常
+
+### 整数缓冲区
+
+`Java` 在运行过程中会创建一个整数缓冲区，会预先创建 `256` 个常用的整数包装类型对象。这是将常用的数据创建的对象进行复用，减少内存开支
+
+```java
+public class Boxing {
+
+    public static void main(String[] args) {
+
+        Integer i1 = new Integer(100);
+        Integer i2 = new Integer(100);
+        System.out.println(i1 == i2);
+
+        Integer i3 = Integer.valueOf(100); // Integer i3 = 100;
+        Integer i4 = Integer.valueOf(100);
+        System.out.println(i3 == i4);
+
+        Integer i5 = Integer.valueOf(200);
+        Integer i6 = Integer.valueOf(200);
+        System.out.println(i5 == i6);
+    }
+}
+
+// 下面是最终输出的结果
+// false
+// true
+// false
+```
+
+## 第九章 String 类
+
+* 字符串是常量，创建以后不可改变
+* 字符串字面值存储在 **字符串池中**，可以共享
+* 给字符串类型的变量赋值有两种方式：
+  
+  * `String s = "Hello";` 这种情况下只会在字符串常量池中产生一个对象
+  * `String s = new String("Hello");` 这种情况下会在堆、池中各产生一个对象
+
+### 常用方法
+
+* `public int length()` ：返回字符串的长度
+* `public Char charAt(int index)` ：根据下标获取字符
+* `public boolean contains(String str)` ：判断当前字符串中是否包含 `str`
+* `public char[] toCharArray()` ：将字符串转换为字符数组
+* `public int indexOf(String str)` ：查找 `str` 首次出现的下标，存在，则返回该下标；不存在，则返回 `-1`
+* `public int lastIndexOf(String str)` ：查找 `str` 在字符串中最后一次出现的下标索引，存在，则返回该下标；不存在，则返回 `-1`
+* `public String trim(String str)` ：去掉字符串前后的空格
+* `public String toUpperCase()` ：将字符串中的小写字母转换为大写
+* `public String toLowerCase()` ：将字符串中的大写字母转换为小写
+* `public boolean startWith(String str)` ：判断字符串是否以 `str` 开头
+* `public boolean endWith(String str)` ：判断字符串是否以 `str` 结尾
+* `public String replace(char oldChar, char newChar)` ：将旧字符串替换为新字符串
+* `public String[] split(String str)` ：根据 `str` 拆分字符串
+* `public boolean equals(String str)` ：比较字符串的内容是否一样
+* `public int compareTo(String str)` ：比较两个字符串的内容是否一样，一样返回 `true`，不一样返回正或负值（先比较字符，字符相等时比较长度）
+
+### 综合练习
+
+```java
+public static void main(String[] args) {
+    /**
+     * 要解决的问题：
+     *    已知字符串：String str = "this is a text";
+     *    1. 将 str 里的单词单独提取出来
+     *    2. 将 str 中的 text 替换为 practice
+     *    3. 在 text 前面插入一个 easy
+     *    4. 将每个单词的首字母改为大写
+     */
+
+    String str = "this is a text";
+    //----------------1. 将 str 里的单词单独提取出来------------------
+    String[] word = str.split(" ");
+    for (String w : word) {
+        System.out.print(w + "\t");
+    }
+
+    //----------------2. 将 str 中的 text 替换为 practice------------
+    System.out.println();
+    String str1 = str.replace("text", "practice");
+    System.out.println(str1);
+
+    //----------------3. 在 text 前面插入一个 easy------------------
+    String str2 = str.replace("text", "easy text");
+    System.out.println(str2);
+
+    //----------------4. 将每个单词的首字母改为大写------------------
+    String res = "";
+    for (String w : word) {
+        char first = w.charAt(0);
+        char newFirst = Character.toUpperCase(first);
+        res += newFirst + w.substring(1) + " ";
+    }
+    System.out.println(res);
+}
+```
+
+### 可变字符串
+
+#### StringBuffer
+
+可变长字符串，`JDK 1.0` 提供，运行效率慢、线程安全
+
+#### StringBuilder
+
+可变长字符串，`JDK 1.5` 提供，运行效率快、纯种不安全
+
+#### 与 String 的区别
+
+1. 效率比 `String` 高
+2. 比 `String` 省内存
+
+#### 常用的方法
+
+1. `public StringBuffer/StringBuilder append(xxx)` ：把参数（转换为字符串后）添加到字符序列之后
+2. `public StringBuffer/StringBuilder insert(int offset, xxx c)` ：在字符序列的 `offset` 位置插入 `c`
+3. `public StringBuffer/StringBuilder delete(int start, int end)` ：删除位于 `[start, end)` 的子字符序列，如果 `start` 等于 `end`，什么都不会做
+4. `public StringBuffer/StringBuilder replace(int start, int end, String str)` ：替换位置在 `[start, end)` 的字符序列
+
+## 第十章 BigDecimal
+
+ 
+
+### 创建
+
+
+
+### 综合示例
+
+
+
+**报错的原因：**
+
+
+
+**正确的做法：**
+
+
+
+## 第十一章 Date
+
+
+
+### 创建
+
+
+
+## 第十二章 枚举
+
+
+
+### 创建
+
+
+
+### 使用
+
+
+
+### 常见方法
+
+
+
+
+
+### 与类的区别
+
+### 特点
 
