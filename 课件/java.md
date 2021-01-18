@@ -500,7 +500,7 @@ switch (变量 | 表达式) {
 }
 ```
 
-1. 可以用于判断的类型：`byte、short、int、char、String（JDK7+）`
+1. 可以用于判断的类型：`byte、short、int、char、String（JDK7+）、枚举`
 2. 每个 `case` 中都可以使用 `break` 来中断匹配的继续
 
 > 一定要养成良好的习惯，在每个 case 分支中尽可能把 break 都写上，否则会引发问题
@@ -1856,7 +1856,7 @@ public static void main(String[] args) {
 
 #### StringBuilder
 
-可变长字符串，`JDK 1.5` 提供，运行效率快、纯种不安全
+可变长字符串，`JDK 1.5` 提供，运行效率快、线程不安全
 
 #### 与 String 的区别
 
@@ -1872,51 +1872,874 @@ public static void main(String[] args) {
 
 ## 第十章 BigDecimal
 
- 
+很多实际应用中需要精确运算，而 `double` 是近似值存储，不符合要求，需要借助 `BigDecimal`
+
+`BigDecimal` 类位于 `java.math` 包中，用于精确计算浮点数。 
 
 ### 创建
 
-
+`BigDecimal bd = new BigDecimal("1.0");`
 
 ### 综合示例
 
+```java
+public static void main(String[] args) {
+    BigDecimal db1 = new BigDecimal("1.0");
+    BigDecimal db2 = new BigDecimal("0.9");
 
+    System.out.println(db1.add(db2));
+    System.out.println(db1.subtract(db2));
+    System.out.println(db1.multiply(db2));
+    System.out.println(db1.divide(db2));
+}
+
+// 下面是输出
+1.9
+0.1
+0.90
+Exception in thread "main" java.lang.ArithmeticException: Non-terminating decimal expansion; no exact representable decimal result.
+    at java.math.BigDecimal.divide(BigDecimal.java:1690)
+    at com.ch.wchya.fourteen.Course.main(Course.java:20)
+```
 
 **报错的原因：**
 
-
+因为 `1.0` 除以 `0.9` 不能除尽，结果是无限循环小数，因此报错
 
 **正确的做法：**
 
+使用 `divide` 方法的另一个重载：`public BigDecimal devide(BigDecimal divisor, int scale, int roundMode)` ，在做除法时传入保留的小数位（`scale`），和小数位进位原则（`BigDecimal.ROUND_XXX`）
 
+> RoundMode 的常量只需要记住 ROUND__HALF_UP（四舍五入）就可以了，有其它需要的在使用的时候自己测试使用即可
 
 ## 第十一章 Date
 
+`Date` 表示特定的瞬间，精确到毫秒
 
+> Date 类中的大部分方法都已经被 Calendar 类中的方法所取代
+
+> 时间单位：
+>
+> * 1秒     = 1000毫秒
+> * 1毫秒 = 1000微秒
+> * 1微秒 = 1000纳秒
 
 ### 创建
 
+`Date date = new Date()`
 
+> 注意：Date 类在 java.sql 包中和 java.util 包中都存在，请使用 java.util 包中的 Date 类，因为 java.sql 包中的 Date 类是继承自 java.util 包中的 Date 类
+
+```java
+public static void main(String[] args) {
+    Date date = new Date();
+    System.out.println(date.toString());
+
+    Date date1 = new Date(date.getTime() - (1000 * 24 * 60 * 60));
+    System.out.println(date1.toString());
+
+    System.out.println(date.toLocaleString());
+    System.out.println(date1.toLocaleString());
+
+    System.out.println(date.before(date1));
+    System.out.println(date.after(date1));
+
+    System.out.println(date.compareTo(date1));
+}
+
+// 以下是输出
+Sat Dec 26 19:11:57 CST 2020
+Wed Dec 23 19:11:57 CST 2020
+2020-12-26 19:11:57
+2020-12-23 19:11:57
+false
+true
+1
+```
 
 ## 第十二章 枚举
 
-
+枚举类型是 `Java 5` 中新增特性的一部分，它是一种特殊的数据类型，在 `JDK 6` 以后，`switch` 支持枚举类型。
 
 ### 创建
 
-
+```java
+public enum Weekdays {
+    MON,TUE,WED,THI,FRI,SAT,SUN
+}
+```
 
 ### 使用
 
-
+```java
+public static void main(String[] args) {
+    Weekdays day = Weekdays.MON;
+}
+```
 
 ### 常见方法
 
+| 返回类型                      | 方法名称                                         | 方法说明                                                |
+| ----------------------------- | ------------------------------------------------ | ------------------------------------------------------- |
+| `int`                         | `compareTo(E o)`                                 | 比较此枚举与指定对象的顺序                              |
+| `boolean`                     | `equals(Object other)`                           | 当指定对象等于此类型常量时，返回 `true`                 |
+| `Class<?>`                    | `getDeclaringClass()`                            | 返回与此枚举常量的枚举类型相对应的 `Class` 对象         |
+| `String`                      | `name()`                                         | 返回此枚举常量的名称，在其枚举声明中对其进行声明        |
+| `int`                         | `ordinal()`                                      | 返回枚举常量的序数（它在枚举声明中的位置，序数从0开始） |
+| `String`                      | `toString()`                                     | 返回枚举常量的名称，它包含在声明中                      |
+| `static<T extends Enum<T>> T` | `static valueOf(Class<T> enumType, String name)` | 返回带指定名称的指定枚举类型的枚举常量                  |
+
+**注意：**
+
+枚举声明以后，位置就已经确定，即每个枚举常量所代表的数值就定下了。但是如果后期枚举常量的位置发生变化，使用 `ordinal()` 方法返回的值也就会变化，所以：
+
+1. 要慎用该方法
+2. 可以使用带整形参数的构造方法将每个枚举常量的位置进行固定
+
+```java
+enum Weekday {
+    SUN(7), MON(1), TUES(2), WED(3), THU(4), FRI(5), SAT(6);
 
 
+    private final int value;
 
+    private Weekday(int value) {
+        this.value = value;
+    }
+}
+```
 
 ### 与类的区别
 
+没有区别，`enum` 定义的类型就是 `class`
+
 ### 特点
+
+* 自定义的 `enum` 类型问题继承自 `java.lang.Enum`，且无法被继承
+* 只能定义出 `enum` 的实例，而无法通过 `new` 操作符创建 `enum` 的实例
+* 定义的每个类型都是引用类型的唯一实例
+* 可以将 `enum` 类型用于 `switch` 语句
+* `enum` 的构造方法要声明为 `private`，字段强烈建议声明为 `final`
+
+## 第十三章 Calendar
+
+`Calendar` 提供了设置各种日历字段的方法
+
+> 注意：因为 Calendar 构造方法的修饰符是 protected 的，所以无法直接创建该对象
+
+### 方法
+
+| 方法名                                                       | 说明                                       |
+| ------------------------------------------------------------ | ------------------------------------------ |
+| `static Calendar getInstance()`                              | 使用默认时区和区域获取日历                 |
+| `void set(int year, int month, int date, int hourofday, int minute, int second)` | 设置日历的年、月、日、时、分、秒           |
+| `int get(int field)`                                         | 返回给定日历字段的值。字段：年、月、日等   |
+| `void setTime(Date date)`                                    | 用给定的 `Date` 设置给日历的时间           |
+| `Date getTime()`                                             | 返回一个 `Date`，表示此日历的时间          |
+| `void add(int field, int amount)`                            | 按照日历的规则，给指定字段添加或减少时间量 |
+| `long getTimeInMillies()`                                    | 毫秒为单位返回该日历的时间值               |
+
+### 示例
+
+```java
+public static void main(String[] args) {
+    Calendar calendar = Calendar.getInstance();
+    System.out.println(calendar.getTime().toLocaleString());
+
+    int year = calendar.get(Calendar.YEAR);
+    // 月份从 0 开始，如果要符合人类正常的逻辑，需要手动 + 1
+    int month = calendar.get(Calendar.MONTH);
+    int day = calendar.get(Calendar.DAY_OF_MONTH);
+    // HOUR_OF_DAY 是 24 小时制的，HOUR 是 12 小时制的
+    int hour = calendar.get(Calendar.HOUR_OF_DAY);
+    int minute = calendar.get(Calendar.MINUTE);
+    int second = calendar.get(Calendar.SECOND);
+    System.out.println(year + "年" + month + "月" + day + "日" + hour + "时" + minute + "分" + second + "秒");
+
+    Calendar calendar1 = Calendar.getInstance();
+    calendar1.add(Calendar.DAY_OF_YEAR, 1);
+    System.out.println(calendar1.getTime().toLocaleString());
+
+    int min = calendar.getActualMinimum(Calendar.DAY_OF_MONTH);
+    int max = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+    System.out.println("最小：" + min + "最大：" + max);
+
+    calendar1.add(Calendar.MONTH, -1);
+    int min1 = calendar1.getActualMinimum(Calendar.DAY_OF_MONTH);
+    int max1 = calendar1.getActualMaximum(Calendar.DAY_OF_MONTH);
+    System.out.println("最小：" + min1 + "最大：" + max1);
+}
+
+// 以下是输出
+2020-12-27 15:30:02
+2020年11月27日15时30分2秒
+2020-12-28 15:30:02
+最小：1最大：31
+最小：1最大：30
+```
+
+## 第十四章 SimpleDateFormat
+
+`SimplleDateFormat` 是一个以语言环境有关的方式来格式化和解析日期的具体类
+
+### 模式字母
+
+| 字母 | 时间或日期                 | 示例 |
+| ---- | -------------------------- | ---- |
+| y    | 年                         | 2019 |
+| M    | 年中月份                   | 08   |
+| d    | 月中天数                   | 07   |
+| H    | 1天中小时数（0-23）        | 23   |
+| m    | 分钟                       | 23   |
+| s    | 秒                         | 23   |
+| S    | 毫秒                       | 832  |
+| w    | 年中的周数                 | 27   |
+| W    | 月中的周数                 | 3    |
+| F    | 月份中的星期               | 4    |
+| E    | 月份中的天数               | 22   |
+| k    | 1天中的小时数（0-24）      | 24   |
+| K    | `am/pm` 中的小时数（0-11） | 0    |
+| h    | `am/pm` 中的小时数（1-12） | 12   |
+
+### 示例
+
+```java
+public static void main(String[] args) throws Exception {
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");
+    SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy/mm/dd");
+
+    System.out.println(sdf.format(new Date()));
+    System.out.println(sdf1.format(new Date()));
+
+    // 注意：sdf1 可以转换的日期时间的字符串格式，与它这个对象在创建时所
+    //      传入的格式是一样的，否则是抛出 ParseException 异常
+    Date date = sdf1.parse("2020/12/20 12:12:12");
+    System.out.println(date);
+}
+```
+
+## 测试与调试
+
+### 编码公约
+
+* 对于 `private` 的方法
+  * 如果在开发过程中有用，请使用 **断言**
+* 对于 `public` 的方法
+  * 在方法文档中提示错误处理
+  * 对于不合法的参数，抛出 `IllegalArgumentException` 异常
+  * 对于为 `null` 的参数，抛出 `NullPointerExceptions` 异常
+  * 如果要显式地标识，请通过返回值处理
+
+## 简单 Java 类
+
+在以后进行项目的开发与设计的过程中，简单 `Java` 类都将作为一个重要的组成部分存在，慢慢接触到正规的项目设计之后，简单 `Java` 类无处不在，并且有可能会产生一系列的变化。
+
+所谓的简单 `Java` 类指的是可以描述某一类信息的程序类，例如：描述一个人、描述一本书、描述一个部门、描述一个部员，并且在这个类之后并没有特别复杂的逻辑操作，只作为一种信息存储的媒介存在。
+
+对于简单 `Java` 类而言，其核心的开发结构如下（未完成，后面有补充）：
+
+* 类名一定要有意义，可以明确的描述一类的事物
+* 类之中的所有属性都必须使用 `private` 进行封装，同时封装后的属性必须要提供有 `getter`、`setter` 方法
+* 类之中可以提供有无数多个构造方法，但是必须要保留有无参构造方法
+* 类之中不允许出现任何的输出语句，所有的内容的获取必须返回
+* 【非必须】可以提供有一个获取对象详细信息的方法，暂时将此方法名称定义为 `getInfo`
+
+## 第十五章 System
+
+`System` 类是系统类，主要用于系统的属性数据和其他操作，构造方法私有
+
+### 方法
+
+| 方法名                            | 说明                                                         |
+| --------------------------------- | ------------------------------------------------------------ |
+| `static void arrayCopy(...)`      | 复制数组                                                     |
+| `static long currentTimeMillos()` | 获取当前系统时间，返回的是毫秒值                             |
+| `static void gc()`                | 建议 `JVM` 赶快启动垃圾回收器回收垃圾                        |
+| `static void exit(int status)`    | 退出 `JVM`，如果参数是 `0` 表示正常退出 `JVM`，非 `0` 表示异常退出 `JVM` |
+
+> gc() 方法只能建议 `JVM` 进行垃圾回收，具体是否回收，是由 `JVM` 的系统根据内存决定的
+
+### 格式化数字打印输出
+
+在 `java.io` 包中包含了 `PrintStream` 类，该类中有两个格式化的方法，可以使用这两个方法来替代 `print` 和 `pringln` 方法。其实，也可以通过 `System.out` 执行 `PrintStream` 类的方法，因此，你可以在任何能够使用 `print` 和 `println` 的地方使用 `PrintStream` 类的方法
+
+`public PrintStream format(String format, Object... args)`
+
+**作用：** 使用指定的格式和参数，向输出流写入格式化后的字符串
+
+**参数：**
+
+* `format` ：格式化字符串
+* `args` ：用于替换 `format` 中的点位符
+  
+  * 如果 `args` 中的参数个数比在 `format` 中指定的参数多，将会忽略 `args` 中多余的参数
+  * `args` 可以是变量，也可以不传
+  * `args` 支撑的最大参数数量由数组的最大数量决定
+
+**返回：** 输出流
+
+#### 示例
+
+```java
+public static void main(String[] args) {
+    long n = 461012;
+    System.out.format("%d%n", n);      //  -->  "461012"
+    System.out.format("%08d%n", n);    //  -->  "00461012"
+    System.out.format("%+8d%n", n);    //  -->  " +461012"
+    System.out.format("%,8d%n", n);    // -->  " 461,012"
+    System.out.format("%+,8d%n%n", n); //  -->  "+461,012"
+
+    double pi = Math.PI;
+
+    System.out.format("%f%n", pi);       // -->  "3.141593"
+    System.out.format("%.3f%n", pi);     // -->  "3.142"
+    System.out.format("%10.3f%n", pi);   // -->  "     3.142"
+    System.out.format("%-10.3f%n", pi);  // -->  "3.142"
+    System.out.format(Locale.FRANCE, "%-10.4f%n%n", pi); // -->  "3,1416"
+
+    Calendar c = Calendar.getInstance();
+    System.out.format("%tB %te, %tY%n", c, c, c); // -->  "May 29, 2006"
+
+    System.out.format("%tl:%tM %tp%n", c, c, c);  // -->  "2:34 am"
+
+    System.out.format("%tD%n", c);    // -->  "05/29/06"
+}
+```
+
+示例中使用到的格式化转换和标识的说明：
+
+| 转换     | 标识 | 说明                                                         |
+| -------- | ---- | ------------------------------------------------------------ |
+| `d`      |      | 十进制数                                                     |
+| `f`      |      | 浮点数                                                       |
+| `n`      |      | 表示新的一行，具体的字符依据当前运行应用的平台调整。应该总是使用 `%n`，而不应该使用 `\n` |
+| `tB`     |      | 日期时间转换——特定于地区的月份全称                           |
+| `td，te` |      | 日期时间转换——两位数字表示月份中的某一天。一位数字时，`td` 有前导 `0`，`te` 没有 |
+| `ty，tY` |      | 日期时间转换——`ty`：两位数字表示年份；`tY`：四位数字表示年份 |
+| `tl`     |      | 日期时间转换——12小时制的小时表示                             |
+| `tM`     |      | 日期时间转换——两位数字的分钟，前导 `0` 一定会存在            |
+| `tp`     |      | 日期时间转换——特定于区域的 `am/pm` 时间                      |
+| `tm`     |      | 日期时间转换——两位的月份表示，前导 `0` 是必须的              |
+| `tD`     |      | 日期时间转换——使用 `%tm%td%ty` 格式显示日期                  |
+|          | `08` | `8` 个字符宽度，如果有需要，增加前置 `0`                     |
+|          | `+`  | 包含符号，有 `+` 和 `-`                                      |
+|          | `,`  | 包含特定于语言的分组字符                                     |
+|          | `-`  | 左对齐                                                       |
+|          | `.3` | 小数点后保留 `3` 位小数                                      |
+
+#### DecimalFormat 类
+
+可以使用 `java.text.DecimalFormat` 类来控制小数前置 `0` 、尾随 `0` 的显示，小数的前缀和后缀，还有千分位分隔等
+
+```java
+
+import java.text.DecimalFormat;
+
+public class DecimalFormatDemo {
+
+    static public void customFormat(String pattern, double value ) {
+        DecimalFormat myFormatter = new DecimalFormat(pattern);
+        String output = myFormatter.format(value);
+        System.out.println(value + "  " + pattern + "  " + output);
+    }
+
+    public static void main(String[] args) {
+        customFormat("###,###.###", 123456.789);  // 123456.789  ###,###.###  123,456.789
+        customFormat("###.##", 123456.789);       // 123456.789  ###.##  123456.79
+        customFormat("000000.000", 123.78);       // 123.78  000000.000  000123.780
+        customFormat("$###,###.###", 12345.67);   // 12345.67  $###,###.###  $12,345.67
+    }
+}
+```
+
+下面是每一行输出的解释：
+
+| 值         | 格式                                                      | 输出        | 解释                                                         |
+| ---------- | --------------------------------------------------------- | ----------- | ------------------------------------------------------------ |
+| 123456.789 | ![](index_files/611dc453-3a19-4989-89c4-daae9fdcefa2.png) | 123,456.789 | # 表示一个数字，逗号是分组分隔符的占位符，句号是小数点分隔符的占位符 |
+| 123456.789 | ![](index_files/9bd0fce7-afc8-4462-a53d-48e407539161.png) | 123456.79   | 该值在小数点右边有三位数，但是在格式中只有两位，`format` 通过四舍五入来解决该问题 |
+| 123.78     | 000000.000                                                | 000123.780  | 该模式指定前导零和尾随零，因为使用0字符代替了井号（＃）      |
+| 12345.67   | ![](index_files/72b9a82d-48fc-4e91-85f2-2f25c8630dc5.png) | $12,345.67  | 模式中的第一个字符是美元符号($)。注意，在格式化输出中，它紧接在最左边的数字前面。 |
+
+## 第十六章 集合框架
+
+### 集合
+
+对象的容器，定义了对多个对象进行操作的常用方法。可实现数组的功能
+
+#### 和数组的区别
+
+* 数组固定长度，集合长度不固定
+* 数组可以存储基本类型和引用类型，集合只能存储引用类型
+
+#### 位置
+
+集合相关的类都位于 `java.util` 包下
+
+### Collection体系集合
+
+![image-20210104122611180](/Users/wchya/own/markdown/imgs/image-20210104122611180.png)
+
+#### Collection 父接口
+
+代表一组任意类型的对象，无序、无下标、不能重复
+
+#### 方法
+
+* `boolean add(Object obj)` ：添加一个对象
+* `boolean addAll(Collection c)` ：将一个集合中的所有对象添加到此集合中
+* `void clear()`：清空此集合中的所有对象
+* `boolean contains(Object o)` ：检查此集合中是否包含 `o` 对象
+* `boolean equals(Object o)` ：比较此集合是否与指定对象相等
+* `boolean isEmpty()` ：判断此集合是否为空
+* `boolean remove(Object o)` ：在此集合中移除 `o` 对象
+* `int size()` ：返回此集合中元素个数
+* `Object[] toArray()` ：将此集合转换为数组
+
+#### 示例
+
+```java
+public class Course15 {
+
+    public static void main(String[] args) {
+        Collection collection = new ArrayList();
+
+        // 1. 新增操作
+        System.out.println("============1. 新增操作============");
+        collection.add("水煮鱼");
+        collection.add("回锅肉");
+        collection.add("毛血旺");
+        System.out.println("集合里的元素个数：" + collection.size());
+        System.out.println(collection);
+
+        // 2. 迭代元素
+        System.out.println("===========2. 迭代元素=============");
+        // 集合的循环需要用到迭代器 Iterator
+        Iterator iterator = collection.iterator();
+        // 2.1 第一种循环方式
+        for (Object str : collection) {
+            System.out.println(str);
+        }
+        // 2.2 第二种循环方式
+        while (iterator.hasNext()) {
+            System.out.println(iterator.next());
+        }
+
+        // 3. 判断
+        System.out.println("===========3. 判断=============");
+        System.out.println(collection.isEmpty());
+        System.out.println(collection.contains("毛血旺"));
+
+        // 4. 删除
+        System.out.println("===========4. 删除=============");
+//        collection.clear();
+//        System.out.println("删除后的元素个数：" + collection.size());
+        // 4.1 注意：在遍历的时候，不能使用集合本身的删除方法，会报错或者删不干净
+        iterator = collection.iterator();
+        // 下面是错误的示例
+//        while (iterator.hasNext()) {
+//            Object next = iterator.next();
+//            System.out.println(next);
+//            collection.remove(next);
+//        }
+        // 应该使用迭代器的删除
+        while (iterator.hasNext()) {
+            System.out.println(iterator.next());
+            iterator.remove();
+        }
+        System.out.println("删除后的元素个数：" + collection.size());
+        System.out.println(collection);
+    }
+}
+
+
+// 下面是输出
+============1. 新增操作============
+集合里的元素个数：3
+[水煮鱼, 回锅肉, 毛血旺]
+===========2. 迭代元素=============
+水煮鱼
+回锅肉
+毛血旺
+水煮鱼
+回锅肉
+毛血旺
+===========3. 判断=============
+false
+true
+===========4. 删除=============
+水煮鱼
+回锅肉
+毛血旺
+删除后的元素个数：0
+[]
+```
+
+### List
+
+#### 特点
+
+有序、有下标、元素可重复
+
+#### 方法
+
+* `void add(int index, Object o)` ：在 `index` 位置插入对象 `o`
+* `boolean addAll(int index, Collection c)` ：将一个集合中的元素添加到此集合中的 `index` 位置
+* `Object get(int index)` ：返回集合中指定位置的元素
+* `List subList(int fromIndex, int toIndex)` ：返回 `fromIndex` 到 `toIndex` 之间（`[fromIndex, toIndex)`）的集合元素
+* `int indexOf(Object o)` ：返回集合中第一个匹配的元素索引，不存在返回 `-1`
+
+```java
+public class Course15 {
+
+    public static void main(String[] args) {
+        List<String> list = new ArrayList<>();
+
+        // 1. 新增
+        System.out.println("===========1. 新增============");
+        list.add("小米");
+        list.add("苹果");
+        list.add(0, "华为");
+        System.out.println("元素个数：" + list.size());
+        System.out.println(list);
+
+        // 2. 删除
+//        System.out.println("============2. 删除===========");
+//        list.remove(1);
+//        System.out.println("元素个数：" + list.size());
+//        System.out.println(list);
+
+        // 3. 遍历
+        System.out.println("==========3. 遍历=============");
+        // 3.1 一般 for
+        System.out.println("===========3.1 一般 for============");
+        for (int i = 0; i < list.size(); i++) {
+            System.out.println(i + " : " + list.get(i));
+        }
+        // 3.2 增加 for
+        System.out.println("===========3.2 增加 for============");
+        for (String s : list) {
+            System.out.println(s);
+        }
+        // 3.3 iterator
+        System.out.println("===========3.3 iterator============");
+        Iterator<String> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            System.out.println(iterator.next());
+        }
+        // 3.4 listIterator
+        System.out.println("===========3.4 listIterator============");
+        ListIterator<String> stringListIterator = list.listIterator();
+        while (stringListIterator.hasNext()) {
+            System.out.println(stringListIterator.nextIndex() + " : " + stringListIterator.next());
+        }
+        while (stringListIterator.hasPrevious()) {
+            System.out.println(stringListIterator.previousIndex() + " : " + stringListIterator.previous());
+        }
+
+        // 4. 判断
+        System.out.println("===========4. 判断============");
+        System.out.println(list.contains("香蕉"));
+        System.out.println(list.isEmpty());
+
+        // 5. 获取
+        System.out.println("===========5. 获取============");
+        System.out.println(list.indexOf("小米"));
+    }
+}
+
+// 下面是输出
+===========1. 新增============
+元素个数：3
+[华为, 小米, 苹果]
+==========3. 遍历=============
+===========3.1 一般 for============
+0 : 华为
+1 : 小米
+2 : 苹果
+===========3.2 增加 for============
+华为
+小米
+苹果
+===========3.3 iterator============
+华为
+小米
+苹果
+===========3.4 listIterator============
+0 : 华为
+1 : 小米
+2 : 苹果
+2 : 苹果
+1 : 小米
+0 : 华为
+===========4. 判断============
+false
+false
+===========5. 获取============
+1
+```
+
+```java
+public class Course15 {
+
+    public static void main(String[] args) {
+        List<Integer> list = new ArrayList<>();
+
+        list.add(200);
+        list.add(300);
+        list.add(400);
+        list.add(500);
+        list.add(600);
+
+        System.out.println(list.size());
+        System.out.println(list);
+
+//        list.remove(new Integer(200));
+        list.remove((Object)200);
+        System.out.println(list.size());
+        System.out.println(list);
+
+        List<Integer> list1 = list.subList(1, 3);
+        System.out.println(list1);
+    }
+}
+
+// 注意：List 里面只能存储引用类型的数据，所以 list.add(200); 这句话，
+// 其实隐藏着一个自动装箱的操作，所以在移除基本数据类型的元素时，需要把
+// 基本数据类型转换为对应的包装类型
+
+// 以下是输出
+5
+[200, 300, 400, 500, 600]
+4
+[300, 400, 500, 600]
+[400, 500]
+```
+
+#### 实现类
+
+* `ArrayList`（重点）：
+  
+  * 数组结构实现，查询快、增删慢
+  * `JDK 1.2` 加入，运行效率快、线程不安全
+  * 常/变量：
+    
+    * `DEFAULT_CAPACITY = 10` ：默认容量大小
+      
+      * 注意：该容量是添加元素后的默认容量，如果一个元素都没有，默认容量为 `0`，添加做生意一个元素之后，容量扩容为 `10`；以后每次的扩容大小为原来大小的 `1.5` 倍
+    * `elementData` ：存放列表元素的数组
+* `Vector` ：
+  
+  * 数组结构实现，查询快、增删慢
+  * `JDK 1.0` 加入，运行效率慢、线程安全
+* `LinkedList` ：
+  
+  * 链表结构实现，增删快、查询慢
+
+#### 集合的问题
+
+1. 集合对元素类型没有任何限制
+2. 从集合取出的元素都是 `Object` 类型的，可能在使用时会引发 `ClassCastException` 异常
+
+##### 错误举例
+
+```java
+public class Course17 {
+
+    public static void main(String[] args) {
+        List list = new ArrayList();
+        list.add("123");
+        list.add("Hello");
+        list.add(5);
+
+        for (Object o : list) {
+            // 下面这一句会产生 ClassCastException 异常
+            System.out.println(((String)o).length());
+        }
+    }
+}
+```
+
+### 泛型
+
+`Java` 的泛型是 `JDK 1.5` 引入的一个新特性，其本质是参数化类型，即把类型当作参数传递，常见的形式有：泛型类、泛型接口、泛型方法
+
+`Java` 增加泛型的支持，在很大程度上都是为了让集合能够记住其它元素的数据类型。
+
+> `Java` 的泛型可以保证：如果在编译时没有发出警告，运行时就不会产生 ClassCastException 异常
+
+#### 语法
+
+`<T,...>`
+
+* `T` 称为类型占位符，表示一种**引用类型**
+* `T` 可以换为任意一个大写字母，一般使用的有：`T（Type）`、`E（Element）`、`K（Key）`、`V（Value）`
+
+#### 好处
+
+* 提高代码的重用性
+* 防止类型转换异常，提高代码的安全性
+
+#### 泛型集合
+
+参数化类型、类型安全的集合，强制集合元素的类型必须一致
+
+##### 特点
+
+* 编译期就可以检查，而非运行时抛出异常
+* 访问时，不必类型转换（拆箱）
+* 不同泛型之间引用不能相互赋值，泛型不存在多态
+
+#### 泛型不能存在的地方
+
+* 静态初始化块
+* 静态变量的声明和初始化
+* `instanceOf` 运算符之后不能使用泛型类
+
+```java
+{
+    ArrayList<String> strings = new ArrayList<>();
+    strings.add("234");
+
+    Collection<Integer> collection = new ArrayList<>();
+    collection.add(234);
+}
+
+{
+    Car<Person> personCar = new Car<>();
+    personCar.oil();
+}
+
+{
+    ArrayList<String> list1 = new ArrayList<>();
+    list1.add("234");
+    list1.add("345");
+
+
+    ArrayList<Integer> list2 = new ArrayList<>();
+    list2.add(3);
+    list2.add(4);
+
+    for (String s : list1) {
+        System.out.println(s);
+    }
+
+    for (Integer integer : list2) {
+        System.out.println(integer);
+    }
+
+}
+{
+    // 下面的泛型申明是 <? extends Person>
+    // P 继承了 Person
+    Futer<Person> personFuter = new Futer<>();
+    Futer<P> pFuter = new Futer<>();
+}
+```
+
+### Set 集合
+
+#### 特点
+
+无序、无下标、元素不可重复
+
+`Set` 集合的所有方法全部来自于 `Collection`，自己并没有添加新的方法，所以，适用于 `Collection` 都适用于 `Set`
+
+```java
+// Set 系列演示
+{
+    Set<String> set = new HashSet<>();
+
+    // 1. 增加
+    set.add("123");
+    set.add("321");
+    set.add("456");
+    set.add("789");
+
+    // 2. 循环
+    /*for (String s : set) {
+        System.out.println(s);
+    }
+
+    Iterator<String> iterator = set.iterator();
+    while (iterator.hasNext())
+        System.out.println(iterator.next());*/
+
+    // 3. 删除
+    set.remove("123");
+    set.add("321");
+    /*for (String s : set) {
+        System.out.println(s);
+    }*/
+
+    // 4. 判断
+    System.out.println(set.contains("7892"));
+}
+```
+
+### HashSet
+
+存储结构：哈希表（数组+链表）
+
+存储过程（重复的判断依据）：
+
+1. 根据 `hashcode` 计算保存的位置，如果此位置为空，则直接保存，如果不为空执行第2步
+2. 执行 `equals` 方法，如果 `equals` 方法为 `true`，则认为是重复，否则，形成链表
+
+```java
+// HashSet 进阶用法展示
+// 根据 Person 的年龄和姓名进行判重的秘诀是：重写 hashCode 和 equals 方法
+{
+    HashSet<Person> people = new HashSet<>();
+
+    Person zhangsan = new Person("张三", 22);
+    Person lisi = new Person("李四", 20);
+    Person liuliu = new Person("刘六", 24);
+
+    people.add(zhangsan);
+    people.add(lisi);
+    people.add(liuliu);
+//            people.add(liuliu);
+
+    people.add(new Person("刘六", 24));
+
+    /*for (Person person : people) {
+        System.out.println(person);
+    }*/
+}
+```
+
+### TreeSet
+
+* 基于排列顺序实现元素不重复
+* 实现了 `SortedSet` 接口，对集合元素自动排序
+* 元素对象的类型必须实现 `Comparable` 接口，指定排序规则
+* 通过 `CompareTo` 方法确定是否为重复元素
+
+```java
+// TreeSet
+// TreeSet 使用自定义的排序规则的方法：
+//     1. TreeSet 使用的泛型类型实现了 Comparable 接口，在 compareTo 方法中实现自定义的排序方式
+//     2. 在实例化 TreeSet 时，使用匿名内部类的方式，实现 Comparator 接口的 compare 方法，实现自定义的排序方式
+{
+    TreeSet<Person> treeSet = new TreeSet<>(new Comparator<Person>() {
+        @Override
+        public int compare(Person o1, Person o2) {
+            return o1.getAge() - o2.getAge();
+        }
+    });
+
+    Person zhangsan = new Person("张三", 22);
+    Person lisi = new Person("李四", 20);
+    Person liuliu = new Person("刘六", 24);
+
+    treeSet.add(zhangsan);
+    treeSet.add(lisi);
+    treeSet.add(liuliu);
+
+    for (Person person : treeSet) {
+        System.out.println(person);
+    }
+}
+```
 
