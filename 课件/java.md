@@ -2743,3 +2743,197 @@ public class Course17 {
 }
 ```
 
+### Map
+
+<img src="/Users/wchya/own/markdown/imgs/image-20210122201604544.png" alt="image-20210122201604544" style="zoom:50%;" />
+
+#### 特点
+
+* 用于存储任意键值对（`key-value`）
+* 键：无序、无下标、不允许重复（唯一）
+* 值：无序、无下标、允许重复
+
+### Map 父接口
+
+#### 方法
+
+* `V put(K key, V value)` ：将对象存入到集合中，关联键值，`key` 重复则覆盖原值
+* `Object get(Object key)` ：根据键获取对应的值
+* `Set<K> keySet()` ：返回所有的 `key`
+* `Collection<V> values()` : 返回包含所有值的 `Collection` 集合
+* `Set<Map.Entry<K,V>> entrySet()` ：返回键值匹配的 `Set` 集合
+* `boolean containsKey(Object key)` ：如果包含指定的键，返回 `true`
+* `boolean containsValue(Object value)` : 如果包含一个或多个的值，返回 `true`
+
+### HashMap（重点）
+
+`JDK 1.2` 版本引入，线程不安全，运行效率快，允许使用 `null` 作为 `key` 或者 `value`
+
+> `HashMap` 无参的构造器会构造一个具有默认初始容量（16）和默认加载因子（0.75） 的空 `HashMap`
+
+#### 源码分析
+
+```java
+static final int DEFAULT_INITIAL_CAPACITY = 1 << 4; // 默认初始化的容量
+static final int MAXIMUM_CAPACITY = 1 << 30; // 最大容量
+static final float DEFAULT_LOAD_FACTOR = 0.75f； // 加载因子
+static final int TREEIFY_THRESHOLD = 8; // 当链表长度大于8时，并且数组元素大于64时，调整成红黑树
+static final int MIN_TREEIFY_CAPACITY = 64; // 当链表长度大于8时，并且数组元素大于64时，调整成红黑树
+transient Node<K,V>[] table; // 哈希表中的数组
+transient int size; // 元素个数
+```
+
+##### 总结
+
+1. `HashMap` 刚创建时，`table` 是 `null`，为了节省空间，当添加第一个元素时，`table` 容量调整为 `16`
+2. 当元素个数大于阀值 $ 16 * 0.75 = 12 $ 时，会进行扩容，扩容后大小为原来的 `2` 倍，目的是减少调整元素的个数
+3. `jdk 1.8` 当每个链表长度大于 `8`，并且数组元素个数大于等于 `64` 时，会调整为红黑树，目的是为了提高执行效率
+4. `jdk 1.8` 当链表长度小于 `6` 时，调整为链表
+5. `jdk 1.8` 以前，链表从头插入，`jdk 1.8` 以后，链表从尾插入
+
+### HashTable（了解即可）
+
+`jdk 1.0` 版本引入，线程安全，运行效率慢，不允许 `null` 作为 `key` 或者 `value`
+
+### Properties
+
+> 流讲完后，再详细讲解这个类
+
+`HashTable` 的子类，要求 `key` 和 `value` 都是 `String`， 通常用于配置文件的读取
+
+### TreeMap
+
+实现了 `SortedMap` 接口（是 `Map` 的子接口），可以对 `key` 自动排序
+
+### Collections 工具类
+
+集合工具类，定义了除了存取以外的集合常用方法
+
+#### 方法
+
+* `public static void reverse(List<?> list)` ：反转集合中元素的顺序
+* `public static void shuffle(List<?> list)` ：随机重置集合中元素的顺序
+* `public static void sort(List<T> list)` ：升序排序（元素类型必须实现 `Comparable` 接口）
+
+## 第十七章 异常
+
+
+
+### 处理异常的必要性
+
+
+
+### 异常处理
+
+
+
+### Throwable
+
+
+
+#### Error
+
+
+
+#### Exception
+
+
+
+### 异常的传递
+
+
+
+### 异常处理
+
+
+
+#### 第一种结构
+
+```java
+try {
+    // 可能出现异常的代码
+} catch(Exception e) {
+    // 异常处理的相关代码，如：getMessage()、printStackTrace()
+}
+```
+
+
+
+#### 第二种结构
+
+```java
+try {
+    // 可能出现异常的代码
+} catch(Exception e) {
+    // 异常处理的相关代码，如：getMessage()、printStackTrace()
+} finally {
+    // 无论出现异常都会执行，可以释放资源等……
+}
+```
+
+
+
+#### 第三种结构
+
+```java
+try {
+    // 可能出现异常的代码
+} catch(异常类型1) {
+    // 异常处理的相关代码，如：getMessage()、printStackTrace()
+} catch(异常类型2) {
+    // 异常处理的相关代码，如：getMessage()、printStackTrace()
+} catch(异常类型3) {
+    // 异常处理的相关代码，如：getMessage()、printStackTrace()
+} ...
+```
+
+
+
+#### 第四种结构
+
+```java
+try {
+    // 可能出现异常的代码
+} finally {
+    // 无论出现异常都会执行，可以释放资源等……
+}
+```
+
+
+
+### 多异常捕获
+
+
+
+### 异常信息
+
+
+
+### 声明异常
+
+
+
+### 抛出异常
+
+
+
+### 自定义异常
+
+
+
+### 带有异常声明的方法覆盖
+
+
+
+### 自动关闭资源 try 语句
+
+
+
+### 总结
+
+* 异常处理结构语法中只有 `try` 块是必须的，也就是说，如果没有 `try` 块，则不能有后面的 `catch` 块和 `finally` 块
+* `catch` 块和 `finally` 块都是可选的，但 `catch` 块和 `finally` 块至少出现其中之一，也可以同时出现
+* 可以有多个 `catch` 块，捕获父类异常的 `catch` 块必须位于捕获子类异常的后面
+* 不能只能 `try` 块，既没有 `catch` 块，也没有 `finally` 块
+* 多个 `catch` 块必须位于 `try` 块之后，`finally` 块必须位于所有的 `catch` 块之后
+
