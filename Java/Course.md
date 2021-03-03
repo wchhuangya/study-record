@@ -5273,7 +5273,7 @@ public class FirstTest {
 
         // 获取连接
         Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/useful?useUnicode=true&characterEncoding=utf-8",
-                "wchya", "root");
+                "******", "******");
 
         // 判断连接是否可用
         if (conn != null) {
@@ -5342,7 +5342,7 @@ public class ExecuteQuery {
             Class.forName("com.mysql.cj.jdbc.Driver");
 
             // 获取数据库连接
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/useful?useUnicode=true&characterEncoding=utf-8", "wchya", "root");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/useful?useUnicode=true&characterEncoding=utf-8", "******", "******");
 
             // 获取 Statement，用于执行 SQL 语句
             statement = conn.createStatement();
@@ -5528,7 +5528,407 @@ String dates = sdf.format(date); // 将日期格式化成字符串
 
 业务，代表用户完成的一个业务功能，可以由一个或多个 `Dao` 的调用组成（软件所提供的一个功能都叫业务）。
 
-![image-20210301183420171](/Users/wchya/own/markdown/imgs/image-20210301183420171.png)
+[![6FYh7t.md.png](https://s3.ax1x.com/2021/03/02/6FYh7t.md.png)](https://imgtu.com/i/6FYh7t)
+
+### 综合实例——银行转账
+
+#### 创建数据库表
+
+```sql
+CREATE TABLE bank_card (
+	card_no VARCHAR(4) NOT NULL PRIMARY KEY,
+	password INT NOT NULL,
+	name VARCHAR(32) NOT NULL,
+	balance INT
+) charset=utf8
+```
+
+#### 创建实体类
+
+```java
+@Data
+public class BankCard {
+    private String cardNo;
+    private int password;
+    private String name;
+    private int balance;
+
+    public BankCard() {
+    }
+
+    public BankCard(String cardNo, int password, String name, int balance) {
+        this.cardNo = cardNo;
+        this.password = password;
+        this.name = name;
+        this.balance = balance;
+    }
+}
+```
+
+#### 创建数据访问层
+
+```java
+public class BankCardDao extends AbstractDao<BankCard> {
+
+    private Connection conn;
+    private PreparedStatement pstm;
+    private ResultSet rs;
+
+    @Override
+    public int add(BankCard bankCard) {
+        return 0;
+    }
+
+    @Override
+    public int delete(int key) {
+        return 0;
+    }
+
+    @Override
+    public int delete(String key) {
+        return 0;
+    }
+
+    @Override
+    public int update(BankCard bankCard) {
+        int res = 0;
+
+        try {
+            init();
+
+            pstm = conn.prepareStatement("update bank_card set password=?, name=?, balance=? where card_no=?");
+            pstm.setInt(1, bankCard.getPassword());
+            pstm.setString(2, bankCard.getName());
+            pstm.setInt(3, bankCard.getBalance());
+            pstm.setString(4, bankCard.getCardNo());
+            res = pstm.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return res;
+    }
+
+    @Override
+    public BankCard findOne(String key) {
+        BankCard bankCard = null;
+
+        try {
+            init();
+
+            pstm = conn.prepareStatement("select * from bank_card where card_no=?");
+            pstm.setString(1, key);
+            rs = pstm.executeQuery();
+
+            if (rs.next()) {
+                bankCard = new BankCard(key, rs.getInt("password"), rs.getString("name"), rs.getInt("balance"));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return bankCard;
+    }
+
+    @Override
+    public BankCard findOne(int key) {
+        return null;
+    }
+
+    @Override
+    public List<BankCard> findAll() {
+        return null;
+    }
+
+    private void init() throws Exception {
+        conn = JDBCUtil.getConnection();
+    }
+}
+```
+
+#### 创建业务逻辑层
+
+```java
+public class BankCardServiceImpl {
+
+    private BankCardDao bankCardDao = new BankCardDao();
+
+    public void transferMoney(String from, int password, int balance, String to) {
+        try {
+            BankCard fromAccount = bankCardDao.findOne(from);
+
+            JDBCUtil.setAutoCommit(false);
+
+            // 1. 判断 from 账号是否存在
+            if (fromAccount == null)
+                throw new RuntimeException("账户不存在！");
+
+            // 2. 判断 from 账号密码是否正确
+            if (password != fromAccount.getPassword())
+                throw new RuntimeException("密码不正确！");
+
+            // 3. 判断 from 账号余额是否充足
+            if (fromAccount.getBalance() < balance)
+                throw new RuntimeException("余额不足！");
+
+            // 4. 判断 to 账号是否存在
+            BankCard toAccount = bankCardDao.findOne(to);
+            if (toAccount == null)
+                throw new RuntimeException("对方账号不存在!");
+
+            // 5. 从 from 账号的余额中减去要转的钱
+            fromAccount.setBalance(fromAccount.getBalance() - balance);
+            bankCardDao.update(fromAccount);
+
+            // 6. 给 to 账号的余额增加转来的钱
+            toAccount.setBalance(toAccount.getBalance() + balance);
+            bankCardDao.update(toAccount);
+
+            JDBCUtil.commit();
+            System.out.println("转账成功！");
+        } catch (Exception e) {
+            System.out.println("转账失败！");
+            try {
+                if (JDBCUtil.getConnection() != null)
+                    JDBCUtil.rollback();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+#### 单元测试
+
+```java
+public class BankCardTest {
+
+    @Test
+    public void testTransferMoney() {
+        BankCardServiceImpl bankCardService = new BankCardServiceImpl();
+        bankCardService.transferMoney("1234", 1234, 1000, "22343");
+    }
+}
+```
+
+#### 附：JDBCUtil.java
+
+```java
+public class JDBCUtil {
+    private static final Properties PROPERTIES = new Properties();
+
+    private static ThreadLocal<Connection> threadLocal = new ThreadLocal<>();
+
+    static { // 类加载，只执行一次
+        try (InputStream is = JDBCUtil.class.getResourceAsStream("/jdbc.properties")) {
+            PROPERTIES.load(is);
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private JDBCUtil() {}
+
+    /**
+     * 获取数据库连接对象
+     * @return - 数据库连接对象
+     * @throws SQLException - 数据库连接失败等异常
+     */
+    public static Connection getConnection() throws SQLException {
+        Connection conn = threadLocal.get();
+        if (conn == null) {
+            conn = DriverManager.getConnection(PROPERTIES.getProperty("url"), PROPERTIES.getProperty("username"), PROPERTIES.getProperty("password"));
+            threadLocal.set(conn);
+        }
+        return conn;
+    }
+
+    /**
+     * 设置 Connection 的自动提交为 false
+     * @throws SQLException - SQL 操作失败
+     */
+    public static void setAutoCommit(boolean sign) throws SQLException {
+        getConnection().setAutoCommit(sign);
+    }
+
+    /**
+     * Connection 提交更改
+     * @throws SQLException - SQL 操作失败
+     */
+    public static void commit() throws SQLException {
+        getConnection().commit();
+        closeAll(null, null, getConnection());
+        threadLocal.remove();
+    }
+
+    /**
+     * 设置 Connection 进行事务的回滚
+     * @throws SQLException - SQL 操作失败
+     */
+    public static void rollback() throws SQLException {
+        getConnection().rollback();
+        closeAll(null, null, getConnection());
+        threadLocal.remove();
+    }
+
+    /**
+     * 关闭 JDBC 数据库操作中可能用到的资源
+     * @param rs - ResultSet
+     * @param sm - Statement
+     * @param conn - Connection
+     * @throws SQLException - 数据库操作相关异常
+     */
+    public static void closeAll(ResultSet rs, Statement sm, Connection conn) throws SQLException {
+        if (rs != null)
+            rs.close();
+        if (sm != null)
+            sm.close();
+        if (conn != null)
+            conn.close();
+    }
+}
+```
+
+### 三层架构
+
+#### 表示层
+
+* 命名：`XxxView`
+* 职责：收集用户的数据和需求、展示数据
+
+#### 业务逻辑层
+
+* 命名：`XxxServiceImpl`
+* 职责：数据加工处理、调用 `Dao` 完成业务实现、控制事务
+
+#### 数据访问层
+
+* 命名：`XxxDao`
+* 职责：向业务层提供数据，将业务层加工后的数据同步到数据库
+
+[![6ka9zT.png](https://s3.ax1x.com/2021/03/02/6ka9zT.png)](https://imgtu.com/i/6ka9zT)
+
+#### 三层架构项目搭建
+
+* `utils` 存放工具类（`JDBCUtil`）
+* `entity` 存放实体类（`BankCard`）
+* `dao` 存放 `Dao` 接口（`BankCardDao`）
+  * `impl` 存放 `Dao` 接口实现类（ `BankCardDaoImpl`）
+* `service` 存放 `service` 接口（`BankCardService`）
+  * `impl` 存放 `service` 接口实现类（`BankCardServiceImpl`）
+
+> 程序设计时，考虑易修改、易扩展，为 `service` 层和 `Dao` 层设计接口，便于来更换实现类
+
+### DaoUtil
+
+> 在 Dao 层中，对数据库表的增、删、改、查操作存在代码冗余，可对其进行抽取封装为 DaoUtil 工具类实现复用
+
+```java
+/**
+ * @文件名: DaoUtil
+ * @项目名 study
+ * @描述: Dao 工具类，里面是能用的更新方法和查询方法
+ * @作者 wchya
+ * @日期 2021-03-02 21:37
+ */
+public class DaoUtil<T> {
+
+    /**
+     * jdbc 增、删、改 的通用操作方法
+     * @param sql - 要执行的 sql 语句
+     * @param args - 可变参数，用于 sql 中占位符的实际值
+     * @return - 受影响的行数
+     * @throws Exception - SQL 相关的异常
+     */
+    public static int commonUpdates(String sql, Object... args) throws SQLException {
+        Connection conn = null;
+        PreparedStatement pstm = null;
+        try {
+            conn = JDBCUtil.getConnection();
+
+            JDBCUtil.setAutoCommit(false);
+            pstm = conn.prepareStatement(sql);
+
+            for (int i = 0; i < args.length; i++) {
+                pstm.setObject(i + 1, args[i]);
+            }
+
+            int res = pstm.executeUpdate();
+            JDBCUtil.commit();
+            return res;
+        } finally {
+            JDBCUtil.closeAll(null, pstm, conn);
+        }
+    }
+
+    /**
+     * jdbc 查询的通用方法，查询出来的数据可以对应任何类
+     * @param sql - 要查询的 sql 语句
+     * @param rowMapper - 一个回调接口，用于调用者使用该接口的 getRow() 方法将查询的数据封装到具体的对象中
+     * @param args - 可变参数，用于传入预编译 Statement 的具体值
+     * @return - 结果集合
+     * @throws SQLException - sql 相关异常
+     */
+    public List<T> commonSelect(String sql, RowMapper<T> rowMapper, Object... args) throws SQLException {
+        Connection conn = null;
+        PreparedStatement pstm = null;
+        ResultSet rs = null;
+        List<T> list = new ArrayList<>();
+
+        conn = JDBCUtil.getConnection();
+        pstm = conn.prepareStatement(sql);
+        for (int i = 0; i < args.length; i++) {
+            pstm.setObject(i + 1, args[i]);
+        }
+
+        rs = pstm.executeQuery();
+
+        while (rs.next()) {
+            list.add((T) rowMapper.getRow(rs));
+        }
+
+        return list;
+    }
+
+    @Test
+    public void testTest() throws SQLException {
+        int res = commonUpdates("update bank_card set name=? where card_no=?", "third", "2234");
+        System.out.println("受影响的行数为：" + res);
+    }
+
+    @Test
+    public void testSelect() throws SQLException {
+        RowMapper<BankCard> mapper = rs -> {
+            BankCard bankCard = null;
+            try {
+                bankCard = new BankCard(rs.getString("card_no"), rs.getInt("password"), rs.getString("name"), rs.getInt("balance"));
+                return bankCard;
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+            return bankCard;
+        };
+
+        List<BankCard> list = new DaoUtil<BankCard>().commonSelect("select * from bank_card where card_no=?", mapper, "2234");
+
+        if (!list.isEmpty()) {
+            BankCard bankCard = (BankCard) list.get(0);
+            System.out.println(bankCard);
+        }
+    }
+}
+
+public interface RowMapper<T> {
+    T getRow(ResultSet rs);
+}
+```
+
+
 
 
 
