@@ -5928,7 +5928,235 @@ public interface RowMapper<T> {
 }
 ```
 
+### Druid 连接池
 
+在程序初始化时，预先创建指定数量的数据库连接对象存储在池中，当需要连接数据库时，从连接池中取出现有连接；使用完毕后，也不会进行关闭，而是放回池中，实现复用，节省资源
+
+#### 连接池使用步骤
+
+1. 创建 `database.properties` 配置文件
+2. 引入 `druid-1.1.5.jar` 文件
+
+#### 配置文件
+
+```properties
+# 连接设置
+# 下面四个键名不能改变，这些都是 Druid 的实现类里面规定的名称，改变后会抛出异常
+driverClassName=com.mysql.cj.jdbc.Driver
+url=jdbc:mysql://localhost:3306/school?useUnicode=true&characterEncoding=utf-8
+username=root
+password=root
+# 初始化连接
+initialSize=10
+# 最大连接数量
+maxActive=50
+# 最小空闲数量（如果初始化的10个连接一直没有用，系统会自动释放一部分，这里的数量设置的就是释放后剩余的连接数）
+minIdle=5
+# 超时等待时间，以毫秒为单位
+maxWait=5000
+```
+
+#### 连接池工具类
+
+```java
+public class DataSourceUtil {
+    // 声明连接池对象
+    private static DruidDataSource ds;
+
+    static {
+        try (InputStream is = DataSourceUtil.class.getResourceAsStream("/jdbc.properties")) {
+            Properties properties = new Properties();
+            properties.load(is);
+
+            // 创建连接池
+            ds = (DruidDataSource) DruidDataSourceFactory.createDataSource(properties);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 获取连接
+     * @return - 数据库连接
+     */
+    public static Connection getConnection() {
+        try {
+            return ds.getConnection(); // 通过连接池获得连接对象
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}
+```
+
+### DbUtils 使用（Apache）
+
+`Commons DbUtils` 是 `Apache` 组织提供的一个对 `JDBC` 进行简单封装的开源工具类库，使用它能够简化 `JDBC` 应用程序的开发！同时，不会影响程序的性能。
+
+#### 简介
+
+`DbUtils` 是 `Java` 编程中数据库操作的实用小工具，小巧、简单、实用：
+
+* 对于数据表的查询操作，可以把结果转换为 `List、Array、Set` 等集合，便于操作
+* 对于数据表的 `DML` 操作，也变得很简单（只需要写 `SQL` 语句）
+
+#### 主要包含
+
+* `ResultSetHandler` 接口：转换类型接口
+  * `BeanHandler`：实现类，把一条记录转换成对象
+  * `BeanListHandler`：实现类，把多条记录转换成 `List` 集合
+  * `ScalarHandler`：实现类，适合获取一行一列的数据
+* `QueryRunner`：执行 `sql` 语句的类
+  * 增、删、改：`update()`
+  * 查询：`query()`
+
+#### 使用步骤
+
+* 导入 `jar` 包
+  * `mysql` 连接驱动的 `jar` 包
+  * `Druid` 的 `jar` 包
+  * `commons-dbutils` 的 `jar` 包
+* `db.properties` 配置文件
+
+#### 实例
+
+```java
+// Dao 层
+public class DboperUser2Dao extends AbstractDao<DboperUser> {
+
+    private QueryRunner queryRunner = new QueryRunner(DataSourceUtil.getDataSource());
+
+    @Override
+    public int add(DboperUser dboperUser) {
+        try {
+            Object[] objects = {dboperUser.getName(), dboperUser.getAge(), dboperUser.getBirthday()};
+            return queryRunner.update("insert into dboper_user(name, age, birthday) values(?,?,?)", objects);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    @Override
+    public int delete(int key) {
+        try {
+            return queryRunner.update("delete from dboper_user where id=?", key);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    @Override
+    public int delete(String key) {
+        return 0;
+    }
+
+    @Override
+    public int update(DboperUser dboperUser) {
+        try {
+            Object[] objects = {dboperUser.getName(), dboperUser.getAge(), dboperUser.getBirthday(), dboperUser.getId()};
+            return queryRunner.update("update dboper_user set name=?, age=?, birthday=? where id=?", objects);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    @Override
+    public DboperUser findOne(String key) {
+
+        return null;
+    }
+
+    @Override
+    public DboperUser findOne(int key) {
+        try {
+            return queryRunner.query("select * from dboper_user where id=?", new BeanHandler<DboperUser>(DboperUser.class), key);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public List<DboperUser> findAll() {
+        try {
+            return queryRunner.query("select * from dboper_user", new BeanListHandler<DboperUser>(DboperUser.class));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public long getUserCounts() {
+        try {
+            return queryRunner.query("select count(id) from dboper_user", new ScalarHandler<>());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+}
+```
+
+```java
+// 测试类
+public class CommonsDbutilsTest {
+
+    private DboperUser2Dao userDao;
+
+    @BeforeTest
+    public void init() {
+        userDao = new DboperUser2Dao();
+    }
+
+    @Test
+    public void testAdd() {
+        int res = userDao.add(new DboperUser("dbutils", 22, DateTimeUtil.utilDateToSqlDate(new Date())));
+        System.out.println("插入 " + res + " 条数据！");
+    }
+
+    @Test
+    public void testUpdate() {
+        int res = 0;
+        try {
+            res = userDao.update(new DboperUser(4, "dbutils", 20, DateTimeUtil.utilDateToSqlDate(DateTimeUtil.strToUtilDate("1985-03-03"))));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        System.out.println("修改 " + res + " 条数据！");
+    }
+
+    @Test
+    public void testDelete() {
+        int res = 0;
+        res = userDao.delete(5);
+        System.out.println("删除 " + res + " 条数据！");
+    }
+
+    @Test
+    public void testFindOne() {
+        DboperUser user = userDao.findOne(4);
+        System.out.println(user);
+    }
+
+    @Test
+    public void testFindAll() {
+        List<DboperUser> lists = userDao.findAll();
+        lists.forEach(System.out::println);
+    }
+
+    @Test
+    public void testGetUserCounts() {
+        long userCounts = userDao.getUserCounts();
+        System.out.println(userCounts);
+    }
+}
+```
 
 
 
