@@ -931,11 +931,11 @@ double num = 0.01e3
 字符字面值使用单引号包裹 `'` ，字符串字面值使用双引号包裹 `"` ，`Unicode` 转义序列可以使用在程序的任何地方（例如字段名等）。
 
 **ASCII 码表：**
-![](index_files/e4ae4fda-f83e-414a-8d22-aadc7013791e.png)
+[![6EXbwV.md.png](https://s3.ax1x.com/2021/03/04/6EXbwV.md.png)](https://imgtu.com/i/6EXbwV)
 
 **转义字符：**
 
-![](index_files/02b4ba14-8abd-409e-8ca9-5b9cb9c6d890.png)
+[![6EXzl9.md.png](https://s3.ax1x.com/2021/03/04/6EXzl9.md.png)](https://imgtu.com/i/6EXzl9)
 
 ###### 在数字字面值中使用下划线 `_` 分隔
 
@@ -2086,12 +2086,12 @@ public class DecimalFormatDemo {
 
 下面是每一行输出的解释：
 
-| 值         | 格式                                                      | 输出        | 解释                                                         |
-| ---------- | --------------------------------------------------------- | ----------- | ------------------------------------------------------------ |
-| 123456.789 | ![](index_files/611dc453-3a19-4989-89c4-daae9fdcefa2.png) | 123,456.789 | # 表示一个数字，逗号是分组分隔符的占位符，句号是小数点分隔符的占位符 |
-| 123456.789 | ![](index_files/9bd0fce7-afc8-4462-a53d-48e407539161.png) | 123456.79   | 该值在小数点右边有三位数，但是在格式中只有两位，`format` 通过四舍五入来解决该问题 |
-| 123.78     | 000000.000                                                | 000123.780  | 该模式指定前导零和尾随零，因为使用0字符代替了井号（＃）      |
-| 12345.67   | ![](index_files/72b9a82d-48fc-4e91-85f2-2f25c8630dc5.png) | $12,345.67  |                                                              |
+| 值         | 格式                                                         | 输出        | 解释                                                         |
+| ---------- | ------------------------------------------------------------ | ----------- | ------------------------------------------------------------ |
+| 123456.789 | [![6Ej8fg.png](https://s3.ax1x.com/2021/03/04/6Ej8fg.png)](https://imgtu.com/i/6Ej8fg) | 123,456.789 | # 表示一个数字，逗号是分组分隔符的占位符，句号是小数点分隔符的占位符 |
+| 123456.789 | [![6Ejd00.png](https://s3.ax1x.com/2021/03/04/6Ejd00.png)](https://imgtu.com/i/6Ejd00) | 123456.79   | 该值在小数点右边有三位数，但是在格式中只有两位，`format` 通过四舍五入来解决该问题 |
+| 123.78     | 000000.000                                                   | 000123.780  | 该模式指定前导零和尾随零，因为使用0字符代替了井号（＃）      |
+| 12345.67   | [![6EjBkT.png](https://s3.ax1x.com/2021/03/04/6EjBkT.png)](https://imgtu.com/i/6EjBkT) | $12,345.67  |                                                              |
 
 ## 简单 Java 类
 
@@ -2124,7 +2124,7 @@ public class DecimalFormatDemo {
 
 ### Collection体系集合
 
-![](index_files/4837c037-0f08-46af-b112-3f17ce0d7b19.png)
+[![6Ejyp4.md.png](https://s3.ax1x.com/2021/03/04/6Ejyp4.md.png)](https://imgtu.com/i/6Ejyp4)
 
 ### Collection 父接口
 
@@ -2597,7 +2597,7 @@ public class Course17 {
 
 ### Map
 
-![](index_files/2bcf5c29-d66c-44b3-80f8-c3e58766aae2.png)
+[![6Ejf76.png](https://s3.ax1x.com/2021/03/04/6Ejf76.png)](https://imgtu.com/i/6Ejf76)
 
 #### 特点
 
@@ -3048,7 +3048,7 @@ Roll No: 10
 
 ### 字节流
 
-![](index_files/7f2a98f3-c586-422b-b518-0cb39c404944.png)
+[![6EL4AS.png](https://s3.ax1x.com/2021/03/04/6EL4AS.png)](https://imgtu.com/i/6EL4AS)
 
 #### 父类（抽象类）
 
@@ -3184,6 +3184,8 @@ public class DemoObjectInputStream {
 ```
 
 ### 字符流
+
+[![6ELX7T.png](https://s3.ax1x.com/2021/03/04/6ELX7T.png)](https://imgtu.com/i/6ELX7T)
 
 #### 字符编码
 
