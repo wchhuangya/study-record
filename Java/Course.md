@@ -5179,7 +5179,1393 @@ public class DemoDIYSinLine {
     
     `ImageIO.read(URL/File)`
 
-## 第二十二章 JDBC
+## 第二十二章 MySQL 数据库
+
+### 现有的数据存储方式有哪些
+
+* `Java` 程序存储数据（变量、对象、数组、集合），数据保存在内存中，属于瞬时状态存储
+* 文件（`File`）存储数据，保存在硬盘上，属于持久状态存储
+
+#### 以上存储方式的缺点
+
+* 没有数据类型的区分
+* 存储数据量级较小
+* 没有访问安全限制
+* 没有备份、恢复机制
+
+### 数据库
+
+数据库是按照数据结构来组织、存储和管理数据的仓库，是一个长期存储在计算机内的、有组织的、有共享的、统一管理的数据集合
+
+#### 分类
+
+* 网状结构数据库：美国通用电气公司 `IDS`（`Integrated Data Store`），以节点形式存储和访问
+* 层次结构数据库：`IBM` 公司 `IMS`（`Information Management System`）定向有序的树状结构实现存储和访问
+* 关系结构数据库：`Oracle、DB2、MySQL、SQL Server`，以表格存储，多表间建立关联关系，通过分类、合并、连接、选取等运算实现访问
+* 非关系型数据库：`ElasterSearch、MongoDB、Redis`，多数使用哈希表，表中以键值对的方式实现特定的键和一个指针指向的特定数据
+
+### 数据库管理系统
+
+`DataBase Management System，DBMS`：指一种操作和管理数据库的大型软件，用于建立、使用和维护数据库，对数据库进行统一管理和控制，以保证数据库的安全性和完整性。用户通过数据库管理系统访问数据库中的数据
+
+#### 常用的数据库管理系统
+
+* `Oracle`：被认为是业界目前比较成功的关系型数据库管理系统。`Oracle` 数据库可以运行在 `Unix、Windows` 等主流操作系统平台，完全支持所有的工业标准，并获得最高级别的 `ISO` 标准安全性认证
+* `DB2`：`IBM` 公司的产品，`DB2` 数据库系统采用多进程多线索体系结构，其功能足以满足大中公司的需要，并可灵活地服务于中小型电子商务解决方案
+* `SQL Server`：`Microsoft` 公司推出的关系型数据库管理系统，具有使用方便可伸缩性好与相关软件集成程度高等优点
+* `SQLite`：应用在手机端的数据库
+
+### MySQL
+
+#### 简介
+
+`MySQL` 是一个 **关系型数据库管理系统**，由瑞典 `MySQL AB` 公司开发，属于 `Oracle` 旗下产品。`MySQL` 是最流行的关系型数据库管理系统之一，在 `Web` 应用方面，`MySQL` 是最好的 `RDBMS（Relational Database Management System）` 应用软件之一。
+
+#### 访问与下载
+
+[官网地址](https://www.mysql.com)
+
+[下载地址](https://dev.mysql.com/downloads/mysql/)
+
+ #### 配置环境变量
+
+* `Windows`
+  * 创建 `MYSQL_HOME: C:\Program Files\MySQL Server x.x`
+  * 追加 `PATH: %MYSQL_HOME%\bin`
+* `MacOS/Linux`
+  * 终端中输入 `cd ~` 进入目录，并检查 `.bash_profile` 是否存在，有则追加，无则创建
+  * 创建文件：`touch .bash_profile`
+  * 打开文件：`open .bash_profile`
+  * 输入：`export PATH=${PATH}/user/local/mysql/bin` 保存并退出终端
+
+##### 验证
+
+* 打开命令行工具
+* 输入命令：`mysql -u 用户名 -p 密码`
+* 如果控制台出现：`mysql>` 则表示成功
+
+#### 目录结构
+
+> 只介绍核心文件
+
+| 文件夹名称 |        内容        |
+| :--------: | :----------------: |
+|    bin     |      命令文件      |
+|    lib     |       库文件       |
+|  include   |       头文件       |
+|    hare    | 字符集、语言等信息 |
+
+以上文件所在路径：`/usr/local/mysql-x.x.x-macosx.x-x86_64/`
+
+#### 配置文件
+
+所在路径：`/etc/my.cnf`
+
+> 在配置文件中可以修改客户端和本地的字符集、服务端口等内容
+
+| 参数                   | 描述                      |
+| ---------------------- | ------------------------- |
+| default-charset-set    | 客户端默认字符集          |
+| character-set-server   | 服务端默认字符集          |
+| port                   | 客户端和服务端的端口号    |
+| default-storage-engine | MySQL 默认存储引擎 INNODB |
+
+### SQL 语言
+
+#### 概念
+
+`SQL（Structed Query Language）`：结构化查询语言，用于存取数据、更新、查询和管理关系数据库系统的程序设计语言
+
+> 通常对数据库执行的 “增删改查” 操作，简称：`C（Create）R（Read）U（Update）D（Delete）`
+
+#### MySQL 上的应用
+
+想对数据库操作，需要在命令行下进入 `MySQL` 环境进行指令的输入，并在一句指令的末尾使用 `;` 结尾
+
+#### 基本命令
+
+##### 查看 MySQL 中所有数据库
+
+`mysql > show databases;`
+
+| 数据库名称           | 描述                                                         |
+| -------------------- | ------------------------------------------------------------ |
+| `information_schema` | 信息数据库，其中保存着关于所有数据库的信息（元数据）<br />元数据是关于数据的数据，如数据库名或表名，列的数据类型，或访问权限等 |
+| `mysql`              | 核心数据库，主要负责存储数据库的用户、权限设置、关键字等，以及需要使用的控制和管理信息，不可以删除 |
+| `performance_schema` | 性能优化的数据库，`MySQL 5.5` 版本中新增的一个性能优化的引擎 |
+| `sys`                | 系统数据库，`MySQL 5.7` 版本中新增的可以快速的了解元数据信息的系统库，便于发现数据库的多样信息，解决性能瓶颈问题 |
+
+##### 创建数据库
+
+```sql
+mysql> create database mydb1; # 创建 mydb 数据库
+mysql> create database mydb2 character set gbk; # 创建数据库并设置编码
+mysql> create database if not exists mydb3; # 如果 mydb4 数据库不存在，就创建
+```
+
+##### 查看数据库创建信息
+
+```sql
+mysql> show create database mydb2; # 查看创建数据库时的基本
+```
+
+##### 修改数据库
+
+```sql
+mysql> alter database mydb2 character set gbk;
+```
+
+##### 删除数据库
+
+```sql
+mysql> drop database mydb2;
+```
+
+##### 查看当前所使用的数据库
+
+```sql
+mysql> select database();
+```
+
+##### 使用数据库
+
+```sql
+mysql> use mydb1;
+```
+
+### 客户端工具
+
+#### Navicate
+
+`Navicate` 是一套快速、可靠并价格便宜的数据库管理工具，专为简化数据库的管理及降低系统管理成本而设。它的设计符合数据库管理员、开发人员及中小企业的需要。`Navicate` 是以直觉化的图形用户界面而建的，让你可以以安全并简单的方式创建、组织、访问并共用信息。
+
+#### SQLyog
+
+`MySQL` 可能是世界上最流行的开源数据库引擎，但是使用基于文本的工具和配置文件可能很难进行管理。`SQLyog` 提供了完整的图形界面，即使初学者也可以轻松使用 `MySQL` 的强大功能，其拥有广泛的预定义工具和查询、友好的视觉界面、类似 `Excel` 的查询结果编辑界面等优点
+
+### 数据查询（DQL）【重点】
+
+#### 数据库表的基本结构
+
+关系结构数据库是以表格进行数据存储，表格由 “行” 和 “列” 组成
+
+> 执行查询语句返回的结果集是一张虚拟表
+
+#### 基本查询
+
+`select 列名 from 表名;`
+
+| 关键字   | 描述           |
+| -------- | -------------- |
+| `select` | 指定要查询的列 |
+| `from`   | 指定要查询的表 |
+
+##### 查询部分列
+
+```sql
+# 查询员工表中所有员工的编号、姓名、邮箱
+select employee_id, first_name, email
+from t_employees;
+```
+
+##### 查询所有列
+
+```sql
+# 查询员工表中所有员工的所有信息
+select 所有的列名 from t_employees;
+select * from t_employees;
+```
+
+> 注意：生产环境下，优先使用列名查询。这是因为在执行时，* 的方式需要转换为全列名，效率低，可读性差
+
+##### 对列中的数据进行运算
+
+```sql
+# 查询员工表中所有员工的编码、名字、年薪
+select employee_id, first_name, salary * 12 
+from t_employees;
+```
+
+| 算术运算符 | 描述           |
+| ---------- | -------------- |
+| +          | 两列做加法运算 |
+| -          | 两列做减法运算 |
+| *          | 两列做乘法运算 |
+| /          | 两列做除法运算 |
+
+> 注意：% 是点位符，而非模运算符
+
+##### 列的别名
+
+`列 as '别名'`
+
+```sql
+# 查询员工表中所有员工的编号、名字、年薪（列名均为中文）
+select employee_id as '编号', first_name as '名字', salary * 12 as '年薪' 
+from t_employees;
+```
+
+##### 查询结果去重
+
+`distinct 列名`
+
+```sql
+# 查询员工表中所有经理的 ID
+select distinct manager_id 
+from t_employees;
+```
+
+#### 排序查询
+
+语法：`select 列名 from 表名 order by 排序列[ 排序规则]`
+
+| 排序规则 | 描述                   |
+| -------- | ---------------------- |
+| asc      | 对前面排序列做升序排序 |
+| desc     | 对前面排序列做降序排序 |
+
+##### 依据单列排序
+
+```sql
+# 查询员工的编号、名字、薪资。按照工资高低进行升序排序
+select employee_id, first_name, salary 
+from t_employees 
+order by salary desc;
+```
+
+##### 依据多列排序
+
+```sql
+# 查询员工的编号、名字、薪资。按照工资高低进行升序排序（薪资相同时，按照编号进行升序排序）
+select employee_id, first_name, salary
+from t_employees
+order by salary desc, employee_id asc;
+```
+
+#### 条件查询
+
+语法：`select 列名 from 表名 where 条件`
+
+| 关键字 | 描述                                                   |
+| ------ | ------------------------------------------------------ |
+| where  | 在查询结果中，筛选复合条件的查询结果，条件为布尔表达式 |
+
+##### 等值判断（=）
+
+```sql
+# 查询薪资是 11000 的员工信息（编号、名字、薪资）
+select employee_id, first_name, salary
+from t_employees
+where salary = 11000;
+```
+
+> 与 Java 中（==）不同的是，mysql 中使用 = 进行等值判断
+
+##### 逻辑判断（or、and、not）
+
+```sql
+# 查询薪资薪资是 11000 并且提成是 0.30 的员工信息（编号、姓名、薪资）
+select employee_id, first_name, salary
+from t_employees
+where salary = 11000 and commission_pct = 0.30;
+```
+
+##### 不等值判断（>、<、>=、<=、!=、<>）
+
+```sql
+# 查询员工的薪资在 6000~10000 之间的员工信息（编号、姓名、薪资）
+select employee_id, first_name, salary
+from t_employees
+where salary >= 6000 and salary <= 10000;
+```
+
+##### 区间判断（between and）
+
+```sql
+# 查询员工的薪资在 6000~10000 之间的员工信息（编号、名字、薪资）
+select employee_id, first_name, salary
+from t_employees
+where salary between 6000 and 10000; # 闭合区间，包含区间边界的两个值
+```
+
+> 注意：在敬意判断语法中，小值在前，大值在后，反之，得不到正确结果
+
+##### NULL 值判断（is null、is not null）
+
+`列名 is null`
+
+`列名 is not null`
+
+```sql
+# 查询没有提成的员工信息（编号、名字、薪资、提成）
+select employee_id, first_name, salary, commission_pct
+from t_employees
+where commission_pct is null;
+```
+
+##### 枚举查询（in（值1，值2，值3））
+
+```sql
+# 查询部门编号为70、80、90的员工信息（编号、名字、薪资、部门编号）
+select employee_id, first_name, salary, department_id
+from t_employees
+where department_id in(70, 80, 90);
+```
+
+> 注意：in 的查询效率较低，可通过多条件拼接
+
+##### 模糊查询
+
+* 单个字符：`列名 like '张_' `
+* 任意长度字符：`列名 like '张%'`
+
+```sql
+# 查询名字以 L 开头的员工信息（编号、名字、薪资、部门编号）
+select employee_id, first_name, salary, department_id
+from t_employees
+where first_name like 'L%'
+
+# 查询名字以 L 开头且长度为 4 的员工信息（编号、名字、薪资、部门编号）
+select employee_id, first_name, salary, department_id
+from t_employees
+where first_name like 'L____'
+```
+
+> 注意：模糊查询只能和 like 关键字结合使用
+
+##### 分支结构查询
+
+```sql
+case
+	when 条件1 then 结果1
+	when 条件2 then 结果2
+	when 条件3 then 结果3
+	else 结果
+end
+```
+
+> 1. 类似于 java 中的 switch
+> 2. 通过使用 case end 进行条件判断，每条数据对应生成一个值
+
+```sql
+# 查询员工信息（编号、名字、薪资、薪资级别<对应条件表达式生成>）
+select employee_id, first_name, salary, 
+	case
+		when salary>=10000 then 'A'
+		when salary>=8000 and salary<10000 then 'B'
+		when salary>=6000 and salary<8000 then 'C'
+		when salary>=4000 and salary<6000 then 'D'
+		else 'E'
+	end as 'level'
+from t_employees;
+```
+
+#### 时间查询
+
+语法：`select [时间函数([参数列表])]()`
+
+> 执行时间函数查询，会自动生成一张虚表（一行一列）
+
+| 时间函数                 | 描述                                   |
+| ------------------------ | -------------------------------------- |
+| `sysdate()`              | 当前系统时间（日、月、年、时、分、秒） |
+| `curdate()`              | 获取当前日期                           |
+| `curtime()`              | 获取当前时间                           |
+| `week(date)`             | 获取当前日期为一年中的第几周           |
+| `year(date)`             | 获取日期的年份                         |
+| `hour(time)`             | 获取指定时间的小时值                   |
+| `minute(time)`           | 获取时间的分钟数                       |
+| `datediff(date1, date2)` | 获取 date1 和 date2 之间相隔的天数     |
+| `adddate(date, n)`       | 计算 `date` 加上 `n` 天以后的日期      |
+
+#### 字符串查询
+
+语法：`select 字符串函数([参数列表])`
+
+| 字符串函数                      | 说明                                                         |
+| ------------------------------- | ------------------------------------------------------------ |
+| `concat(str1, str2, str...)`    | 将多个字符串连接                                             |
+| `insert(str, pos, len, newstr)` | 将 `str` 中指定 `pos` 位置开始 `len` 长度的内容替换为 `newstr` |
+| `lower(str)`                    | 将指定字符串转换为小写                                       |
+| `upper(str)`                    | 将指定字符串转换为大写                                       |
+| `substring(str, num, len)`      | 将 `str` 字符串指定 `num` 位置开始截取 `len` 个内容          |
+
+##### 字符串应用
+
+```sql
+# 拼接内容
+select concat('My', 'S', 'QL');
+# 字符串替换，注意：字符串下标从零开始
+select insert('这是一个数据库', 3, 2, 'MySQL'); 
+# 指定内容转换为小写
+select lower('MYSQL');
+# 指定内容转换为大写
+select upper('mysql');
+```
+
+#### 聚合函数
+
+语法：`select 聚合函数(列名) from 表名;`
+
+| 聚合函数  | 说明                     |
+| --------- | ------------------------ |
+| `sum()`   | 求所有行中单列结果的总和 |
+| `avg()`   | 平均值                   |
+| `max()`   | 最大值                   |
+| `min()`   | 最小值                   |
+| `count()` | 求总行数                 |
+
+> 聚合函数
+>
+> 1. 对多条数据的单列进行统计，返回统计后的一行结果
+> 2. 会自动忽略 null 值，不进行统计
+
+#### 分组查询
+
+语法：`select 列名 from 表名 where 条件 group by 分组依据（列）`
+
+| 关键字   | 说明                            |
+| -------- | ------------------------------- |
+| group by | 分组依据，必须在 where 之后生效 |
+
+##### 查询各部门人数的总和
+
+```sql
+# 思路
+# 1. 按照部门编号进行分组（分组依据是 employee_id)
+# 2. 再针对各部门的人数进行统计（count）
+select department_id, count(employee_id)
+from t_employees
+group by department_id;
+```
+
+##### 查询各部门的总人数
+
+```sql
+# 思路
+# 1. 按照部门编号进行分组（分组依据是 employee_id)
+# 2. 再针对各部门进行平均工资统计（avg）
+select department_id, count(salary)
+from t_employees
+group by department_id;
+```
+
+##### 查询各个部门、各个岗位的人数
+
+```sql
+# 思路
+# 1. 按照部门编号进行分组（分组依据是 employee_id)
+# 2. 按照岗位名称进行分组（分组依据是 job_id）
+# 3. 针对每个部门中的各个岗位进行人数统计（count）
+select department_id, job_id, count(employee_id)
+from t_employees
+group by department_id, job_id
+```
+
+##### 常见问题
+
+```sql
+# 查询各个部门 id、总人数、first_name
+select department_id, count(*), first_name
+from t_employees
+group by department_id;
+# 注意：执行上面这一句会出现 error
+```
+
+> 分组查询中，`select` 显示的列只能是分组依据列，或者聚合函数列，不能出现其它列
+
+#### 分组过滤查询
+
+语法：`select 列名 from 表名 where 条件 group by 分组列 having 过滤规则`
+
+| 关键字          | 说明                               |
+| --------------- | ---------------------------------- |
+| having 过滤规则 | 过滤规则定义对分组后的数据进行过滤 |
+
+##### 统计部门的最高工资
+
+```sql
+# 统计 60、70、90 号部门的最高工资
+# 1. 确定分组依据（department_id）
+# 2. 对分组后的数据，过滤出部门号是 60、70、90 的部门
+# 3. 使用 max 函数
+select department_id, max(salary)
+from t_employees
+group by department_id
+having departmennt_id in (60, 70, 90);
+```
+
+#### 限定查询
+
+语法：`select 列名 from 表名 limit 起始行，查询行数`
+
+| 关键字                          | 说明                           |
+| ------------------------------- | ------------------------------ |
+| `limit offset_start, row_count` | 限定查询结果的起始行数和总行数 |
+
+> 注意：起始行从 0 开始，代表了第 1 行，第 2 个参数代表的是从指定行开始查询几行
+
+##### 查询前 5 行记录
+
+```sql
+select * from t_employees limit 0, 5;
+```
+
+##### 查询范围记录
+
+```sql
+# 表中从第 4 行开始，查询 10 行
+select * from t_employees limit 3, 10;
+```
+
+##### limit 典型应用
+
+分页查询：一页显示 10 条，一共查询 3 页
+
+```sql
+# 思路：第 1 页从 0 开始，显示 10 条
+select * from limit 0, 10;
+
+# 第 2 页是从 10 开始，显示 10 条
+select * from limit 10, 10;
+
+# 第 3 页是从 20 开始，显示 10 条
+select * from limit 20, 10;
+```
+
+> 在分页应用场景中，起始行是变化的，但是一页显示的数据是不变的
+
+#### 查询总结
+
+##### sql 语句编写顺序
+
+`select 列名 from 表名 where 条件 group by 分组 having 过滤条件 order by 排序列（asc|desc） limit 起始行，总行数；`
+
+##### sql 语句执行顺序
+
+```sql
+1. from：指定数据来源表
+2. where：对查询数据做第一次过滤
+3. group by：分组
+4. having：对分组后的数据第二次过滤
+5. select：查询各字段的值
+6. order by：排序
+7. limit：限定查询结果
+```
+
+#### 子查询（作为条件判断）
+
+`select 列名  from 表名 where 条件（子查询结果）`
+
+##### 查询工资大于 Bruce 的员工
+
+```sql
+# 1. 先查询到 Bruce 的工资，一行一列
+select salary from t_employees where first_name = 'Bruce'; # 查询结果是 6000
+
+# 2. 查询工资大于 Bruce 的员工信息
+select * from t_employees where salary > 6000;
+
+# 3. 将 1、2 句整合为一句
+select * from t_employees where salary > (select salary from t_employees where first_name = 'Bruce');
+```
+
+> 注意：将子查询 “一行一列” 的结果作为第二次查询的条件
+
+#### 子查询（作为枚举查询条件）
+
+`select 列名 from 表名 where 列名 in(子查询结果);`
+
+##### 查询与名为 king 同一部门的员工信息
+
+```sql
+# 1. 先查询 King 所在的部门编号(多行单列)
+select department_id
+from t_employees
+where first_name = 'King'; # 部门编号：80，90
+
+# 2. 再查询 80、90 号部门的员工信息
+select * from t_employees
+where department_id in(80, 90);
+
+# 3. 合并
+select * from t_employees
+where department_id in(
+  select department_id
+  from t_employees
+  where first_name = 'King'
+);
+```
+
+##### 工资高于 60 部门所有人的信息
+
+```sql
+# 1. 查询 60 部门所有人的工资（多行多列）
+select salary from t_employees
+where department_id = 60;
+
+# 2. 查询高于 60 部门所有人的工资的员工信息（高于所有）
+select * from t_employees
+where salary > all(select salary from t_employees where depaprtment_id=60);
+
+# 查询高于 60 部门所有人的工资的员工信息（高于部分）
+select * from t_employees
+where salary > any(select salary from t_employees where depaprtment_id=60);
+```
+
+> 注意：当子查询结果集形成为多行单列时可以使用 any 或 all 关键字
+
+#### 子查询（作为一张表）
+
+语法：`select 列名 from (子查询的结果集) where 条件;`
+
+##### 查询员工表中工资排名前 5 名的员工信息
+
+```sql
+# 1. 先对所有员工的薪资进行排序（排序后形成临时表）
+select employee_id, first_name, salary
+from t_employees
+order by salary desc;
+
+# 2. 再查临时表中前 5 行的员工信息
+select employee_id, first_name, salary
+from 临时表
+limit 0, 5;
+
+# 3. 合并
+select employee_id, first_name, salary
+from 
+(
+  select employee_id, first_name, salary
+  from t_employees
+  order by salary desc
+) as temp
+limit 0, 5;
+```
+
+> 注意：
+>
+> 1. 将子查询 “多行多列” 的结果作为外部查询的第一张表，做第二次查询
+> 2. 子查询作为临时表，为其赋予一个临时表名
+
+#### 合并查询（了解）
+
+```sql
+select * from 表名1 union select * from 表名2;
+select * from 表象1 union all select * from 表名2;
+```
+
+##### 合并两张表的结果（去除重复记录）
+
+```sql
+select * from t1 union select * fromm t2;
+```
+
+> 注意：
+>
+> 1. 合并结果的两张表，列数必须相同，列的数据类型可以不同
+> 2. 使用 union 合并结果集，会去除掉两张表中的重复数据
+
+##### 合并两张表的结果（保留重复记录）
+
+```sql
+select * from t1 union all select * fromm t2;
+```
+
+#### 表连接查询
+
+语法：`select 列名 from 表1 连接方式 表2 on 连接条件`
+
+##### 内链接查询
+
+```sql
+# 1. 查询所有有部门的员工信息（sql标准做法）
+select * from t_employees inner_join t_jobs on t_employees.job_id = t_jobs.job_id;
+
+# 2. 查询所有有部门的员工信息（mysql不标准做法）
+select * from t_employees, t_jobs where t_employees.job_id = t_jobs.job_id;
+```
+
+> 1. 在 Mysql 中，第 2 种做法也可以作为内连接查询，但是不符合 sql 标准
+> 2. 第一种属于 sql 标准，在其它关系型数据库中通用
+
+##### 三表连接查询
+
+```sql
+# 查询所有员工号、名字、部门名称、部门所在国家 ID
+select * from t_employees e
+inner join t_employees d
+on e.employee_id = d.employee_id
+inner join t_location l
+on d.location_id = t.location_id;
+```
+
+##### 左外连接（left join）
+
+```sql
+# 查询所有员工信息，以及对应的部门名称（没有部门的员工，也在查询结果中，部门名称以 null 填充）
+select e.employee_id, e.first_name, e.salary, d.department_name from t_employees e
+left join t_departments d
+on e.department_id = d.department_id;
+```
+
+>注意：左外连接，是以左表为主，今次向右匹配，匹配到，返回结果；匹配不到，则返回 null 值填充
+
+##### 右外连接（right join）
+
+```sql
+查询所有部门信息，以及此部门中所有员工信息（没有员工的部门，也在查询结果中，员工信息以 null 填充）
+select e.employee_id, e.first_name, e.salary, d.department_name from t_employees e
+right join t_departments d
+on e.department_id = d.department_id;
+```
+
+> 注意：右外连接，是以右表为主，今次向左匹配，匹配到，返回结果；匹配不到，则返回 null 值填充
+
+### DML 操作【重点】
+
+#### 新增（insert）
+
+语法：`insert into 表名(列1, 列2, 列3...) values(值1, 值2, 值3...);`
+
+##### 添加一条信息
+
+```sql
+insert into t_jobs(job_id, job_title, min_salary, max_salary)
+values('Java_Le', 'Java_Lecturer', 2500, 9000);
+```
+
+```sql
+# 添加一条员工信息
+insert into t_employees(employee_id, first_name, last_name, email, phone_number, hire_date, job_id, salary, commission_pct, man_ager_id, department_id)
+values('194', 'Samuel', 'McCain', 'SMCCAIN', '650.510.3876', '1998-07-01', 'SH_CLERK', '3200', NULL, '123', '50');
+```
+
+> 注意：表名后的列名和 values 里的值要一一对应（个数、顺序、类型）
+
+#### 修改（update）
+
+语法：`update 表名 set 列名1=新值1, 列名2=新值2, ... where 条件;`
+
+##### 修改一条信息
+
+```sql
+update t_employees set salary = 25000 where employee_id = '100';
+
+update t_employees set job_id = 'st_man', salary = 3500 where employee_id = '135';
+```
+
+> 注意：set 后多个 列名=值，绝大多数情况下都要加 where 条件，指定修改，否则为整表更新
+
+#### 删除（Delete）
+
+语法：`delete from 表名 where 条件;`
+
+```sql
+delete from t_employees where employee_id = '135';
+
+delete from t_employees where first_name = 'Peter' and last_name = 'Hail';
+```
+
+> 注意：删除时，如若不加 where 条件，删除的则是整张表的数据
+
+#### 清空整表数据（truncate）
+
+语法：`truncate table 表名;`
+
+##### 清空整张表
+
+```sql
+truncate table t_countries;
+```
+
+> 注意：与 delete 不加 where 删除整表数据不同，truncate 是把表销毁，再按照原表的格式创建一张新表
+
+### 数据表操作
+
+#### 数据类型
+
+`MySQL` 支持多种类型，大致可以分为三类：数值、日期/时间、字符串（字符）类型，对于我们约束数据的类型有很大的帮助。
+
+##### 数值类型
+
+| 类型         | 大小                            | 范围（有符号）            | 范围（无符号）            | 用途           |
+| ------------ | ------------------------------- | ------------------------- | ------------------------- | -------------- |
+| int          | 4字节                           | $-2^{31}$~$2^{31}-1$      | 0~$2^{32}-1$              | 大整数值       |
+| double       | 8字节                           | (-1.797E+308,-2.22E-308)  | (0,2.22E-308,1.797E+308)  | 双精度浮点数值 |
+| double(m, d) | 8字节，m表示长度，d表示小数位数 | 同上，受m和d的约束        | 同上，受m和d的约束        | 双精度浮点数值 |
+| decimal(m,d) |                                 | 依赖于m和d的值，m最大值65 | 依赖于m和d的值，m最大值65 | 小数数值       |
+
+##### 日期类型
+
+| 类型      | 大小 | 范围                                                         | 格式                 | 用途                   |
+| --------- | ---- | ------------------------------------------------------------ | -------------------- | ---------------------- |
+| date      | 3    | 1000-01-01/9999-12-31                                        | YYYY-MM-DD           | 日期值                 |
+| time      | 3    | '-838:59:59'/'838:59:59'                                     | HH:MM:SS             | 时间值或持续时间       |
+| year      | 1    | 1901/2155                                                    | YYYY                 | 年份值                 |
+| datetime  | 8    | 1000-01-01 00:00:00/9999-12-31 23:59:59                      | YYYY-MM-DD HH:MM:SS  | 混合日期和时间值       |
+| timestamp | 4    | 1970-01-01 00:00:00/2038 结束时间是第2147483647秒（北京时间）格林尼治时间2038年1月19日凌晨03:14:07 | YYYYMM<br />DDHHMMSS | 混合日期、时间、时间戮 |
+
+##### 字符串类型
+
+| 类型    | 大小        | 用途                   |
+| ------- | ----------- | ---------------------- |
+| char    | 0~255字符   | 定长字符串             |
+| varchar | 0~65535字节 | 变长字符串             |
+| blob    | 0~65535字节 | 二进制形式的长文本数据 |
+| text    | 0~65535字节 | 长文本数据             |
+
+> 注意：
+>
+> 1. char 和 varchar 类型类似，但它们保存和检索的方式不同，它们的最大长度和是否尾部空格被保留等方面也不同，在存储和检索过程中不进行大小写转换
+> 2. blob 是一个二进制大对象，可以容纳可变数量的数据，有 4 种 blob 类型：tinyblob，blob，mediumblob 和 longblob，它们只是可容纳值的最大长度不同
+
+#### 数据表创建（create）
+
+```sql
+create table 表名 (
+	列名 数据类型 [约束],
+	列名 数据类型 [约束],
+	.......
+	列名 数据类型 [约束]   # 最后一列的末尾不加逗号
+) [charset=utf8]  		# 可根据需要指定表的字符集编码
+```
+
+##### 创建表
+
+| 列名         | 数据类型    | 说明     |
+| ------------ | ----------- | -------- |
+| subjectId    | int         | 课程编号 |
+| subjectName  | varchar(20) | 课程名称 |
+| subjectHours | int         | 课程时长 |
+
+```sql
+create table `subject` (
+	subjectId int,
+  subjectName varchar(20),
+  subjectHours int
+) charset=utf8;
+# 注意：subject 是关键字，如果想规避关键字，使用 tab 上面、1 左面的键 '`' 将字符包裹即可
+
+insert into subject(subjectId, subjectName, subjectHours) values(1, 'Java', 40);
+insert into subject(subjectId, subjectName, subjectHours) values(2, 'MySQL', 30);
+insert into subject(subjectId, subjectName, subjectHours) values(3, 'JavaScript', 20);
+```
+
+####  修改表（alter）
+
+语法：`alter table 表名 操作`
+
+##### 向现有表中添加列
+
+```sql
+alter table `subject` add gradeId int;
+```
+
+##### 修改表中的列
+
+```sql
+alter table `subject` modify subjectName varchar(10);
+```
+
+> 注意：修改表中的某列时，也要写全列的名字，数据类型，约束
+
+##### 删除表中的列
+
+```sql
+alter table `subject` drop gradeId;
+```
+
+> 注意：删除列时，每次只能删除一列
+
+##### 修改列名
+
+```sql
+alter table `subject` change subjectHours classHours int;
+```
+
+#####  修改表名
+
+```sql
+alter table `subject` rename sub;
+```
+
+#### 删除表
+
+语法：`drop table 表名`
+
+```sql
+drop table `subject`;
+```
+
+### 约束
+
+* 问题：在往已创建的表中新增数据时，可不可以新增两行列值相同的数据？
+* 如果可行，会有什么弊端？
+
+#### 实体完整性约束
+
+表中的一行数据代表一行实体（`entity`），实体完整性的作用即是标识每一行数据不重复、实体唯一
+
+##### 主键约束
+
+`primary key`：唯一，标识表中的一行数据，此列的值不可重复，且不能为 `null`
+
+```sql
+# 为表中适用主键的列添加主键约束
+create table `subject` (
+	subjectId int primary key, # 标识每一个课程编号唯一，且不能为null
+  subjectName varchar(20),
+  subjectHours int
+) charset=utf8;
+
+insert into subject(subjectId, subjectName, subjectHours) values(1, 'Java', 40);
+insert into subject(subjectId, subjectName, subjectHours) values(1, 'Java', 40); # error 主键 1 已经存在
+```
+
+##### 唯一约束
+
+`unique`，唯一，标识表中的一行数据，不可以重复，可以为 `null`
+
+```sql
+# 为表中列值不允许重复的列添加唯一约束
+create table `subject` (
+	subjectId int primary key,
+  subjectName varchar(20) unique, # 课程名称唯一
+  subjectHours int
+) charset=utf8;
+
+insert into subject(subjectId, subjectName, subjectHours) values(1, 'Java', 40);
+insert into subject(subjectId, subjectName, subjectHours) values(2, 'Java', 40); # error 课程名称已存在
+```
+
+##### 自动增长列
+
+`auto_increment`：自动增长，给主键数值列添加自动增长，从 1 开始，每次加 1，**不能单独使用，和主键配合**
+
+```sql
+# 为表中主键列添加自动增长，避免忘记 ID 主键序号
+create table `subject` (
+	subjectId int primary key auto_increment, # 课程编号主键自动增长，会从 1 开始根据添加数据的顺序依次加 1
+  subjectName varchar(20) unique, 
+  subjectHours int
+) charset=utf8;
+
+insert into subject(subjectName, subjectHours) values('Java', 40);
+insert into subject(subjectName, subjectHours) values('JavaScript', 40); 
+```
+
+#### 域完整性约束
+
+用来限制列的单元格的数据正确性
+
+##### 非空约束
+
+`not null`：非空，此列必须有值
+
+```sql
+# 课程名称虽然添加了唯一约束，但是有 null 值存在的可能，要避免课程名称为 null
+create table `subject` (
+	subjectId int primary key auto_increment, # 课程编号主键自动增长，会从 1 开始根据添加数据的顺序依次加 1
+  subjectName varchar(20) unique not null, 
+  subjectHours int
+) charset=utf8;
+
+insert into subject(subjectName, subjectHours) values(null, 40); # error，课程名称约束了非空
+```
+
+##### 默认值约束
+
+`default值`：为列赋予默认值，当新增数据不指定值时，书写 default，以指定的默认值进行填充
+
+```sql
+# 当存储课程信息时，如果课程时长没有指定，则以默认课时 20 填充
+create table `subject` (
+	subjectId int primary key auto_increment, # 课程编号主键自动增长，会从 1 开始根据添加数据的顺序依次加 1
+  subjectName varchar(20) unique, 
+  subjectHours int default 20
+) charset=utf8;
+
+insert into subject(subjectName, subjectHours) values('Java', default); # 课程时长默认以 20 填充
+```
+
+##### 引用完整性约束
+
+* 语法：`constraint 引用名 foreign key(列名) references 被引用表名(列名)`
+* 详解：`foreign key` 引用外部表的某个列的值，新增数据时，约束此列的值必须是引用表中存在的值
+
+```sql
+# 创建专业表
+create table speciality (
+	id int primary key auto_increment,
+  specialName varchar(20) unique not null
+) charset=utf8;
+
+# 创建课程表（课程表的 specialId 引用专业表的 id）
+create table `subject` (
+	subjectId int primary key auto_increment, # 课程编号主键自动增长，会从 1 开始根据添加数据的顺序依次加 1
+  subjectName varchar(20) unique, 
+  subjectHours int default 20,
+  specialId int not null
+  constraint fk_subject_specialID foreign key(specialId) references speciality(id)  # 引用专业表里的 id 作为外键，新增课程信息时，约束课程所属的专业
+) charset=utf8;
+
+# 专业表新增数据
+insert into speciality(specialName) values('Java');
+insert into speciality(specialName) values('C#');
+
+# 课程信息表添加数据
+insert into subject(subjectName, subjectHours, specialId) values('Java', 30, 1); # 专业 id 为 1，引用的是专业表的 Java
+insert into subject(subjectName, subjectHours, specialId) values('C#MVC', 10， 2); # 专业 id 为 2，引用的是专业表的 C#
+```
+
+#### 约束创建整合
+
+##### 创建表
+
+| 列名      | 数据类型    | 约束           | 说明     |
+| --------- | ----------- | -------------- | -------- |
+| gradeId   | int         | 主键，自动增长 | 班级编号 |
+| gradeName | varchar(20) | 唯一、非空     | 班级名称 |
+
+```sql
+create table grade (
+	gradeId int primary key auto_increment,
+  gradeName varchar(20) unique not null
+) charset=utf8;
+```
+
+| 列名         | 数据类型    | 约束                           | 说明     |
+| ------------ | ----------- | ------------------------------ | -------- |
+| student_id   | varchar(20) | 主键                           | 学号     |
+| student_name | varchar(50) | 非空                           | 姓名     |
+| sex          | char(1)     | 默认填充男                     | 性别     |
+| borndate     | date        | 非空                           | 生日     |
+| phone        | varchar(11) | 无                             | 电话     |
+| gradeId      | int         | 非空，外键约束，引用班级表的id | 班级编号 |
+
+```sql
+create table student (
+	student_id varchar(20) primary key,
+  student_name varchar(50) not null,
+  sex char(1) default '男',
+  borndate date not null,
+  phone varchar(11),
+  gradeId int,
+  constraint fk_student_gradeId foreign key(gradeId) references grade(gradeId)
+) charset=utf8;
+```
+
+> 1. 创建关系表时，一定要先创建主表，再创建从表
+> 2. 删除关系表时，先删除从表，再删除主表
+
+### 事务【重点】
+
+#### 模拟转账
+
+生活当中转账是转账方账户扣钱，几账方账户加钱，可以使用数据库来模拟现实转账
+
+##### 模拟转账
+
+```sql
+# A 账户转账给 B 账户 1000 元
+# A 账户减 1000 元
+update account set money = money - 1000 where id = 1;
+
+# B 账户加 1000 元
+update account set money = money + 1000 where id = 2;
+```
+
+> 以上代码就完成了两个账户之间的转账操作
+
+##### 模拟转账错误
+
+```sql
+# A 账户转账给 B 账户 1000 元
+# A 账户减 1000 元
+update account set money = money - 1000 where id = 1;
+
+# 断电、异常、出错...
+
+# B 账户加 1000 元
+update account set money = money + 1000 where id = 2;
+```
+
+> 上述代码在减操作之后的过程中出现了异常或者加钱语句出错，会发现，减钱仍然是成功了，而加钱失败了
+>
+> 注意：每条 sql 语句都是一个独立的操作，一个操作执行完对数据库是永久性的影响
+
+#### 事务的概念
+
+事务是一个原子操作，是一个最小执行单元，可以由一个或多个 sql 语句组成，在同一个事务当中，所有的 sql 语句都成功执行时，整个事务成功，有一条 sql 语句执行失败，整个事务都执行失败
+
+#### 事务的边界
+
+* 开始
+  * 连接到数据库，执行一条 `DML` 语句。上一个事务结束后，又输入了一条 `DML` 语句，即事务的开始
+* 结束
+  * 提交
+    * 显示提交：`commit`
+    * 隐式提交：一条创建、删除的语句，正常退出（客户端退出连接）
+  * 回滚
+    * 显式回滚：`rollback`
+    * 隐式回滚：非正常退出（断电，宕机），执行了创建、删除的语句，但是失败了，会为这个无效的语句执行回滚
+
+#### 事务的原理
+
+数据库会为每一个客户都维护一个空间独立的缓存区（回滚段），一个事务中所有的增删改语句的执行结果都会缓存在回滚段里，只有当事务中所有 `sql` 语句均正常结束（`commit`)，才会将回滚段中的数据同步到数据库。否则无论因为哪种原因失败，整个事务都将回滚（`rollback`）
+
+#### 事务的特性
+
+* `Atomicity`（原子性）
+  * 表示一个事务内所有的操作是一个整体，要么全部成功，要么全部失败
+* `Consistency`（一致性）
+  * 表示一个事务内有一个操作失败时，所有更改过的数据必须回滚到更改前的状态
+* `Isolation`（隔离性）
+  * 事务查看数据操作时数据所处的状态，要么是另一并发事务修改它之前的状态，要么是另一事务修改它之后的状态，事务不会查看中间状态的数据
+* `Durability`（持久性）
+  * 持久性事务完成之后，它对于系统的影响是永久性的
+
+#### 事务应用
+
+应用环境：基于增删改语句的操作结果（均返回操作后受影响的行数），可通过程序逻辑手动控制事务提交或回滚
+
+##### 事务完成转账
+
+```sql
+# A 账户给 B 账户转账
+# 1. 开启事务
+start transaction; # setAutoCommit=0; 禁止自动提交
+# 2. 事务内数据操作语句
+update account set money = money - 1000 where id = 1;
+update account set money = money + 1000 where id = 2;
+# 3. 事务内语句都成功了，执行 commit
+commit;
+# 4. 事务内语句如果出现错误，执行 rollback
+rollback;
+```
+
+> 注意：开启事务后，执行的语句均属于当前事务，成功再执行 commit，失败要进行 rollback
+
+### 权限管理
+
+#### 创建用户
+
+语法：`create user 用户名 identified by 密码;`
+
+```sql
+create user `zhangsan` identified by '123';
+```
+
+#### 授权
+
+语法：`grant all on 数据库.表 to 用户名;`
+
+```sql
+grant all on companyDB.* to `zhangsan`;
+```
+
+#### 撤销授权
+
+语法：`revoke all on 数据库.表 from 用户名;`
+
+```sql
+revoke all on companyDB.* from `zhangsan`;
+```
+
+> 注意：撤销权限后，账户要重新连接客户端才会生效
+
+#### 删除用户
+
+语法：`drop user 用户名;`
+
+```sql
+drop user `zhangsan`;
+```
+
+### 视图
+
+#### 概念
+
+视图，虚拟表，从一个表或多个表中查询出来的表，作用和真实表一样，包含一系列带有行和列的数据。视图中，用户可以使用 `select` 语句查询数据，也可以使用 `insert, update, delete` 修改记录，视图可以使用户操作方便，并保障数据库系统安全。
+
+#### 视图特点
+
+* 优点
+  * 简单化，数据所见即所得
+  * 安全性，用户只能查询或修改他们所能见得到的数据
+  * 逻辑独立性，可以屏蔽真实表结构变化带来的影响
+* 缺点
+  * 性能相对较差，简单的查询也会变得稍显复杂
+  * 修改不方便，特别是复杂的聚合视图基本无法修改
+
+#### 视图的创建
+
+语法：`create view 视图名 as 查询数据源表语句;`
+
+##### 创建视图
+
+```sql
+# 创建 t_empInfo 的视图，其视图从 t_employees 表中查询到员工编号、员工姓名、员工邮箱、工资
+create view t_empInfo
+as
+select employee_id, first_name, last_name, email, salary from t_employees;
+```
+
+##### 使用视图
+
+```sql
+# 查询 t_empInfo 视图中编号为 101 的员工信息
+select * from t_empInfo where employee_id = '101';
+```
+
+#### 视图的修改
+
+* 方式一：`create or replace view 视图名 as 查询语句`
+* 方式二：`alter view 视图名 as 查询语句`
+
+```sql
+# 方式 1：如果视图存在则进行修改，反之，进行创建
+create or replace view t_empInfo
+as
+select employee_id, first_name, last_name, email, salary, department_id from t_employees;
+
+# 方式 2：直接对已存在的社稷进行修改
+alter view t_empInfo
+as
+select employee_id, first_name, last_name, email, salary, department_id from t_employees;
+```
+
+#### 视图的删除
+
+语法：`drop view 视图名`
+
+```sql
+drop view t_empInfo;
+```
+
+> 注意：删除视图不会影响原表
+
+#### 视图注意事项
+
+* 视图不会独立存储数据，万年青发生改变，视图也发生改变，没有优化任何查询性能
+* 如果视图包含以下结构中的一种，则视图不可更新
+  * 聚合函数的结果
+  * `dintinct` 去重后的结果
+  * `group by` 分组后的结果
+  * `having` 筛选过后的结果
+  * `union、union all` 联合后的结果
+
+### SQL 语言分类
+
+* 数据查询语言 `DQL（Data Query Language）：select、where、order by、group by、having`
+* 数据定义语言 `DDL（Data Definition Language）：create、alter、drop`
+* 数据操作语言 `DML（Data Mainipulation Language）：insert、update、delete`
+* 事务处理语言 `TPL（Transaction Process Language）：commit、rollback`
+* 数据控制语言 `DCL（Data Control Language）：grant、revoke`
+
+### 综合练习
+
+某商城数据库表结构如下：
+
+```sql
+# 创建用户表
+create table user(
+	userId int primary key auto_increment,
+  username varchar(20) not null,
+  password varchar(18) not null,
+  address varchar(100),
+  phone varchar(11)
+);
+
+# 创建分类表
+create table category(
+	cid varchar(32) primary key,
+  cname varchar(100) not null				# 分类名称
+);
+
+# 商品表
+create table `products`(
+	`pid` varchar(32) primary key,
+  `name` varchar(40),
+  `price` double(7,2),
+  category_id varchar(32),
+  constraint fk_products_category_id foreign key(category_id) references category(cid)
+);
+
+# 订单表
+create table `orders`(
+	`oid` varchar(32) primary key,
+  `totalprice` double(12,2),
+  `userId` int,
+  constraint fk_orders_userId foreign key(userId) references user(userId)
+);
+
+# 订单项表
+create table orderitem(
+	oid varchar(32),	# 订单 id
+  pid varchar(32),	# 商品 id
+  num int,					# 购买商品数量
+  primary key(oid, pid), 		# 主键
+  constraint fk_orderitem_oid foreign key(oid) references orders(oid),
+  constraint fk_orderitem_pid foreign key(pid) references products(pid)
+);
+
+# 初始化数据
+
+# 用户表添加数据
+insert into user(username, password, address, phone) values('张三', '123', '北京昌平沙河', '13812345678');
+insert into user(username, password, address, phone) values('王五', '5678', '北京海滨', '13812345141');
+insert into user(username, password, address, phone) values('赵六', '123', '北京朝阳', '13812348987');
+insert into user(username, password, address, phone) values('田七', '123', '北京大兴', '13812345687');
+
+# 商品表初始化值
+insert into products(pid, name, price, category_id) values('p001', '联想', 5000, 'c001');
+insert into products(pid, name, price, category_id) values('p002', '海尔', 3000, 'c001');
+insert into products(pid, name, price, category_id) values('p003', '雷神', 5000, 'c001');
+insert into products(pid, name, price, category_id) values('p004', 'JACK JONES', 800, 'c002');
+insert into products(pid, name, price, category_id) values('p005', '真维斯', 200, 'c002');
+insert into products(pid, name, price, category_id) values('p006', '花花公子', 440, 'c002');
+insert into products(pid, name, price, category_id) values('p007', '劲霸', 2000, 'c002');
+insert into products(pid, name, price, category_id) values('p008', '香奈儿', 800, 'c003');
+insert into products(pid, name, price, category_id) values('p009', '相宜本草', 200, 'c003');
+insert into products(pid, name, price, category_id) values('p010', '梅明子', 200, null);
+
+# 添加分类
+insert into category values('c001', '电器');
+insert into category values('c002', '服饰');
+insert into category values('c003', '化妆品');
+insert into category values('c004', '书籍');
+
+# 添加订单
+insert into orders values('o6100', 18000.50, 1);
+insert into orders values('o6101', 7200.35, 1);
+insert into orders values('o6102', 600.00, 2);
+insert into orders values('o6103', 13000.26, 4);
+
+# 订单详情表
+insert into orderitem values('o6100', 'p001', 1),('o6100', 'p002', 1),('o6101', 'p003', 1);
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 第二十三章 JDBC
 
 `JDBC(Java Database Conectivity)` ，`Java` 连接数据库，可以使用 `Java` 语言连接数据库完成 `CRUD` 的操作。
 
@@ -5187,7 +6573,7 @@ public class DemoDIYSinLine {
 
 `Java` 中定义了访问数据库的接口，可以为多种关系型数据库提供统一的访问方式，由数据库厂商提供驱动实现类（`Driver` 数据库驱动）
 
-![](index_files/0b65ea09-ba22-4147-b0eb-32809bec90cc.png)
+[![6ma7cR.md.png](https://s3.ax1x.com/2021/03/05/6ma7cR.md.png)](https://imgtu.com/i/6ma7cR)
 
 ### 常用类
 
@@ -6014,6 +7400,10 @@ public class DataSourceUtil {
 * `QueryRunner`：执行 `sql` 语句的类
   * 增、删、改：`update()`
   * 查询：`query()`
+
+> 注意：
+>
+> 1. 使用 QueryRunner 时写的 sql 中，查找出来的列的名称要和泛型中传递实体的属性名称一致，例如：实体中属性名称是：userName，在查找的 sql 中，必须有这个列名才行
 
 #### 使用步骤
 
