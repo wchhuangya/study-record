@@ -6547,23 +6547,46 @@ insert into orders values('o6103', 13000.26, 4);
 insert into orderitem values('o6100', 'p001', 1),('o6100', 'p002', 1),('o6101', 'p003', 1);
 ```
 
+#### 综合练习1 - 【多表查询】
 
+##### 查询所有用户的订单
 
+```sql
+select o.oid, o.totalprice, u.userId, u.userName, u.phone
+from orders o inner join user u on o.userId = u.userId;
+```
 
+##### 查询用户 id 为 1 的所有订单详情
 
+```sql
+select o.oid, o.totalprice, u.userId, u.username, u.phone, oi,pid
+from orders o inner join user u on o.userId = u.userId
+inner join orderitem oi on o.oid = oi.oid
+where u.userid = 1;
+```
 
+#### 综合练习2 - 【子查询】
 
+##### 查看用户为张三的订单
 
+```sql
+select * from orders where userId = (select userid from user where username='张三');
+```
 
+##### 查询出订单的价格大于 800 的所有用户信息
 
+```sql
+select * from user where userId in (select distinct userId from where totalprice > 800);
+```
 
+#### 综合练习3 - 【分页查询】
 
+##### 查询所有订单信息，每页显示 5 条数据
 
-
-
-
-
-
+```sql
+# 查询第一页
+select * from orders limit 0,5;
+```
 
 ## 第二十三章 JDBC
 
