@@ -2889,7 +2889,7 @@ public class Course19 {
 
 `MVCPatternDemo` 是一个演示类，会使用 `StudentController` 类来演示 `MVC` 模式的使用
 
-![](index_files/6c301597-89af-4345-96f5-6428bbca26f0.png)
+[![6BBkYn.md.png](https://s3.ax1x.com/2021/03/15/6BBkYn.md.png)](https://imgtu.com/i/6BBkYn)
 
 ### 步骤一
 
@@ -3580,1606 +3580,9 @@ public class DemoRecursionTraverseFoldersAndDelFiles {
 }
 ```
 
-## 第二十章 GUI 编程
+* * 
 
-### 核心技术
-
-`Swing、AWT`
-
-### 不流行的原因
-
-* 界面不美观
-* 需要 `JRE` 环境
-
-### 为什么学习
-
-* 可以根据自己的需求，写一些实用的小工具
-* 工作的时候，在对原来的项目进行维护时可能会用到
-* 了解 `MVC` 架构，了解监听
-
-### AWT
-
-#### 介绍
-
-* `AWT-Abstract Window Tools`，抽象窗口工具集
-* 包含了很多的类和接口
-* 元素包括：窗口、按钮、文本框
-
-![](index_files/cf672ede-319f-4b3a-a093-976dba8194f7.png)
-
-#### 容器
-
-容器（`container`）是 `Component` 的子类，因此容器对象本身也是一个组件，具有组件的所有性质，可以调用 `Component` 类的所有方法。`Component` 类的常用方法如下：
-
-* `setLocation(int x, int y)` ：设置组件的位置
-* `setSize(int width, int height)` ：设置组件的大小
-* `setBounds(int x, int y, int width, int height)` ：同时设置组件的大小和位置
-* `setVisible(Boolean visible)` ：设置组件的可见性
-* `Component add(Component, comp)` ：向容器中添加其它组件（该组件可以是普通组件，也可以是容器）
-* `Component getComponentAt(int x, int y)` ：返回指定点的组件
-* `int getComponentCount()` ：返回该容器内组件的数量
-* `Component[] getComponents()` ：返回该容器内所有的组件
-
-**分类**
-
-* `Window` ：可独立存在的顶级窗口
-* `Panel` ：可作为容纳其它组件，但不能独立存在，必须被添加到其它容器中（如 `Window`、`Panel` 或 `Applet` 等）
-
-##### Frame
-
-是 `Window` 的子类，有以下的特点：
-
-* `Frame` 对象有标题，允许通过拖拉来改变窗口的位置、大小
-* 初始化时为不可见，可用 `setVisible(true)` 使其显示出来
-* 默认使用 `BorderLayout` 作为其布局管理器
-
-```java
-public static void main(String[] args) {
-    Frame frame = new Frame("第一个 Frame");
-    frame.setVisible(true);
-    frame.setSize(300, 300);
-    frame.setBackground(Color.LIGHT_GRAY);
-    frame.setLocation(300, 300);
-    frame.setResizable(false);
-}
-```
-
-**问题**
-
-上面代码可以生成一个窗口，但是点击关闭按钮没有任何作用，只能通过停止程序运行关闭窗口
-
-##### Panel
-
-`Penal` 存在的意义在于为其它组件提供空间，有以下的特点：
-
-* 可作为容器来盛装其它组件，为放置组件提供空间
-* 不能单独存在，必须放置到其它容器中
-* 默认使用 `FlowLayout` 作为其布局管理器
-
-```java
-public static void main(String[] args) {
-    Frame frame = new Frame("我的第一个窗口");
-
-    frame.setLayout(null);
-    frame.setBounds(100, 100, 300, 300);
-    frame.setBackground(Color.lightGray);
-
-    Panel panel = new Panel();
-
-    panel.setBounds(50, 50, 100, 100);
-    panel.setBackground(new Color(182, 13, 23));
-
-    frame.add(panel);
-    frame.setVisible(true);
-
-    frame.addWindowListener(new WindowAdapter() {
-
-        @Override
-        public void windowClosing(WindowEvent e) {
-            System.exit(0);
-        }
-    });
-}
-```
-
-> 上面的代码给关闭按钮添加了监听事件，所以解决了上节遗留的问题
-
-##### ScrollPane
-
-`ScrollPane` 是一个带滚动条的容器，也不能独立存在，必须被添加到其它容器中，有以下的特点：
-
-* 可作为容器来盛装其它组件，当组件占用空间过大时，`ScrollPane` 自动产生滚动条，当然也可以通过指定的构造器参数来指定默认具有滚动条
-* 不能单独存在，必须放置到其它容器中
-* 默认使用 `BorderLayout` 作为其布局管理器。`ScrollPane` 通常用于盛装其它容器，所以通常不允许改变 `ScrollPane` 的布局管理器
-
-```java
-public static void main(String[] args) {
-    Frame frame = new Frame("ScrollPane 容器练习");
-
-    ScrollPane scrollPane = new ScrollPane(ScrollPane.SCROLLBARS_ALWAYS);
-
-    TextField comp = new TextField(30);
-    comp.setBackground(Color.blue);
-    scrollPane.add(new Label("下面是一个输入框"), BorderLayout.EAST);
-    scrollPane.add(comp, BorderLayout.SOUTH);
-
-    frame.add(scrollPane);
-
-    frame.pack();
-    frame.setVisible(true);
-}
-```
-
-#### 布局管理器
-
-所有的 `AWT` 容器都有默认的布局管理器，如果没有为容器指定布局管理器，则该容器使用默认的布局管理器。为容器指定布局管理器的方法：
-
-`c.setLayout(new XxxLayout());`
-
-##### FlowLayout
-
-在 `FlowLayout` 布局管理器中，组件像水流一样向某方向流动（排列），遇到障碍（边界）就折回，重头开始排列。默认情况下，`FlowLayout` 从左到右今次排列所有组件，遇到边界就会折回下一行重新开始。
-
-```java
-public static void main(String[] args) {
-    Frame frame = new Frame("FlowLayout 容器练习");
-
-    frame.setLayout(new FlowLayout());
-    frame.setBounds(100, 100, 200, 300);
-
-    for (int i = 0; i < 10; i++) {
-        frame.add(new Button("按钮" + i));
-    }
-
-    frame.pack();
-    frame.setVisible(true);
-}
-```
-
-##### BorderLayout
-
-`BorderLayout` 将容器分为 `EAST、WEST、NORTH、SOUTH、CENTER` 五个区域，普通组件可以被放置在这 `5` 个区域中的任意一个中，注意点如下：
-
-* 当改变使用 `BorderLayout` 的容器大小时，`NORTH、SOUTH、CENTER` 区域水平调整，而 `EAST、WEST、CENTER` 区域垂直调整
-* 当向使用 `BorderLayout` 布局管理器的容器中添加组件时，需要指定要添加到哪个区域中，如果没有指定添加到哪个区域中，则默认添加到中间区域中
-* 如果向同一个区域添加多个组件时，后放入的组件会覆盖先放入的组件
-
-```java
-public static void main(String[] args) {
-    Frame frame = new Frame("BorderLayout 容器练习");
-
-    frame.setLayout(new BorderLayout());
-    frame.setBounds(100, 100, 100, 200);
-
-    frame.add(new Button("North"), BorderLayout.NORTH);
-    frame.add(new Button("South"), BorderLayout.SOUTH);
-    // 不指定区域，默认添加到中间区域
-    frame.add(new Button("Center"));
-    frame.add(new Button("West"), BorderLayout.WEST);
-    frame.add(new Button("East"), BorderLayout.EAST);
-
-    frame.pack();
-    frame.setVisible(true);
-}
-```
-
-##### GridLayout
-
-`GridLayout` 布局管理器将容器分割成纵横线分隔的风格，每个网格所占的区域大小相同。当向使用 `GridLayout` 布局管理器的容器中添加组件时，默认从左向右、从上到下依次添加到每个网格中。与 `FlowLayout` 不同的是，放置在 `GridLayout` 布局管理器中的各组件的大小由组件所处的区域来决定（**每个组件将自动占满整个区域**）
-
-```java
-public static void main(String[] args) {
-    Frame frame = new Frame("GridLayout 容器练习");
-
-    frame.setBounds(200, 200, 200, 300);
-    frame.add(new TextField(30), BorderLayout.NORTH);
-
-    Panel panel = new Panel();
-    panel.setLayout(new GridLayout(3, 5, 5, 5));
-    String[] bs = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "+", "-", "*", "/", "="};
-    for (int i = 0; i < bs.length; i++) {
-        panel.add(new Button(bs[i]));
-    }
-    frame.add(panel);
-
-    frame.pack();
-    frame.setVisible(true);
-}
-```
-
-##### GridBagLayout
-
-`GridBagLayout` 布局管理器中，一个组件可以跨越 1 个或多个网格，并可以设置各网格的大小互不相同，从而增加了布局的灵活性，当窗口的大小发生变化时，`GridBagLayout` 布局管理器也可以准确地控制窗口各部分的拉伸。
-
-使用步骤如下：
-
-1. 创建 `GridBagLayout` 布局管理器，并指定 `GUI` 容器使用该布局管理器
-  
-   ```java
-   GridBagLayout gbl = new GridBagLayout();
-   container.setLayout(gbl);
-   ```
-2. 创建 `GridBagConstraints`，并设置该对象的关联属性（用于设置受该对象控制的 `GUI` 组件的大小、跨越性等
-  
-   ```java
-   GridBagConstraints gbc = new GridBagConstraints();
-   gbc.gridx = 2; // 组件位于网格的横向索引
-   gbc.gridy = 1; // 组件位于网格的纵向索引
-   gbc.gridwidth = 2; // 组件横向跨越多少网格
-   gbc.gridheight = 1; // 组件纵向跨越多少网格
-   ```
-3. 调用 `GridBagConstraints` 对象的方法来建立 `GridBagConstraints` 对象和受控组件之间的关联
-  
-   ```java
-   gbc.setConstraints(c, gbc);
-   ```
-4. 添加组件
-  
-   ```java
-   container.add(c);
-   ```
-
-> `GridBagConstraints` 对象应该被重用，只需要不断改变它的属性就可以了
-
-```java
-public class WindowAndPanel {
-    private static Frame frame;
-    private static GridBagLayout gbl;
-    private static GridBagConstraints gbc;
-
-    public static void main(String[] args) {
-        frame = new Frame("GridLayout 容器练习");
-
-        gbl = new GridBagLayout();
-        frame.setLayout(gbl);
-        frame.setBounds(200, 200, 300, 300);
-        Button[] bs = new Button[10];
-
-        for (int i = 0; i < bs.length; i++) {
-            bs[i] = new Button("按钮" + i);
-        }
-
-        gbc = new GridBagConstraints();
-
-        // 所有组件都可以在横向、纵向上扩大
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1;
-        addButton(bs[0]);
-        addButton(bs[1]);
-        addButton(bs[2]);
-        // 将会成为横向最后一个组件
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        addButton(bs[3]);
-        // 将在横向上不会扩大
-        gbc.weightx = 0;
-        addButton(bs[4]);
-        // 将横跨两个网格
-        gbc.gridwidth = 2;
-        addButton(bs[5]);
-        // 将横跨一个网格
-        gbc.gridwidth = 1;
-        // 纵向将横跨两个网格
-        gbc.gridheight = 2;
-        // 将成为横向最后一个组件
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        addButton(bs[6]);
-        // 横向跨越一个网格，纵向跨越两个网格
-        gbc.gridwidth = 1;
-        gbc.gridheight = 2;
-        // 纵向扩大的权重是 1
-        gbc.weighty = 1;
-        addButton(bs[7]);
-        // 纵向不会扩大
-        gbc.weighty = 0;
-        // 成为横向最后一个
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        // 纵向上横跨一个网格
-        gbc.gridheight = 1;
-        addButton(bs[8]);
-        addButton(bs[9]);
-
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    private static void addButton(Button b) {
-        gbl.setConstraints(b, gbc);
-        frame.add(b);
-    }
-}
-```
-
-##### CardLayout
-
-`CardLayout` 布局管理器以时间而非空间来管理它里面的组件，它将加入容器的所有组件看成一叠卡片，每次只有最上面的那个 `Component` 才可见。常用方法：
-
-* `first(Container tgarget)` ：显示 `target` 容器中的第一张卡片
-* `last(Container tgarget)`：显示`target` 容器中的最后一张卡片
-* `previous(Container tgarget)`：显示`target` 容器中的前一张卡片
-* `next(Container tgarget)`：显示`target` 容器中的后一张卡片
-* `show(Container target, String name)` ：显示 `target` 容器中指定名字的卡片
-
-```java
-public class WindowAndPanel {
-    private Frame frame = new Frame("CardLayout 测试");
-    private String[] names = {"第一张", "第二张", "第三张", "第四张", "第五张"};
-    private Panel panel = new Panel();
-
-    public void init() {
-        CardLayout cardLayout = new CardLayout();
-        panel.setLayout(cardLayout);
-
-        for (int i = 0; i < names.length; i++) {
-            panel.add(names[i], new Button(names[i]));
-        }
-        Panel p = new Panel();
-        ActionListener listener = e -> {
-            switch (e.getActionCommand()) {
-                case "上一张":
-                    cardLayout.previous(panel);
-                    break;
-                case "下一张":
-                    cardLayout.next(panel);
-                    break;
-                case "最后一张":
-                    cardLayout.last(panel);
-                    break;
-                case "第三张":
-                    cardLayout.show(panel, "第三张");
-                    break;
-            }
-        };
-        // 控制显示上一张的按钮
-        Button previous = new Button("上一张");
-        previous.addActionListener(listener);
-        Button next = new Button("下一张");
-        next.addActionListener(listener);
-        Button last = new Button("最后一张");
-        last.addActionListener(listener);
-        Button third = new Button("第三张");
-        third.addActionListener(listener);
-        p.add(previous);
-        p.add(next);
-        p.add(last);
-        p.add(third);
-        frame.add(panel);
-        frame.add(p, BorderLayout.SOUTH);
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    public static void main(String[] args) {
-        new WindowAndPanel().init();
-    }
-}
-```
-
-##### 绝对定位
-
-绝对定位的步骤：
-
-1. 将 `container` 的布局管理器设置为 `null`
-2. 向容器中添加组件时，先调用 `setBounds()` 或 `setSize()` 方法来设置组件的大小、位置，或者直接创建 `GUI` 组件时通过构造参数指定组件的大小和位置，然后将组件添加到容器中
-
-```java
-public class WindowAndPanel {
-    private Frame frame = new Frame("绝对定位 测试");
-    private Button btn1 = new Button("第一个按钮");
-    private Button btn2 = new Button("第二个按钮");
-
-    public void init() {
-        // 设置 null 布局管理器
-        frame.setLayout(null);
-        // 下面强制设置每个按钮的大小和位置
-        btn1.setBounds(20, 30 , 90, 28);
-        frame.add(btn1);
-        btn2.setBounds(50, 45, 120, 35);
-        frame.add(btn2);
-        frame.setBounds(50, 50, 200, 100);
-        frame.setVisible(true);
-    }
-
-    public static void main(String[] args) {
-        new WindowAndPanel().init();
-    }
-}
-```
-
-##### BoxLayout
-
-`GridBagLayout` 布局管理器虽然功能强大，但它实在太复杂了，所以 `Swing` 引入了一个新的布局管理器：`BoxLayout`，它可以在垂直和水平两个方向上摆放 `GUI` 组件
-
-```java
-public class WindowAndPanel {
-    private Frame frame = new Frame("BoxLayout 测试一");
-
-    public void init() {
-        frame.setLayout(new BoxLayout(frame, BoxLayout.Y_AXIS));
-        frame.add(new Button("第一个按钮"));
-        frame.add(new Button("第二个按钮"));
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    public static void main(String[] args) {
-        new WindowAndPanel().init();
-    }
-}
-```
-
-`BoxLayout` 通常和 `Box` 容器结合使用，`Box` 是一个特殊的容器，它有点像 `Panel` 容器，但该容器默认使用 `BoxLayout` 布局管理器，`Box` 提供了两个静态方法来创建`Box` 对象：
-
-* `createHorizontalBox()` ：创建一个水平排列组件的 `Box` 容器
-* `createVerticalBox()` ：创建一个垂直排列的 `Box` 容器
-
-```java
-public class WindowAndPanel {
-    private Frame frame = new Frame("BoxLayout 测试一");
-
-    public void init() {
-        Box horizontalBox = Box.createHorizontalBox();
-        horizontalBox.add(new Button("水平按钮一"));
-        horizontalBox.add(new Button("水平按钮二"));
-        Box verticalBox = Box.createVerticalBox();
-        verticalBox.add(new Button("垂直按钮一"));
-        verticalBox.add(new Button("垂直按钮二"));
-        frame.add(horizontalBox, BorderLayout.NORTH);
-        frame.add(verticalBox);
-
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    public static void main(String[] args) {
-        new WindowAndPanel().init();
-    }
-}
-```
-
-`Box` 提供了五个静态方法来创建 `Glue`、`Strut` 和 `RigidArea`，用来控制组件在水平和垂直方向上的间距：
-
-* `createHorizontalGlue()` ：创建一个水平 `Glue`（可在两个方向同时拉伸的间距）
-* `createVerticalGlue()` ：创建一个垂直 `Glue`（可在两个方向同时拉伸的间距）
-* `createHorizontalStut(int width)` ：创建一条指定宽度的 `Strut`（可在垂直方向拉伸的间距）
-* `createVerticalStrut(int height)` ：创建一条指定高度的垂直 `Strut`（可在水平方向拉伸的间距）
-* `createRightArea(Dimension d)` ：创建指定宽度、高度的 `RigidArea`（不可拉伸的间距）
-
-```java
-public class WindowAndPanel {
-    private Frame frame = new Frame("BoxLayout 测试一");
-
-    public void init() {
-        Box horizontalBox = Box.createHorizontalBox();
-        Box verticalBox = Box.createVerticalBox();
-
-        horizontalBox.add(new Button("水平按钮一"));
-        horizontalBox.add(Box.createHorizontalGlue());
-        horizontalBox.add(new Button("水平按钮二"));
-        // 水平方向不可拉伸距离，其宽度为 10
-        horizontalBox.add(Box.createHorizontalStrut(10));
-        horizontalBox.add(new Button("水平按钮三"));
-
-        verticalBox.add(new Button("垂直按钮一"));
-        verticalBox.add(Box.createVerticalGlue());
-        verticalBox.add(new Button("垂直按钮二"));
-        // 垂直方向不可拉伸的距离，其高度为 10
-        verticalBox.add(Box.createVerticalStrut(10));
-        verticalBox.add(new Button("垂直按钮三"));
-
-        frame.add(horizontalBox, BorderLayout.NORTH);
-        frame.add(verticalBox);
-
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    public static void main(String[] args) {
-        new WindowAndPanel().init();
-    }
-}
-```
-
-#### AWT 常用组件
-
-`AWT` 组件需要调用运行平台的图形界面来创建和平台一致的对等体，因此 `AWT` 平台只能使用所有平台都支撑的公共组件，所以 `AWT` 只提供了一些常用的 `GUI` 组件
-
-##### 基本组件
-
-* `Button` ：按钮，可接受单击操作
-* `Canvas` ：用于绘图的画布
-* `Checkbox` ：复选框组件（也可以变成单选框组件）
-* `CheckboxGroup` ：用于将多个  `Checkbox` 组件合成一组，一组 `Checkbox` 组件将只有一个可以被选中，即全部变成单选框组件
-* `Choice` ：下拉式选择框组件
-* `Frame` ：窗口，在 `GUI` 程序里通过该类创建窗口
-* `Label` ：标签类，用于放置提示性文本
-* `List` ：列表框组件，可以添加多项条目
-* `Panel` ：不能单独存在的基本容器类，必须放到其它容器中
-* `ScrollBar` ：滑动条组件，如果需要用户输入位于某个范围的值，就可以使用滑动条组件，比如调色板中设置 `RGB` 三个值所用的滑动条。当创建一个滑动条时，必须指定它的方向、初始值、滑块的大小、最小值和最大值
-* `ScrollPane` ：带水平及垂直滚动条的容器组件
-* `TextArea` ：多行文本域
-* `TextField` ：单行文本域
-
-##### 对话框（Dialog）
-
-`Dialog` 是 `Window` 的子类，是一个容器类，属于特殊组件。对话框是可以独立存在的顶级窗口，因此用法与普通窗口的用法几乎完全一样，但需要注意两点：
-
-* 对话框通常依赖于其它窗口，就是通常有一个 `parent` 窗口
-* 对话框有非模式（`non-modal`）和模式（`nodal`）两种，当某个模式对话框被打开后，该模式对话框总是位于它依赖的窗口之上。在模式对话框被关闭之前，它依赖的窗口无法获得焦点
-
-对话框有多个重载的构造器，可能会有如下三个参数：
-
-* `owner` ：指定该对话框所依赖的窗口，既可以是窗口，也可以是对话框
-* `title` ：指定该对话框的窗口标题
-* `modal` ：指定该对话框是否模式的，`true` 或 `false`
-
-```java
-public class WindowAndPanel {
-    private Frame frame = new Frame("Dialog 测试");
-
-    public void init() {
-        Dialog dialog1 = new Dialog(frame, "模式对话框", true);
-        Dialog dialog2 = new Dialog(frame, "非模式对话框", false);
-
-        Button button1 = new Button("打开模式对话框");
-        Button button2 = new Button("打开非模式对话框");
-
-        dialog1.setBounds(20, 30 , 300, 400);
-        dialog2.setBounds(20, 30 , 300, 400);
-
-        button1.addActionListener(e -> dialog1.setVisible(true));
-        button2.addActionListener(e -> dialog2.setVisible(true));
-
-        frame.add(button1);
-        frame.add(button2, BorderLayout.SOUTH);
-
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    public static void main(String[] args) {
-        new WindowAndPanel().init();
-    }
-}
-```
-
-`FileDialog` 是 `Dialog` 的子类，它代表一个对话框文件，用于打开或保存文件，它的构造器可支持：`parent`、`title` 和 `model` 三个参数，其中 `parent`、`title` 指定文件对话框的所属父窗口和标题，而 `mode` 用于指定该窗口用于打开文件或保存文件，该参数支持两个参数值：`FileDialog.LOAD`、`FileDialog.SAVE`。
-
-`FileDialog` 提供了如下两个方法来获取被打开/保存文件的路径：
-
-* `getDirectory()` ：获取被打开/保存文件的绝对路径
-* `getFile()` ：获取被打开/保存文件的文件名
-
-```java
-public class WindowAndPanel {
-    private Frame frame = new Frame("FileDialog 测试");
-
-    public void init() {
-        FileDialog openDialog = new FileDialog(frame, "打开文件", FileDialog.LOAD);
-        FileDialog saveDialog = new FileDialog(frame, "保存文件", FileDialog.SAVE);
-
-        Button openButton = new Button("打开文件");
-        Button saveButton = new Button("保存文件");
-
-        openButton.addActionListener(e -> {
-            openDialog.setVisible(true);
-            System.out.println(openDialog.getDirectory() + openDialog.getFile());
-        });
-
-        saveButton.addActionListener(e -> {
-            saveDialog.setVisible(true);
-            System.out.println(saveDialog.getDirectory() + saveDialog.getFile());
-        });
-
-        frame.add(openButton);
-        frame.add(saveButton, BorderLayout.SOUTH);
-
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    public static void main(String[] args) {
-        new WindowAndPanel().init();
-    }
-}
-```
-
-#### 事件处理
-
-##### Java 事件模型的流程
-
-在事件处理过程中，主要涉及三类对象：
-
-* `Event Source（事件源）` ：事件发生的场所，通常就是各个组件，例如按钮、窗口、菜单等
-* `Event（事件）` ：事件封装了 `GUI` 组件上发生的特定事件（通常就是一次用户操作）。如果程序需要获得 `GUI` 组件上所发生事件的相关信息，都通过 `Event` 对象来获取
-* `Event Listener（事件监听器）` ：负责监听事件源所发生的事件，并对各种事件做出监听处理
-
-![](index_files/1a41257c-2b28-40e8-bec1-129c905f74f7.png)
-
-实现 `AWT` 事件处理机制的步骤如下：
-
-1. 实现事件监听类，该监听类是一个特殊的 `Java` 类，必须实现一个 `XxxListener` 接口
-2. 创建普通组件（事件源），创建事件监听器对象
-3. 调用 `addXxxListener()` 方法将事件监听器对象注册给普通组件（事件源）。当事件源上发生指定事件时，`AWT` 会触发事件监听器，由事件监听器调用相应的方法（事件处理器）来处理事件，事件源上所发生的事件会作为参数传入事件处理器
-
-##### AWT 事件分类
-
-* 低级事件
-  
-  指基于特定动作的事件。比如进入、点击、拖放等动作的鼠标事件，当组件得到焦点、失去焦点触发焦点事件
-  
-  * `ComponentEvent` ：组件事件，当组件尺寸发生变化、位置发生移动、显示/隐藏状态发生改变时触发该事件
-  * `ContainerEvent` ：容器事件，当容器里发生添加组件、删除组件时触发该事件
-  * `WindowEvent` ：窗口事件，当窗口状态发生改变（如打开、关闭、最大化、最小化）时触发该事件
-  * `FocusEvent` ：焦点事件，当组件得到焦点或失去焦点时触发该事件
-  * `KeyEvent` ：键盘事件，当按键被按下、松开、单击时触发该事件
-  * `MouseEvent` ：鼠标事件，当进行按下、松开、单击、移动鼠标等动作时触发该事件
-  * `PaintEvent` ：组件绘制事件，该事件是一个特殊的事件类型，当 `GUI` 组件调用 `update/paint` 方法来呈现自身时触发该事件，该事件并非专用于事件处理模型
-* 高级事件
-  
-  基于语义的事件，它可以不和特定的动作相关联，而依赖于触发此事件的类。比如，在 `TextField` 中按 `Enter` 键会触发 `ActionEvent` 事件，在滑动条上移动滑块会触发 `AdjustmentEvent` 事件，选中项目列表的某一项就会触发 `ItemEvent` 事件
-  
-  * `ActionEvent` ：动作事件，当按钮、菜单被单击，在 `TextField` 中按 `Enter` 键时触发该事件
-  * `AdjustmentEvent` ：调节事件，在滑动条上移动滑块以调节数值时触发该事件
-  * `ItemEvent` ：选项事件，当用户选中某项，或取消选中某项时触发该事件
-  * `TextEvent` ：文本事件，当文本框、文本域里的文本发生改变时触发该事件
-
-![](index_files/18736909-528c-4e20-9fae-2a03e0a69a87.png)
-
-| 事件              | 监听器接口           | 处理器及触发时间                                             |
-| ----------------- | -------------------- | ------------------------------------------------------------ |
-| `ActionEvent`     | `ActionListener`     | `actionPerformed`：按钮、文本框、菜单被单击时触发            |
-| `AdjustmentEvent` | `AdjustmentListener` | `adjustmentValueChanged`：滑块位置发生变化时触发             |
-| `ContainerEvent`  | `ContainerListener`  | `componentAdded`：向容器中添加组件时触发；`componentRemoved`：从容器中删除组件时触发<br/> |
-| 未完待续……        |                      |                                                              |
-
-```java
-public class WindowAndPanel {
-    private Frame frame = new Frame("事件监听 测试");
-    private TextArea textArea = new TextArea(6, 40);
-    private Button bu1 = new Button("按钮一");
-    private Button bu2 = new Button("按钮二");
-
-    public void init() {
-        FirstListener firstListener = new FirstListener();
-        bu1.addActionListener(firstListener);
-        bu1.addActionListener(new SecondListener());
-
-        bu2.addActionListener(firstListener);
-
-        frame.add(textArea);
-        Panel panel = new Panel();
-        panel.add(bu1);
-        panel.add(bu2);
-        frame.add(panel, BorderLayout.SOUTH);
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    class FirstListener implements ActionListener {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            textArea.append("第一个事件监听器被触发，事件源是：" + e.getActionCommand() + "\n");
-        }
-    }
-
-    class SecondListener implements ActionListener {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            textArea.append("单击了：" + e.getActionCommand() + "按钮\n");
-        }
-    }
-
-    public static void main(String[] args) {
-        new WindowAndPanel().init();
-    }
-}
-```
-
-#### AWT 菜单
-
-`AWT` 中的菜单由如下几个类组成：
-
-* `MenuBar` ：菜单条，菜单的容器
-* `Menu` ：菜单组件，菜单项的容器，它也是 `MenuItem` 的子类，所以可作为菜单项使用
-* `PopupMenu` ：上下文菜单组件（右键菜单组件）
-* `MenuItem` ：菜单项组件
-* `CheckboxMenuItem` ：复选框菜单项组件
-* `MenuShortcut` ：菜单快捷键组件
-
-![](index_files/80827469-a709-4c3f-9818-135d801bd7fd.png)
-
-从图中可以看出，`MenuBar` 和 `Menu` 都实现了菜单容器接口，所以 `MenuBar` 可以盛装 `Menu`，而 `Menu` 可以盛装 `MenuItem`（包括 `Menu` 和 `CheckboxMenuItem` 两个子类对象）。`Menu` 还有一个子类：`PopupMenu`，代表上下文菜单，上下文菜单无须使用 `MenuBar` 盛装。
-
-## 第二十一章 Swing
-
-### 创建窗口
-
-`JFrame` 代表一个窗口，通过 `JFrame` 相关的 `API` 就可以创建窗口：
-
-```java
-JFrame frame = new JFrame("这是窗口的标题内容");
-```
-
-### 监听器
-
-监听器 `Listener` 是 `Swing` 里界面事件处理的一种方式，使用步骤如下：
-
-1. 创建监听器对象 `Listener`
-2. 将监听器对象交给要监听的组件
-3. 当按钮被点击时，`Swing` 框架会自动调用监听器对象里的方法，进行处理
-
-```java
-public class ShowCurTime {
-
-    private static Label label;
-    private static Button button;
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("显示当前时间", 400, 300);
-
-        Container contentPane = frame.getContentPane();
-        contentPane.setLayout(new FlowLayout());
-
-        button = new Button("显示时间");
-        contentPane.add(button);
-        label = new Label("00:00:00");
-        contentPane.add(label);
-
-        // 当按钮被点击时，Swing 框架会调用监听器的 actionPerformed() 方法
-        button.addActionListener(e -> showTime());
-    }
-
-    public static void showTime() {
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        label.setText(sdf.format(new Date()));
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(ShowCurTime::createGUI);
-    }
-}
-```
-
-### 回调
-
-回调，`Callback()`，一个设计上的术语。
-
-* 当我们调用系统的一个方法时，叫 `Call`（调用）
-* 当我们写的一个方法被系统调用时，叫 `Callback`（回调）
-
-> Java 中，使用 interface 语法实现回调
-
-### 控件
-
-#### JLabel
-
-用于显示短文本，或者图标
-
-* `setText()` ：设置文本
-* `setFont()` ：设置字体
-* `setForeground()` ：设置文本颜色
-* `setToolTipText()` ：设置工具提示
-
-#### JTextField
-
-用于显示单行文本
-
-* `new JTextField(16)` ：`16` 表示列数，用于计算宽度（并不是字数限制）
-* `setText()/getText()` ：设置文本/获取文本
-* `setFont()` ：设置字体
-
-```java
-public class DemoJTextField {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("JTextField 演示", 500, 200);
-
-        Container contentPane = frame.getContentPane();
-        contentPane.setLayout(new FlowLayout());
-
-        contentPane.add(new JLabel("请输入你的名字"));
-        JTextField textField = new JTextField(16);
-        contentPane.add(textField);
-        JButton button = new JButton("确定");
-        contentPane.add(button);
-
-        button.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String text = textField.getText();
-                JOptionPane.showMessageDialog(frame, "你输入的名字是：" + text);
-            }
-        });
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoJTextField::createGUI);
-    }
-}
-```
-
-#### JCheckBox
-
-复选框
-
-* `isSelected()/setSelected()` ：获取/设置选中状态
-* `setText()` ：选项文字
-* `addActionListener()` ：用户选中/取消时触发
-
-```java
-public class DemoJCheckBox {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("JCheckBox 练习", 400, 200);
-
-        Container contentPane = frame.getContentPane();
-        contentPane.setLayout(new FlowLayout());
-
-        JCheckBox checkBox = new JCheckBox("我想订阅邮件通知");
-        contentPane.add(checkBox);
-        JTextField textField = new JTextField(16);
-        contentPane.add(textField);
-
-        checkBox.setSelected(true);
-
-        checkBox.addActionListener(e -> textField.setEnabled(checkBox.isSelected()));
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoJCheckBox::createGUI);
-    }
-}
-```
-
-#### JComboBox
-
-下拉列表
-
-* `addItem(Object)` ：添加指定的对象成为列表项
-* `Object getItemAt(int index)` ：获取第 `index` 个索引
-* `Object getSelectedItem()` ：获得被选中的元素
-* `int getItemCount()` ：获取列表项的数目
-
-```java
-public class DemoJComboBox {
-
-    private static JComboBox<String> colors;
-    private static JLabel label;
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("JComboBox 练习", 400, 300);
-
-        Container contentPane = frame.getContentPane();
-        contentPane.setLayout(new FlowLayout());
-
-        colors = new JComboBox<>();
-        colors.addItem("红色");
-        colors.addItem("绿色");
-        colors.addItem("蓝色");
-
-        colors.setSelectedIndex(2);
-
-        colors.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                changeTextColor();
-            }
-        });
-
-        contentPane.add(colors);
-        label = new JLabel("文本样例 This is a sample");
-        contentPane.add(label);
-
-        changeTextColor();
-    }
-
-    private static void changeTextColor() {
-        int index = colors.getSelectedIndex();
-        if (index == 0)
-            label.setForeground(Color.red);
-        else if (index == 1)
-            label.setForeground(Color.green);
-        else if (index == 2)
-            label.setForeground(Color.blue);
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoJComboBox::createGUI);
-    }
-}
-```
-
-#### 综合小练习——彩色标签
-
-```java
-public class ColorLabel {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("彩色标签实战", 400, 200);
-
-        Container contentPane = frame.getContentPane();
-        contentPane.setLayout(new FlowLayout());
-
-        Color[] colors = {Color.yellow, Color.green, Color.gray, new Color(0, 116, 122)};
-
-        // 下面是第一种方式，不完全面向对象
-        /*for (int i = 0; i < colors.length; i++) {
-            JLabel label = new JLabel((i + 1) + "");
-            // 设置背影为不透明，JLabel 背影默认为透明的
-            label.setOpaque(true);
-            // 设置最佳尺寸
-            label.setPreferredSize(new Dimension(60, 30));
-            label.setBackground(colors[i]);
-            label.setHorizontalAlignment(SwingConstants.CENTER);
-            contentPane.add(label);
-        }*/
-
-        // 下面是第二种方式，面向对象
-        for (int i = 0; i < colors.length; i++) {
-            contentPane.add(new ColorLabel().new ColorfulLabel((i + 1) + "", colors[i]));
-        }
-    }
-
-    private class ColorfulLabel extends JLabel {
-        public ColorfulLabel(String text, Color color) {
-            super(text);
-
-            setOpaque(true);
-            setPreferredSize(new Dimension(60, 30));
-            setBackground(color);
-            setHorizontalAlignment(SwingConstants.CENTER);
-        }
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(ColorLabel::createGUI);
-    }
-}
-```
-
-### 卡片布局器练习
-
-```java
-public class DemoCardLayout {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("CardLayout 练习", 400, 200);
-
-        Container contentPane = frame.getContentPane();
-        contentPane.setLayout(new BorderLayout());
-
-        JComboBox<String> comboBox = new JComboBox<>();
-        comboBox.addItem("第一个卡片");
-        comboBox.addItem("第二个卡片");
-        contentPane.add(comboBox, BorderLayout.PAGE_START);
-
-        JPanel panel = new JPanel();
-        panel.setLayout(new CardLayout());
-        contentPane.add(panel);
-
-        JPanel panel1 = new JPanel();
-        panel1.add(new ColorLabel().new ColorfulLabel("1", Color.yellow));
-        panel1.add(new ColorLabel().new ColorfulLabel("2", Color.green));
-        panel1.add(new ColorLabel().new ColorfulLabel("3", Color.red));
-
-        JPanel panel2 = new JPanel();
-        panel2.add(new JLabel("请输入你的信息："));
-        panel2.add(new JTextField(16));
-
-        panel.add(panel1, "first");
-        panel.add(panel2, "second");
-
-        comboBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int index = comboBox.getSelectedIndex();
-                CardLayout layout = (CardLayout) panel.getLayout();
-                if (index == 0)
-                    layout.show(panel, "first");
-                else if (index == 1)
-                    layout.show(panel, "second");
-            }
-        });
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoCardLayout::createGUI);
-    }
-}
-```
-
-### 窗口布局
-
-* 把上层窗口称为容器（`Container`）
-* 容器里可以有多个子窗口或子控件（`Component`）
-* 所谓布局，就是决定每一个子控件显示在什么位置
-* 在布局时，每个控件占据一个矩形区域（`Rectangle`）
-  
-  * `Rectangle` 参数：左上角坐标 `(x,y)`、宽度 `width`、高度 `height`
-
-> 1. 取消布局器后（`setLayout(null)`），子控件默认是不显示的
-> 2. `Frame` 的窗口大小，包括了标题栏的大小
-
-```java
-public class DemoDIYLayout {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("自定义布局器 练习", 500, 400);
-
-        Container contentPane = frame.getContentPane();
-        contentPane.setLayout(null);
-
-        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("彩色标签一", Color.yellow);
-        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("彩色标签二", Color.red);
-
-        label1.setBounds(new Rectangle(0, 0, 200, 200));
-        label2.setBounds(new Rectangle(150, 150, 100, 150));
-
-        contentPane.add(label1);
-        contentPane.add(label2);
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoDIYLayout::createGUI);
-    }
-}
-```
-
-### 布局管理器
-
-负责对子控件的布局，当窗口变化的时候，动态调整子控件的位置和大小
-
-#### 布局器运行机制
-
-1. 给容器设置一个布局器：`root.setLayout(layoutMgr)`
-2. 当容器大小改变时，自动调用布局器重新布局：`layoutMgr.layoutContainer(...)` （这是`Swing`自动调用的）
-
-#### 手动布局
-
-手工定义每个控件的位置，只需要重写 `LayoutManager` 类的 `layoutContainer` 这个方法即可
-
-```java
-public class DemoLayoutManager {
-
-    private static ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("Hello World!", Color.yellow);
-    private static ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("样例文本", new Color(202, 255, 112));
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("布局管理器 练习", 300, 200);
-
-        Container contentPane = frame.getContentPane();
-        // 设置自定义的布局管理器
-        contentPane.setLayout(new DemoLayoutManager().new MyLayout());
-
-        contentPane.add(label1);
-        contentPane.add(label2);
-    }
-
-    public class MyLayout extends LayoutManagerAdapter {
-        @Override
-        public void layoutContainer(Container parent) {
-            super.layoutContainer(parent);
-
-            int width = parent.getWidth();
-            int height = parent.getHeight();
-
-            if (label1.isVisible()) {
-                int width1 = label1.getPreferredSize().width;
-                int height1 = label1.getPreferredSize().height;
-
-                label1.setBounds((width - width1) / 2, (height - height1) / 2, width1, height1);
-            }
-
-            if (label2.isVisible()) {
-                int width2 = label2.getPreferredSize().width;
-                int height2 = label2.getPreferredSize().height;
-
-                label2.setBounds(width - width2, 0, width2, height2);
-            }
-        }
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoLayoutManager::createGUI);
-    }
-}
-```
-
-#### 线性布局器
-
-包含 **水平布局** 和 **垂直布局** 两种
-
-```java
-// 该类中，使用了阿发提供的 AfXLayout 工具类
-public class DemoLinearLayout {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("线性布局 练习", 300, 150);
-
-        Container contentPane = frame.getContentPane();
-        contentPane.setLayout(new AfXLayout(8));
-
-        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("Hello World!", Color.yellow);
-        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("样例文本", Color.green);
-        ColorLabel.ColorfulLabel label3 = new ColorLabel().new ColorfulLabel("Good Boy", Color.cyan);
-        ColorLabel.ColorfulLabel label4 = new ColorLabel().new ColorfulLabel("占满剩余", Color.red);
-
-        contentPane.add(label1, "100px");
-        contentPane.add(label2, "30%");
-        contentPane.add(label3, "auto");
-        contentPane.add(label4, "1w");
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoLinearLayout::createGUI);
-    }
-}
-```
-
-#### 任意布局
-
-一种不规则的布局，比规则布局使用频率低
-
-```java
-// 该类中，使用了阿发提供的 AfAnyWhere 工具类
-public class DemoAnywhereLayout {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("任意位置布局器 练习", 500, 300);
-
-        Container contentPane = frame.getContentPane();
-        contentPane.setLayout(new AfAnyWhere());
-
-        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("Hello World！", Color.yellow);
-        contentPane.add(label1, AfMargin.TOP_LEFT);
-        label1.setPreferredSize(new Dimension(90, 30));
-
-        contentPane.add(new ColorLabel().new ColorfulLabel("样例文本", Color.green), AfMargin.TOP_RIGHT);
-
-        ColorLabel.ColorfulLabel label = new ColorLabel().new ColorfulLabel("Good Boy", Color.red);
-        contentPane.add(label, AfMargin.CENTER);
-        label.setPreferredSize(new Dimension(260, 150));
-
-        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("占据剩余", Color.cyan);
-        contentPane.add(label2, new AfMargin(-1, 15, 10, 15)); // -1 表示自动计算
-        label2.setPreferredSize(new Dimension(0, 40));
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoAnywhereLayout::createGUI);
-    }
-}
-```
-
-#### 综合布局
-
-这是一个综合布局练习，请享用
-
-```java
-// 该类使用了阿发提供的 AfXLayout 工具类
-public class DemoComprehensiveLayout {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("综合布局 练习", 500, 300);
-
-        Container contentPane = frame.getContentPane();
-
-        JPanel panel1 = new JPanel();
-        panel1.setLayout(new AfXLayout());
-        JLabel label = new ColorLabel().new ColorfulLabel(">>>", Color.green);
-        label.setBackground(Color.yellow);
-        label.setHorizontalAlignment(SwingConstants.CENTER);
-        panel1.add(label, "1w");
-        JButton button = new JButton("发送");
-        panel1.add(button, "80px");
-        contentPane.add(panel1, BorderLayout.PAGE_START);
-
-        contentPane.add(new ColorLabel().new ColorfulLabel("...", Color.green), BorderLayout.CENTER);
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoComprehensiveLayout::createGUI);
-    }
-}
-```
-
-### Border
-
-每个 `JComponent` 都可以有一个或多个边框。边界是非常有用的对象，虽然它们本身不是组件，但知道如何绘制 `Swing` 组件的边缘。边框不仅用于绘制线条和漂亮的边缘，还用于提供标题和组件周围的空白。
-
-> 尽管从技术上讲，可以在继承自 `JComponent` 的任何对象上设置边框，但许多标准 `Swing` 组件的外观实现与用户设置的边框不能很好地整合在一起工作。通常，当你想在除 `JPanel` 或 `JLabel` 之外的标准 `Swing` 组件上设置边框时，建议将组件放在 `JPanel` 中，并在 `JPanel` 上设置边框。
-
-```java
-public class DemoBorderEasy {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("简单边框 练习", 500, 400);
-
-        Container contentPane = frame.getContentPane();
-        contentPane.setLayout(new AfYLayout(3));
-
-        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("1", new Color(0xceeb5f));
-        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("2", new Color(0xefe149));
-        LineBorder lineBorder = new LineBorder(Color.blue, 4, true);
-        label2.setBorder(lineBorder);
-        ColorLabel.ColorfulLabel label3 = new ColorLabel().new ColorfulLabel("3", new Color(0xb1e8a6));
-        label3.setBorder(BorderFactory.createLineBorder(Color.blue, 4));
-        ColorLabel.ColorfulLabel label4 = new ColorLabel().new ColorfulLabel("4", new Color(0xf0f0f0));
-        label4.setBorder(BorderFactory.createTitledBorder("边框标题"));
-
-        contentPane.add(label1, "25%");
-        contentPane.add(label2, "25%");
-        contentPane.add(label3, "25%");
-        contentPane.add(label4, "25%");
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoBorderEasy::createGUI);
-    }
-}
-```
-
-根据边框的样式分类，大概可以分为 `4` 种：
-
-* 简单边框：`Simple`
-* 特种边框：`Matte`（上、下、左、右边框不一样的）
-* 带标题边框：`Titled`
-* 复合边框：`Compound`
-
-```java
-public class DemoBorderAllKinds {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("四各类型的边框 练习", 400, 300);
-
-        JPanel panel = new JPanel();
-        panel.setLayout(new AfYLayout(3));
-        // 给窗口设置空边框（用于占位）
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 20));
-        frame.setContentPane(panel);
-
-        // 简单类型边框（Simple）
-        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("1", new Color(0xfcfcfc));
-        label1.setBorder(BorderFactory.createRaisedBevelBorder());
-
-        // 特种边框（Matte）
-        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("2", new Color(0xfcfcfc));
-        label2.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.red));
-
-        // 带标题边框（Titled）
-        ColorLabel.ColorfulLabel label3 = new ColorLabel().new ColorfulLabel("3", new Color(0xfcfcfc));
-        TitledBorder title = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "title");
-        title.setTitleJustification(TitledBorder.RIGHT);
-        label3.setBorder(title);
-
-        // 复合边框（Compound）
-        ColorLabel.ColorfulLabel label4 = new ColorLabel().new ColorfulLabel("4", new Color(0xfcfcfc));
-        Border outer = BorderFactory.createLineBorder(Color.blue, 4);
-        Border inner = BorderFactory.createLineBorder(Color.red, 4);
-        CompoundBorder compound = BorderFactory.createCompoundBorder(outer, inner);
-        label4.setBorder(compound);
-
-        panel.add(label1, "25%");
-        panel.add(label2, "25%");
-        panel.add(label3, "25%");
-        panel.add(label4, "25%");
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoBorderAllKinds::createGUI);
-    }
-}
-```
-
-#### 边距与填充
-
-在 `Swing` 里，边距和填充也是由 `Border` 来实现的。
-
-```java
-// 所谓的 EmptyBorder，就可以用来实现空白填充效果
-Border padding = BorderFactory.createEmptyBorder(8, 8, 8, 8);
-```
-
-> 具体代码实现见上一个示例代码
-
-* `padding`：边框线与内容之间的边距
-* `margin`：边框外的空白间距
-
-```java
-// 本类使用了阿发提供的 AfLayout、AfBorder 工具类
-public class DemoMarginUtil {
-
-    public static void createGUI() {
-
-        MyFrame frame = new MyFrame("四各类型的边框 练习", 400, 300);
-
-        JPanel panel = new JPanel();
-        panel.setLayout(new AfYLayout(3));
-        // 给窗口添加内边距
-        // AfBorder.addPadding(panel, 8);
-        AfBorder.addPadding(panel, 3, 6, 12, 24);
-        frame.setContentPane(panel);
-
-        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("1", new Color(0xfcfcfc));
-        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("2", new Color(0xfcfcfc));
-        ColorLabel.ColorfulLabel label3 = new ColorLabel().new ColorfulLabel("3", new Color(0xfcfcfc));
-        ColorLabel.ColorfulLabel label4 = new ColorLabel().new ColorfulLabel("4", new Color(0xfcfcfc));
-
-        panel.add(label1, "25%");
-        panel.add(label2, "25%");
-        panel.add(label3, "25%");
-        panel.add(label4, "25%");
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoMarginUtil::createGUI);
-    }
-}
-```
-
-### 使用图标
-
-* 接口：`Icon`
-* 实现类：`ImageIcon`
-
-默认情况下，`JLabel、JButton` 都可以显示图标，支持 `jpg/jepg/png` 格式的静态图片
-
-```java
-public class DemoIconLoad {
-
-    public static void createGUI() throws Exception {
-        MyFrame frame = new MyFrame("图片加载 练习", 300, 200);
-
-        JPanel panel = new JPanel();
-        JLabel label = new JLabel();
-        frame.setContentPane(panel);
-
-        Icon camera = new ImageIcon(DemoIconLoad.class.getResource("/images/camera.png"));
-        label.setIcon(camera);
-        label.setText("这是一个图标");
-        panel.add(label);
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            try {
-                createGUI();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-}
-```
-
-#### 资源文件
-
-随 `class` 文件一同打包的文件，称为资源文件
-
-资源文件的加载：内部由 `ClassLoader` 负责加载，加载时，须指定资源文件的路径（包路径
-
-```java
-public class DemoImageIconShow {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("图标按钮 练习", 500, 400);
-
-        JPanel panel = new JPanel();
-        frame.setContentPane(panel);
-
-        panel.setLayout(new BorderLayout());
-
-        JButton button1 = createButton("/images/view.png");
-        JButton button2 = createButton("/images/save.png");
-        JButton button3 = createButton("/images/print.png");
-
-        Box box = Box.createHorizontalBox();
-        panel.add(box, BorderLayout.PAGE_START);
-
-        box.add(button1);
-        box.add(button2);
-        box.add(button3);
-
-        JTextArea content = new JTextArea();
-        panel.add(content, BorderLayout.CENTER);
-        content.setBorder(BorderFactory.createLineBorder(Color.lightGray));
-    }
-
-    public static JButton createButton(String path) {
-        URL url;
-        Icon icon = new ImageIcon(DemoImageIconShow.class.getResource(path));
-
-        JButton button = new JButton();
-        button.setIcon(icon);
-
-        button.setContentAreaFilled(false);
-        button.setFocusPainted(false);
-
-        return button;
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoImageIconShow::createGUI);
-    }
-}
-```
-
-### 自定义控件
-
-* 自己写个类，继承某个系统的类
-* 重写 `paintComponent(Graphics g)` 方法，决定自定义控件的显示
-
-```java
-public class DemoDIYComponentRedSquare {
-
-    public static void createGUI() {
-        MyFrame frame = new MyFrame("自定义控件-红色方框 练习", 300, 300);
-
-        frame.setLayout(new FlowLayout());
-
-        frame.setContentPane(new DemoDIYComponentRedSquare().new MyPanel());
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoDIYComponentRedSquare::createGUI);
-    }
-
-    private class MyPanel extends JPanel {
-        @Override
-        protected void paintComponent(Graphics g) {
-            int width = this.getWidth();
-            int height = this.getHeight();
-
-            g.clearRect(0, 0, width, height);
-
-            g.setColor(Color.red);
-            g.fillRect(0, 0, width, height);
-        }
-    }
-}
-```
-
-#### 颜色
-
-在 `Swing` 里，用 `Color` 类来代表颜色
-
-```java
-Color color = Color.red;
-Color color = new Color(255, 0, 0);
-Color color = new Color(0xFF0000);
-```
-
-#### 控件的绘制
-
-在控件里可以绘制的内容：
-
-* 几何图形
-* 文本
-* 图片
-
-绘制几何图形时，使用 `Graphics` 和 `Graphics2D` 下的方法
-
-* `Line` ：直线
-* `Rect` ：矩形（含正方形）
-* `Oval` ：椭圆（含圆）
-* `Polygon` ：多边形（含三角形）
-* `Arc` ：圆弧 / 扇形
-
-几何图形的绘制方法分为两种
-
-* `drawXXX()` ：表示只画线条
-* `fillXXX()` ：表示只填充
-
-**自定义绘制正弦曲线示例**
-
-```java
-public class DemoDIYSinLine {
-    static MyClass contentPane = null;
-    static JSpinner grainSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 10, 1));
-    static JSpinner rangeSpinner = new JSpinner(new SpinnerNumberModel(50, 20, 80, 5));
-    static JSpinner periodSpinner = new JSpinner(new SpinnerNumberModel(100, 50, 150, 10));
-
-    public static void createGUI() {
-
-        MyFrame frame = new MyFrame("自定义绘制正弦曲线 练习", 500, 500);
-
-        Container pane = frame.getContentPane();
-        pane.setLayout(new BorderLayout());
-        DemoDIYSinLine.contentPane = new DemoDIYSinLine().new MyClass();
-
-        Box box = Box.createHorizontalBox();
-        pane.add(box, BorderLayout.PAGE_START);
-        box.add(new JLabel("粒度"));
-        box.add(grainSpinner);
-        box.add(new JLabel("高度"));
-        box.add(rangeSpinner);
-        box.add(new JLabel("周期"));
-        box.add(periodSpinner);
-        box.add(Box.createHorizontalGlue());
-
-        grainSpinner.setValue(DemoDIYSinLine.contentPane.grain);
-        rangeSpinner.setValue(DemoDIYSinLine.contentPane.range);
-        periodSpinner.setValue(DemoDIYSinLine.contentPane.period);
-
-        ChangeListener listener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                changeUI(e);
-            }
-        };
-
-        grainSpinner.addChangeListener(listener);
-        rangeSpinner.addChangeListener(listener);
-        periodSpinner.addChangeListener(listener);
-        pane.add(box, BorderLayout.PAGE_START);
-        pane.add(DemoDIYSinLine.contentPane, BorderLayout.CENTER);
-    }
-
-    public static void changeUI(ChangeEvent e) {
-        contentPane.grain = (int) grainSpinner.getValue();
-        contentPane.range = (int) rangeSpinner.getValue();
-        contentPane.period = (int) periodSpinner.getValue();
-
-        contentPane.repaint();
-    }
-
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(DemoDIYSinLine::createGUI);
-    }
-
-    private class MyClass extends JPanel {
-
-        int grain = 1; // 线条的精细度（粒度）
-        int range = 50; // 高度（振幅半径）
-        int period = 100; // x 轴，第 100 像素表示一个周期（2PI）
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            int width = getWidth();
-            int height = getHeight();
-
-            g.clearRect(0, 0, width, height);
-            g.setColor(Color.white);
-            g.fillRect(0, 0, width, height);
-
-            int center = height / 2;
-            g.setColor(Color.blue);
-            g.drawLine(0, center, width, center);
-
-            int x1 = 0, y1 = 0;
-            for (int i = 0; i < width; i += grain) {
-                // 每 100 像素表示 2PI
-                int x2 = i;
-                int y2 = (int) (range * Math.sin( 2 * Math.PI * i / period));
-                g.drawLine(x1, center + y1, x2, center + y2);
-
-                x1 = x2;
-                y1 = y2;
-            }
-        }
-    }
-}
-```
-
-#### 绘制图片
-
-位于 `java.awt.Image`，描述一个图像数据
-
-`drawImage(Image img, int x, int y, int width, int height, ImageObserver observer)` ：用于绘制图片的方法，`x, y, width, height` 为目标区域，`observer` 为通知接收者
-
-* 图片的准备
-  
-  * 支持 `jpg/jpeg/png` 格式
-  * 可以是资源文件或本地文件
-* 加载图片
-  
-  * 使用 `ImageIO` 类来加载图片，得到 `Image` 对象
-    
-    `ImageIO.read(URL/File)`
-
-## 第二十二章 MySQL 数据库
+## 第二十章 MySQL 数据库
 
 ### 现有的数据存储方式有哪些
 
@@ -5639,13 +4042,13 @@ from t_employees
 group by department_id;
 ```
 
-##### 查询各部门的总人数
+##### 查询各部门的平均工资
 
 ```sql
 # 思路
 # 1. 按照部门编号进行分组（分组依据是 employee_id)
 # 2. 再针对各部门进行平均工资统计（avg）
-select department_id, count(salary)
+select department_id, avg(salary)
 from t_employees
 group by department_id;
 ```
@@ -6206,7 +4609,7 @@ create table `subject` (
 	subjectId int primary key auto_increment, # 课程编号主键自动增长，会从 1 开始根据添加数据的顺序依次加 1
   subjectName varchar(20) unique, 
   subjectHours int default 20,
-  specialId int not null
+  specialId int not null,
   constraint fk_subject_specialID foreign key(specialId) references speciality(id)  # 引用专业表里的 id 作为外键，新增课程信息时，约束课程所属的专业
 ) charset=utf8;
 
@@ -6448,7 +4851,7 @@ drop view t_empInfo;
 
 #### 视图注意事项
 
-* 视图不会独立存储数据，万年青发生改变，视图也发生改变，没有优化任何查询性能
+* 视图不会独立存储数据，源数据发生改变，视图也发生改变，没有优化任何查询性能
 * 如果视图包含以下结构中的一种，则视图不可更新
   * 聚合函数的结果
   * `dintinct` 去重后的结果
@@ -6588,7 +4991,7 @@ select * from user where userId in (select distinct userId from where totalprice
 select * from orders limit 0,5;
 ```
 
-## 第二十三章 JDBC
+## 第二十一章 JDBC
 
 `JDBC(Java Database Conectivity)` ，`Java` 连接数据库，可以使用 `Java` 语言连接数据库完成 `CRUD` 的操作。
 
@@ -7573,6 +5976,609 @@ public class CommonsDbutilsTest {
 }
 ```
 
+[![6DWFeI.md.png](https://s3.ax1x.com/2021/03/15/6DWFeI.md.png)](https://imgtu.com/i/6DWFeI)
+
+## 第二十二章 HTML
+
+### 引言
+
+网页，是网站中的一个页面，通常来说，网页是构成网站的基本元素，是承载各种网站应用的平台。通俗的说，网站就是由网页组成的。通常我们看到的网页都是以 `html` 或者 `htm` 后缀结尾的文件，俗称 `HTML` 文件。
+
+### 什么是 HTML
+
+`HTML` 全称：`Hyper Text Markup Language`（超文本标记语言）
+
+* 超文本：页面可以包含图片、链接，甚至是音乐、程序等非文本元素
+* 标记：标签，不同的标签实现不同的功能
+* 语言：人与计算机的交互工具
+
+### 能做什么
+
+使用标记标签来描述网页，展示信息给用户
+
+### 书写规范
+
+* `HTML` 标签是以尖括号包围的关键字
+* `HTML` 标签通常是成对出现的，有开始就有结束
+* `HTML` 标签通常都有属性，格式：属性="属性值"（多个属性之间用空格隔开）
+* `HTML` 标签不区分大小写，建议全部小写
+
+### 标签
+
+在网页中具有特殊功能的符号，`HTML` 中所有的标签都以 `<>` 为区分，区分普通文本。
+
+#### 分类
+
+1. 双标签：成对出现，有开始有结束。`<开始标签>标签内容</结束标签>`
+2. 单标签：只有开始标签，没有结束标签，可以手动添加 `/` 表示结束。`<标签名> 或者 <标签名/>`
+
+#### 嵌套
+
+1. 在成对的标签中出现其他标签；
+2. 嵌套结构中，外层元素称为父元素，内层元素成为子元素
+
+#### 文档结构
+
+1. 新建文档，保存为 `.html/.htm` 格式
+2. 书写一对 `html` 标签 `<html></html>`
+3. 在 `html` 标签中嵌套一对 `head` 标签
+4. 在 `html` 标签中嵌套一对 `body` 标签
+5. 为 `body` 标签增加文本内容，内容不限
+
+#### 属性
+
+用来修饰标签的显示效果
+
+##### 语法
+
+1. 属性由属性名和属性值组成：`属性名="属性值"`
+2. 属性的申明必须写在开始标签中：`<开始标签 属性名="属性值">...</结束标签>`
+3. 每个标签都可以设置多个属性，属性之间使用空格隔开：`<开始标签 属性名="属性值" 属性名="属性值" ...>...</结束标签>`
+
+### 注释
+
+`<!-- 注释内容 -->`
+
+> 1. 注释不能写在标签里面
+> 2. 注释不能嵌套
+
+### 换行与空格
+
+`html` 文档会忽略掉多与的空格，只显示为一个空格。如果需要显示多个空格或者 `< >` 等，都需要使用特殊符号代替
+
+### 基本标签
+
+#### 结构标签
+
+```html
+<html>:根标签
+  <head>:网页头标签
+    <title></title>:页面的标题
+  </head>
+  <body></body>:网页正文
+</html>
+```
+
+| 属性         | 代码                                   | 描述                         |
+| ------------ | -------------------------------------- | ---------------------------- |
+| `text`       | &lt;body text="0xf00"></body&gt;       | 设置网页下方中所有文字的颜色 |
+| `bgcolor`    | &lt;body bgcolor="#00f"></body&gt;     | 设置网页的背影色             |
+| `background` | &lt;body background="1.png"></body&gt; | 设置网页的背影图             |
+
+> 颜色的表示方式：
+>
+> * 用表示颜色的英文单词，例：`red、blue、green`
+> * 用 16 进制表示颜色，例：`#000000， #ffffff`
+
+>注意：背影色和背影图片只能单独出现
+
+#### 排版标签
+
+可用于实现简单的页面布局
+
+##### 注释标签
+
+`<!--注释-->`
+
+##### 换行标签
+
+`<br>`
+
+##### 段落标签
+
+`<p>文本文字</p>`：突出显示一段文本，每一段的文本都独占一行或一块，不与其他元素同行，并且与具备垂直的空白距离
+
+* 特点：段与段之间有空行
+* 属性
+  * `align`：对齐方式，值有：`left、right、center`
+
+##### 水平标签
+
+`<hr/>`
+
+* 属性
+  * `width`：水平线的长度，两种表示方式
+    * 像素表示
+    * 百分比表示
+  * `size`：水平线的粗细，使用像素表示，例如：`10px`
+  * `color`：水平线的颜色
+  * `align`：水平线的对齐方式
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body text="#d2691e" bgcolor="#faebd7">
+    <!--换行-->
+    换<br>行
+    <!--段落-->
+    <p>段落一</p>
+    <p align="center">段落二</p>
+    <p align="right">段落三</p>
+    <!--水平线-->
+    <hr align="center" width="50%" color="red" size="3">
+</body>
+</html>
+```
+
+#### 块标签
+
+> 使用 css + div 是现下流行的一种布局方式
+
+| 标签   | 代码            | 描述                         |
+| ------ | --------------- | ---------------------------- |
+| `div`  | `<div></div>`   | 行级块标签，独占一行，换行   |
+| `span` | `<span></span>` | 行内块标签，所有内容都在一行 |
+
+#### 基本文字标签（已过时）
+
+<del>`<font></font>`</del>：处理网页中文字的显示方式
+
+| 属性名  | 代码                         | 描述                                 |
+| ------- | ---------------------------- | ------------------------------------ |
+| `size`  | `<font size="7"></font>`     | 用于设置字体的大小，最小1号，最大7号 |
+| `color` | `<font color="#f00"></font>` | 用于设置字体的颜色                   |
+| `face`  | `<font face="宋体"></font>`  | 用于设置字体的样式                   |
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>块标签和基本文字标签</title>
+</head>
+<body>
+    <div>div标签1div标签1div标签1<font color="red" size="7">div标签1</font>div标签1div标签1</div>
+    <div>div标签2</div>
+    <div>div标签3</div>
+    <span>span标签1</span>
+    <span>span标签2</span>
+    <span>span标签3</span>
+</body>
+</html>
+```
+
+> 注意：font 标签是一个闭合标签，如果不写后面的结束标签，那么 font 的样式会从开始标签一直应用到文档的末尾
+
+#### 文本格式化标签
+
+使用标签实现文本的样式处理
+
+| 标签                       | 代码                | 描述     |
+| -------------------------- | ------------------- | -------- |
+| `b`                        | `<b></b>`           | 粗体标签 |
+| `strong`                   | `<strong></strong>` | 加粗     |
+| `em`                       | `<em></em>`         | 强调     |
+| `i`                        | `<i></i>`           | 斜体     |
+| `small`                    | `<small></small>`   | 小号字体 |
+| <del>`big`（已过时）</del> | `<big></big>`       | 大号字体 |
+| `sub`                      | `<sub></sub>`       | 上标标签 |
+| `sup`                      | `<sup></sup>`       | 下标标签 |
+| `del`                      | `<del></del>`       | 删除线   |
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>文本格式化标签</title>
+</head>
+<body>
+    <b>粗体</b><strong>粗体</strong>
+    <br>
+    <em>斜体</em><i>斜体</i>
+    <br>
+    <big>大号</big><small>小号</small>
+    <br>
+    上标：5m<sup>2</sup>，下标：H<sub>2</sub>O
+    <br>
+    <del>删除线</del>
+</body>
+</html>
+```
+
+#### 字符实体
+
+具有实际意义的符号。
+
+| 字符实体 | 表示意义   |
+| -------- | ---------- |
+| `&nbsp`  | 空格       |
+| `&lt;`   | 小于号 `<` |
+| `&gt;`   | 大于号 `>` |
+| `&copy;` | 版权符号   |
+| `&yen;`  | 人民币符号 |
+
+#### 标题标签
+
+可以不同的文字大小和加粗方式显示文本：`<hn></hn>` ，n 取值 1 ~ 6，字体大小依次递减
+
+> 1. 会改变文字的大小并具有加粗效果
+> 2. 每个标题都会具备垂直的空白距离
+> 3. 每个标题都独占一行，不与其他元素共行显示
+> 4. 每个标题都可以添加属性 align，取值：left, right, center，用于设置文本的水平显示位置，默认居左
+
+| 标签 | 代码        | 描述              |
+| ---- | ----------- | ----------------- |
+| `h1` | `<h1></h1>` | 1号标题，最大字号 |
+| `h2` | `<h2></h2>` | 2号标题           |
+| `h3` | `<h3></h3>` | 3号标题           |
+| `h4` | `<h4></h4>` | 4号标题           |
+| `h5` | `<h5></h5>` | 5号标题           |
+| `h6` | `<h6></h6>` | 6号标题，最小字号 |
+
+#### 列表标签（清单标签）
+
+##### 无序列表
+
+使用一组无序的符号定义：
+
+```html
+<ul>
+  <li></li>
+  ...
+</ul>
+```
+
+重要属性：`type`
+
+| 属性值             | 描述     | 用法举例                  |
+| ------------------ | -------- | ------------------------- |
+| `circle`（默认值） | 空心圆   | `<ul type="circle"></ul>` |
+| `disc`             | 实心圆   | `<ul type="disc"></ul>`   |
+| `square`           | 黑色广场 | `<ul type="square"></ul>` |
+
+##### 有序列表
+
+使用一组有序的符号定义：
+
+```html
+<ol type="a" start="1">
+  <li></li>
+  ...
+</ol>
+```
+
+重要属性：`type`
+
+| 属性值        | 描述             | 用法举例                       |
+| ------------- | ---------------- | ------------------------------ |
+| `1`（默认值） | 数字类型         | `<ol type="1" start="2"></ol>` |
+| `A`           | 大写字母类型     | `<ol type="A" start="2"></ol>` |
+| `a`           | 小写字母类型     | `<ol type="a" start="2"></ol>` |
+| `i`           | 小写罗马字母类型 | `<ol type="i" start="2"></ol>` |
+| `I`           | 大写罗马字母类型 | `<ol type="I" start="2"></ol>` |
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>列表</title>
+</head>
+<body>
+    无序列表：<br>
+    <ul type="square">
+        <li>做真实的自己</li>
+        <li>用良心做自己</li>
+    </ul>
+    有序列表：<br>
+    <ol type="i" start="4">
+        <li>人生的风景</li>
+        <li>就像大海的风景</li>
+        <li>有时涌</li>
+        <li>有时急</li>
+        <li>亲爱朋友你就小心</li>
+    </ol>
+    嵌套列表：<br>
+    <ul type="square">
+        <li>做真实的自己
+            <ol type="i" start="4">
+                <li>人生的风景</li>
+                <li>就像大海的风景</li>
+                <li>有时涌</li>
+                <li>有时急</li>
+                <li>亲爱朋友你就小心</li>
+            </ol>
+        </li>
+        <li>用良心做自己</li>
+    </ul>
+</body>
+</html>
+```
+
+#### 图形标签
+
+`<img/>`：在页面指定位置处引入一幅图片
+
+| 属性名   | 描述               |
+| -------- | ------------------ |
+| `src`    | 引入图片的地址     |
+| `width`  | 图片的宽度         |
+| `height` | 图片的高度         |
+| `bordre` | 图片的边框         |
+| `align`  | 与图片对齐显示方式 |
+| `alt`    | 提示信息           |
+| `hspace` | 在图片左右设定空白 |
+| `vspace` | 在图片上下设定空白 |
+
+> 注意：width 和 height 只设置一个属性值时，另外一个属性值会按照原始比例进行缩放
+
+```java
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>图片</title>
+</head>
+<body>
+    <p align="center">
+        前一行 <br>
+        前面的文字<img src="tiger.png" alt="十二生肖--虎" width="500px" align="center" border="5" hspace="50px" vspace="100px">后面的文字
+        <br>
+        后一行
+    </p>
+</body>
+</html>
+```
+
+#### 超链接标签
+
+`<a href=""></a>`：在页面中使用链接标签会跳转到另外一页面
+
+**属性：**
+
+* `href`
+  * 跳转页面的地址
+  * **跳转到外网时需要添加协议**
+* `target`
+  * 跳转页面时页面的打开方式
+  * 值：
+    * `_blank`：在新窗口打开
+    * `_self`：在原窗口打开
+    * `_parent`：在父窗口打开
+    * `_top`：在顶层窗口打开
+  * 同一页面中跳转
+    * 定义位置：`<a name="名称"></a>`
+    * 指向：`<a href="#名称"></a>`
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>链接</title>
+</head>
+<body>
+    <a name="top"></a><p></p> 首页 <a href="demo1.html" target="_blank">跳转另外一个页面</a>
+    <br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br>
+    <a href="#top">回到顶部</a>
+</body>
+</html>
+```
+
+#### 表格标签
+
+##### 定义表格
+
+* 标签：`table`
+* 属性：
+  * `width`：表格宽度
+  * `border`：表格边框。==table 上的边框设置只能给表格增加边框，不能给单元格添加==
+  * `cellpadding`：内容和单元格的距离
+  * `cellspacing`：单元格之间的距离。如果指定为0，则单元格的线合为一条
+  * `bgcolor`：背影色
+  * `align`：对齐方式
+
+##### 定义行
+
+* 标签：`tr`
+* 属性：
+  * `bgcolor`：背影色
+  * `align`：对齐方式
+
+##### 定义单元格
+
+* 标签：`td`
+* 属性：
+  * `rowspan`：合并行。==在同一列合并多行==
+  * `colspan`：合并列。==在同一行合并多列==
+
+##### 其它标签
+
+* `th`：定义表头单元格，内容会有加粗和居中效果
+* `caption`：表格标题
+
+行分组
+
+允许将表格中的一行或若干行分为一组，便于管理
+
+1. `<thead>` 表头行分组
+2. `<tfoot>` 表尾行分组
+3. `<tbody>` 表主体行分组
+
+> 以上这三个标签可以省略，默认情况下，所有的行都会被添加到 tbody 中
+>
+> 如果需要手动添加分组，建议按照 thead tbody tfoot 的顺序书写
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>表格</title>
+</head>
+<body>
+    <table width="500px" height="200px" border="1" align="center" cellspacing="0">
+        <caption>学生成绩表</caption>
+        <tr>
+            <th>编号</th>
+            <th>姓名</th>
+            <th>性别</th>
+            <th>成绩</th>
+        </tr>
+        <tr>
+            <td align="center">1</td>
+            <td align="center">杨过</td>
+            <td align="center">男</td>
+            <td align="center">100</td>
+        </tr>
+        <tr>
+            <td align="center">2</td>
+            <td align="center">小龙女</td>
+            <td align="center">女</td>
+            <td align="center" rowspan="2">90</td>
+        </tr>
+        <tr>
+            <td align="center">3</td>
+            <td align="center">金轮法王</td>
+            <td align="center">男</td>
+        </tr>
+        <tr>
+            <td align="center">总成绩</td>
+            <td align="center" colspan="3">190</td>
+        </tr>
+    </table>
+</body>
+</html>
+```
+
+### 表单标签
+
+`html` 表单用于收集不同类型的用户输入数据
+
+#### form 元素
+
+本身不可见，但不能省略，因为数据的提交功能要由 `form` 元素完成
+
+```html
+<form>
+  表单元素
+</form>
+```
+
+##### 属性
+
+1. `action` ：指定数据提交的目的地址
+2. `method` ：数据请求方式 `get/post` 
+   1. `get` ：默认值，通常用于向服务器获取数据
+      1. 提交的数据会以参数的形式拼接在 `URL` 的后面
+      2. 安全性较低
+      3. 提交数据最大为 `2kb`
+   2. `post` ：将数据提交给服务器处理
+      1. 隐式提交，看不到数据提交
+      2. 安全性较高
+      3. 没有数据大小限制
+
+#### 表单控件
+
+提供与用户交互的可视化组件
+
+> 只有放在表单元素中的表单控件才允许被提交
+
+##### 文本框和密码框
+
+`<input type="text/password">`
+
+1. `name` ：定义当前控件的名称，缺少的话无法提交，提交数据时被当做 `key` 值
+2. `value` ：要提交给服务器的值，也是默认显示在控件上的值
+3. `maxlength` ：限制用户输入的最大字符数
+4. `placeholder` ：用户输入之前显示在框中的提示文本
+
+##### 单选框和复选框
+
+`<input type="radio">` 单选 `<input type="checkbox">` 复选
+
+1. `name` ：定义控件名称，还起到分组的作用，一组中的按钮必须保持一致
+2. `value` ：设置当前控件的值，最终提交给服务器
+3. `checked` ：设置预选中状态，可以省略属性值，也可以使用 `"checked"` 作为值
+
+##### 隐藏域
+
+需要提交给服务器但是却不需要呈现给用户的数据，都可以放在隐藏域中 `<input type="hidden">`
+
+1. `name` ：控件的名称
+2. `value` ：控件的值
+
+##### 文件选择
+
+`<input type="file">`
+
+1. `name` ：控件的名称
+
+##### 下拉选择框
+
+```html
+<select name="op">
+  <option value="o1">选项一</option>
+  <option value="o2">选项二</option>
+  ...
+</select>
+```
+
+假设用户选择选项一，在使用 `get` 方式提交数据时，`URL` 拼接后的数据应为：`op=o1`
+
+##### 文本域
+
+`<textarea></textarea>` 支持用户输入多行文本
+
+1. `name` ：控件名称
+2. `cols` ：指定文本域默认显示的列数，一行中能显示的英文字符量，中文减半
+3. `rows` ：指定文本域能够显示的行数
+
+> 文本域可以由用户调整大小
+
+##### 提交按钮
+
+`<input type="submit">` 将表单数据发送给服务器，不写 `value` 属性，默认显示：提交
+
+##### 重置按钮
+
+`<input type="reser">` 重置表单，将表单内容恢复到初始化状态，不写 `value` 属性，默认显示：重置
+
+##### 普通按钮
+
+`<input type="button" valu="显示本文">` 可以绑定自定义的事件
+
+`<button>按钮显示文本</button>`  该标签可以在任何地方使用；**该标签如果使用在表单中，默认具有提交功能，等同于 `<input type="submit">` **；可以添加 `type` 属性，取值：`submit / reset / button` 进行区分；
+
+#### 特殊用法
+
+`<label for="要关联的控件id">男</label><input type="radio" id="male" name="gender" value="male>"` 
+
+
+
 
 
 ## 第XX章 多线程
@@ -7709,3 +6715,1607 @@ cd5(no)->op3
 * 当多线程迸发访问临界资源时，如果破坏原子操作，可能会造成数据不一致
 * 临界资源：共享资源（同一对象），一次仅允许同一个线程使用，才可保证其正确性
 * 原子操作：不可分割的多步操作被视作一个整体，其顺序和步骤不可打乱或缺省
+
+## 第XX章 GUI 编程
+
+### 核心技术
+
+`Swing、AWT`
+
+### 不流行的原因
+
+* 界面不美观
+* 需要 `JRE` 环境
+
+### 为什么学习
+
+* 可以根据自己的需求，写一些实用的小工具
+* 工作的时候，在对原来的项目进行维护时可能会用到
+* 了解 `MVC` 架构，了解监听
+
+### AWT
+
+#### 介绍
+
+* `AWT-Abstract Window Tools`，抽象窗口工具集
+* 包含了很多的类和接口
+* 元素包括：窗口、按钮、文本框
+
+[![6BdeyD.md.png](https://s3.ax1x.com/2021/03/15/6BdeyD.md.png)](https://imgtu.com/i/6BdeyD)
+
+#### 容器
+
+容器（`container`）是 `Component` 的子类，因此容器对象本身也是一个组件，具有组件的所有性质，可以调用 `Component` 类的所有方法。`Component` 类的常用方法如下：
+
+* `setLocation(int x, int y)` ：设置组件的位置
+* `setSize(int width, int height)` ：设置组件的大小
+* `setBounds(int x, int y, int width, int height)` ：同时设置组件的大小和位置
+* `setVisible(Boolean visible)` ：设置组件的可见性
+* `Component add(Component, comp)` ：向容器中添加其它组件（该组件可以是普通组件，也可以是容器）
+* `Component getComponentAt(int x, int y)` ：返回指定点的组件
+* `int getComponentCount()` ：返回该容器内组件的数量
+* `Component[] getComponents()` ：返回该容器内所有的组件
+
+**分类**
+
+* `Window` ：可独立存在的顶级窗口
+* `Panel` ：可作为容纳其它组件，但不能独立存在，必须被添加到其它容器中（如 `Window`、`Panel` 或 `Applet` 等）
+
+##### Frame
+
+是 `Window` 的子类，有以下的特点：
+
+* `Frame` 对象有标题，允许通过拖拉来改变窗口的位置、大小
+* 初始化时为不可见，可用 `setVisible(true)` 使其显示出来
+* 默认使用 `BorderLayout` 作为其布局管理器
+
+```java
+public static void main(String[] args) {
+    Frame frame = new Frame("第一个 Frame");
+    frame.setVisible(true);
+    frame.setSize(300, 300);
+    frame.setBackground(Color.LIGHT_GRAY);
+    frame.setLocation(300, 300);
+    frame.setResizable(false);
+}
+```
+
+**问题**
+
+上面代码可以生成一个窗口，但是点击关闭按钮没有任何作用，只能通过停止程序运行关闭窗口
+
+##### Panel
+
+`Penal` 存在的意义在于为其它组件提供空间，有以下的特点：
+
+* 可作为容器来盛装其它组件，为放置组件提供空间
+* 不能单独存在，必须放置到其它容器中
+* 默认使用 `FlowLayout` 作为其布局管理器
+
+```java
+public static void main(String[] args) {
+    Frame frame = new Frame("我的第一个窗口");
+
+    frame.setLayout(null);
+    frame.setBounds(100, 100, 300, 300);
+    frame.setBackground(Color.lightGray);
+
+    Panel panel = new Panel();
+
+    panel.setBounds(50, 50, 100, 100);
+    panel.setBackground(new Color(182, 13, 23));
+
+    frame.add(panel);
+    frame.setVisible(true);
+
+    frame.addWindowListener(new WindowAdapter() {
+
+        @Override
+        public void windowClosing(WindowEvent e) {
+            System.exit(0);
+        }
+    });
+}
+```
+
+> 上面的代码给关闭按钮添加了监听事件，所以解决了上节遗留的问题
+
+##### ScrollPane
+
+`ScrollPane` 是一个带滚动条的容器，也不能独立存在，必须被添加到其它容器中，有以下的特点：
+
+* 可作为容器来盛装其它组件，当组件占用空间过大时，`ScrollPane` 自动产生滚动条，当然也可以通过指定的构造器参数来指定默认具有滚动条
+* 不能单独存在，必须放置到其它容器中
+* 默认使用 `BorderLayout` 作为其布局管理器。`ScrollPane` 通常用于盛装其它容器，所以通常不允许改变 `ScrollPane` 的布局管理器
+
+```java
+public static void main(String[] args) {
+    Frame frame = new Frame("ScrollPane 容器练习");
+
+    ScrollPane scrollPane = new ScrollPane(ScrollPane.SCROLLBARS_ALWAYS);
+
+    TextField comp = new TextField(30);
+    comp.setBackground(Color.blue);
+    scrollPane.add(new Label("下面是一个输入框"), BorderLayout.EAST);
+    scrollPane.add(comp, BorderLayout.SOUTH);
+
+    frame.add(scrollPane);
+
+    frame.pack();
+    frame.setVisible(true);
+}
+```
+
+#### 布局管理器
+
+所有的 `AWT` 容器都有默认的布局管理器，如果没有为容器指定布局管理器，则该容器使用默认的布局管理器。为容器指定布局管理器的方法：
+
+`c.setLayout(new XxxLayout());`
+
+##### FlowLayout
+
+在 `FlowLayout` 布局管理器中，组件像水流一样向某方向流动（排列），遇到障碍（边界）就折回，重头开始排列。默认情况下，`FlowLayout` 从左到右今次排列所有组件，遇到边界就会折回下一行重新开始。
+
+```java
+public static void main(String[] args) {
+    Frame frame = new Frame("FlowLayout 容器练习");
+
+    frame.setLayout(new FlowLayout());
+    frame.setBounds(100, 100, 200, 300);
+
+    for (int i = 0; i < 10; i++) {
+        frame.add(new Button("按钮" + i));
+    }
+
+    frame.pack();
+    frame.setVisible(true);
+}
+```
+
+##### BorderLayout
+
+`BorderLayout` 将容器分为 `EAST、WEST、NORTH、SOUTH、CENTER` 五个区域，普通组件可以被放置在这 `5` 个区域中的任意一个中，注意点如下：
+
+* 当改变使用 `BorderLayout` 的容器大小时，`NORTH、SOUTH、CENTER` 区域水平调整，而 `EAST、WEST、CENTER` 区域垂直调整
+* 当向使用 `BorderLayout` 布局管理器的容器中添加组件时，需要指定要添加到哪个区域中，如果没有指定添加到哪个区域中，则默认添加到中间区域中
+* 如果向同一个区域添加多个组件时，后放入的组件会覆盖先放入的组件
+
+```java
+public static void main(String[] args) {
+    Frame frame = new Frame("BorderLayout 容器练习");
+
+    frame.setLayout(new BorderLayout());
+    frame.setBounds(100, 100, 100, 200);
+
+    frame.add(new Button("North"), BorderLayout.NORTH);
+    frame.add(new Button("South"), BorderLayout.SOUTH);
+    // 不指定区域，默认添加到中间区域
+    frame.add(new Button("Center"));
+    frame.add(new Button("West"), BorderLayout.WEST);
+    frame.add(new Button("East"), BorderLayout.EAST);
+
+    frame.pack();
+    frame.setVisible(true);
+}
+```
+
+##### GridLayout
+
+`GridLayout` 布局管理器将容器分割成纵横线分隔的风格，每个网格所占的区域大小相同。当向使用 `GridLayout` 布局管理器的容器中添加组件时，默认从左向右、从上到下依次添加到每个网格中。与 `FlowLayout` 不同的是，放置在 `GridLayout` 布局管理器中的各组件的大小由组件所处的区域来决定（**每个组件将自动占满整个区域**）
+
+```java
+public static void main(String[] args) {
+    Frame frame = new Frame("GridLayout 容器练习");
+
+    frame.setBounds(200, 200, 200, 300);
+    frame.add(new TextField(30), BorderLayout.NORTH);
+
+    Panel panel = new Panel();
+    panel.setLayout(new GridLayout(3, 5, 5, 5));
+    String[] bs = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "+", "-", "*", "/", "="};
+    for (int i = 0; i < bs.length; i++) {
+        panel.add(new Button(bs[i]));
+    }
+    frame.add(panel);
+
+    frame.pack();
+    frame.setVisible(true);
+}
+```
+
+##### GridBagLayout
+
+`GridBagLayout` 布局管理器中，一个组件可以跨越 1 个或多个网格，并可以设置各网格的大小互不相同，从而增加了布局的灵活性，当窗口的大小发生变化时，`GridBagLayout` 布局管理器也可以准确地控制窗口各部分的拉伸。
+
+使用步骤如下：
+
+1. 创建 `GridBagLayout` 布局管理器，并指定 `GUI` 容器使用该布局管理器
+
+   ```java
+   GridBagLayout gbl = new GridBagLayout();
+   container.setLayout(gbl);
+   ```
+
+2. 创建 `GridBagConstraints`，并设置该对象的关联属性（用于设置受该对象控制的 `GUI` 组件的大小、跨越性等
+
+   ```java
+   GridBagConstraints gbc = new GridBagConstraints();
+   gbc.gridx = 2; // 组件位于网格的横向索引
+   gbc.gridy = 1; // 组件位于网格的纵向索引
+   gbc.gridwidth = 2; // 组件横向跨越多少网格
+   gbc.gridheight = 1; // 组件纵向跨越多少网格
+   ```
+
+3. 调用 `GridBagConstraints` 对象的方法来建立 `GridBagConstraints` 对象和受控组件之间的关联
+
+   ```java
+   gbc.setConstraints(c, gbc);
+   ```
+
+4. 添加组件
+
+   ```java
+   container.add(c);
+   ```
+
+> `GridBagConstraints` 对象应该被重用，只需要不断改变它的属性就可以了
+
+```java
+public class WindowAndPanel {
+    private static Frame frame;
+    private static GridBagLayout gbl;
+    private static GridBagConstraints gbc;
+
+    public static void main(String[] args) {
+        frame = new Frame("GridLayout 容器练习");
+
+        gbl = new GridBagLayout();
+        frame.setLayout(gbl);
+        frame.setBounds(200, 200, 300, 300);
+        Button[] bs = new Button[10];
+
+        for (int i = 0; i < bs.length; i++) {
+            bs[i] = new Button("按钮" + i);
+        }
+
+        gbc = new GridBagConstraints();
+
+        // 所有组件都可以在横向、纵向上扩大
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        addButton(bs[0]);
+        addButton(bs[1]);
+        addButton(bs[2]);
+        // 将会成为横向最后一个组件
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        addButton(bs[3]);
+        // 将在横向上不会扩大
+        gbc.weightx = 0;
+        addButton(bs[4]);
+        // 将横跨两个网格
+        gbc.gridwidth = 2;
+        addButton(bs[5]);
+        // 将横跨一个网格
+        gbc.gridwidth = 1;
+        // 纵向将横跨两个网格
+        gbc.gridheight = 2;
+        // 将成为横向最后一个组件
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        addButton(bs[6]);
+        // 横向跨越一个网格，纵向跨越两个网格
+        gbc.gridwidth = 1;
+        gbc.gridheight = 2;
+        // 纵向扩大的权重是 1
+        gbc.weighty = 1;
+        addButton(bs[7]);
+        // 纵向不会扩大
+        gbc.weighty = 0;
+        // 成为横向最后一个
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        // 纵向上横跨一个网格
+        gbc.gridheight = 1;
+        addButton(bs[8]);
+        addButton(bs[9]);
+
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    private static void addButton(Button b) {
+        gbl.setConstraints(b, gbc);
+        frame.add(b);
+    }
+}
+```
+
+##### CardLayout
+
+`CardLayout` 布局管理器以时间而非空间来管理它里面的组件，它将加入容器的所有组件看成一叠卡片，每次只有最上面的那个 `Component` 才可见。常用方法：
+
+* `first(Container tgarget)` ：显示 `target` 容器中的第一张卡片
+* `last(Container tgarget)`：显示`target` 容器中的最后一张卡片
+* `previous(Container tgarget)`：显示`target` 容器中的前一张卡片
+* `next(Container tgarget)`：显示`target` 容器中的后一张卡片
+* `show(Container target, String name)` ：显示 `target` 容器中指定名字的卡片
+
+```java
+public class WindowAndPanel {
+    private Frame frame = new Frame("CardLayout 测试");
+    private String[] names = {"第一张", "第二张", "第三张", "第四张", "第五张"};
+    private Panel panel = new Panel();
+
+    public void init() {
+        CardLayout cardLayout = new CardLayout();
+        panel.setLayout(cardLayout);
+
+        for (int i = 0; i < names.length; i++) {
+            panel.add(names[i], new Button(names[i]));
+        }
+        Panel p = new Panel();
+        ActionListener listener = e -> {
+            switch (e.getActionCommand()) {
+                case "上一张":
+                    cardLayout.previous(panel);
+                    break;
+                case "下一张":
+                    cardLayout.next(panel);
+                    break;
+                case "最后一张":
+                    cardLayout.last(panel);
+                    break;
+                case "第三张":
+                    cardLayout.show(panel, "第三张");
+                    break;
+            }
+        };
+        // 控制显示上一张的按钮
+        Button previous = new Button("上一张");
+        previous.addActionListener(listener);
+        Button next = new Button("下一张");
+        next.addActionListener(listener);
+        Button last = new Button("最后一张");
+        last.addActionListener(listener);
+        Button third = new Button("第三张");
+        third.addActionListener(listener);
+        p.add(previous);
+        p.add(next);
+        p.add(last);
+        p.add(third);
+        frame.add(panel);
+        frame.add(p, BorderLayout.SOUTH);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        new WindowAndPanel().init();
+    }
+}
+```
+
+##### 绝对定位
+
+绝对定位的步骤：
+
+1. 将 `container` 的布局管理器设置为 `null`
+2. 向容器中添加组件时，先调用 `setBounds()` 或 `setSize()` 方法来设置组件的大小、位置，或者直接创建 `GUI` 组件时通过构造参数指定组件的大小和位置，然后将组件添加到容器中
+
+```java
+public class WindowAndPanel {
+    private Frame frame = new Frame("绝对定位 测试");
+    private Button btn1 = new Button("第一个按钮");
+    private Button btn2 = new Button("第二个按钮");
+
+    public void init() {
+        // 设置 null 布局管理器
+        frame.setLayout(null);
+        // 下面强制设置每个按钮的大小和位置
+        btn1.setBounds(20, 30 , 90, 28);
+        frame.add(btn1);
+        btn2.setBounds(50, 45, 120, 35);
+        frame.add(btn2);
+        frame.setBounds(50, 50, 200, 100);
+        frame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        new WindowAndPanel().init();
+    }
+}
+```
+
+##### BoxLayout
+
+`GridBagLayout` 布局管理器虽然功能强大，但它实在太复杂了，所以 `Swing` 引入了一个新的布局管理器：`BoxLayout`，它可以在垂直和水平两个方向上摆放 `GUI` 组件
+
+```java
+public class WindowAndPanel {
+    private Frame frame = new Frame("BoxLayout 测试一");
+
+    public void init() {
+        frame.setLayout(new BoxLayout(frame, BoxLayout.Y_AXIS));
+        frame.add(new Button("第一个按钮"));
+        frame.add(new Button("第二个按钮"));
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        new WindowAndPanel().init();
+    }
+}
+```
+
+`BoxLayout` 通常和 `Box` 容器结合使用，`Box` 是一个特殊的容器，它有点像 `Panel` 容器，但该容器默认使用 `BoxLayout` 布局管理器，`Box` 提供了两个静态方法来创建`Box` 对象：
+
+* `createHorizontalBox()` ：创建一个水平排列组件的 `Box` 容器
+* `createVerticalBox()` ：创建一个垂直排列的 `Box` 容器
+
+```java
+public class WindowAndPanel {
+    private Frame frame = new Frame("BoxLayout 测试一");
+
+    public void init() {
+        Box horizontalBox = Box.createHorizontalBox();
+        horizontalBox.add(new Button("水平按钮一"));
+        horizontalBox.add(new Button("水平按钮二"));
+        Box verticalBox = Box.createVerticalBox();
+        verticalBox.add(new Button("垂直按钮一"));
+        verticalBox.add(new Button("垂直按钮二"));
+        frame.add(horizontalBox, BorderLayout.NORTH);
+        frame.add(verticalBox);
+
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        new WindowAndPanel().init();
+    }
+}
+```
+
+`Box` 提供了五个静态方法来创建 `Glue`、`Strut` 和 `RigidArea`，用来控制组件在水平和垂直方向上的间距：
+
+* `createHorizontalGlue()` ：创建一个水平 `Glue`（可在两个方向同时拉伸的间距）
+* `createVerticalGlue()` ：创建一个垂直 `Glue`（可在两个方向同时拉伸的间距）
+* `createHorizontalStut(int width)` ：创建一条指定宽度的 `Strut`（可在垂直方向拉伸的间距）
+* `createVerticalStrut(int height)` ：创建一条指定高度的垂直 `Strut`（可在水平方向拉伸的间距）
+* `createRightArea(Dimension d)` ：创建指定宽度、高度的 `RigidArea`（不可拉伸的间距）
+
+```java
+public class WindowAndPanel {
+    private Frame frame = new Frame("BoxLayout 测试一");
+
+    public void init() {
+        Box horizontalBox = Box.createHorizontalBox();
+        Box verticalBox = Box.createVerticalBox();
+
+        horizontalBox.add(new Button("水平按钮一"));
+        horizontalBox.add(Box.createHorizontalGlue());
+        horizontalBox.add(new Button("水平按钮二"));
+        // 水平方向不可拉伸距离，其宽度为 10
+        horizontalBox.add(Box.createHorizontalStrut(10));
+        horizontalBox.add(new Button("水平按钮三"));
+
+        verticalBox.add(new Button("垂直按钮一"));
+        verticalBox.add(Box.createVerticalGlue());
+        verticalBox.add(new Button("垂直按钮二"));
+        // 垂直方向不可拉伸的距离，其高度为 10
+        verticalBox.add(Box.createVerticalStrut(10));
+        verticalBox.add(new Button("垂直按钮三"));
+
+        frame.add(horizontalBox, BorderLayout.NORTH);
+        frame.add(verticalBox);
+
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        new WindowAndPanel().init();
+    }
+}
+```
+
+#### AWT 常用组件
+
+`AWT` 组件需要调用运行平台的图形界面来创建和平台一致的对等体，因此 `AWT` 平台只能使用所有平台都支撑的公共组件，所以 `AWT` 只提供了一些常用的 `GUI` 组件
+
+##### 基本组件
+
+* `Button` ：按钮，可接受单击操作
+* `Canvas` ：用于绘图的画布
+* `Checkbox` ：复选框组件（也可以变成单选框组件）
+* `CheckboxGroup` ：用于将多个  `Checkbox` 组件合成一组，一组 `Checkbox` 组件将只有一个可以被选中，即全部变成单选框组件
+* `Choice` ：下拉式选择框组件
+* `Frame` ：窗口，在 `GUI` 程序里通过该类创建窗口
+* `Label` ：标签类，用于放置提示性文本
+* `List` ：列表框组件，可以添加多项条目
+* `Panel` ：不能单独存在的基本容器类，必须放到其它容器中
+* `ScrollBar` ：滑动条组件，如果需要用户输入位于某个范围的值，就可以使用滑动条组件，比如调色板中设置 `RGB` 三个值所用的滑动条。当创建一个滑动条时，必须指定它的方向、初始值、滑块的大小、最小值和最大值
+* `ScrollPane` ：带水平及垂直滚动条的容器组件
+* `TextArea` ：多行文本域
+* `TextField` ：单行文本域
+
+##### 对话框（Dialog）
+
+`Dialog` 是 `Window` 的子类，是一个容器类，属于特殊组件。对话框是可以独立存在的顶级窗口，因此用法与普通窗口的用法几乎完全一样，但需要注意两点：
+
+* 对话框通常依赖于其它窗口，就是通常有一个 `parent` 窗口
+* 对话框有非模式（`non-modal`）和模式（`nodal`）两种，当某个模式对话框被打开后，该模式对话框总是位于它依赖的窗口之上。在模式对话框被关闭之前，它依赖的窗口无法获得焦点
+
+对话框有多个重载的构造器，可能会有如下三个参数：
+
+* `owner` ：指定该对话框所依赖的窗口，既可以是窗口，也可以是对话框
+* `title` ：指定该对话框的窗口标题
+* `modal` ：指定该对话框是否模式的，`true` 或 `false`
+
+```java
+public class WindowAndPanel {
+    private Frame frame = new Frame("Dialog 测试");
+
+    public void init() {
+        Dialog dialog1 = new Dialog(frame, "模式对话框", true);
+        Dialog dialog2 = new Dialog(frame, "非模式对话框", false);
+
+        Button button1 = new Button("打开模式对话框");
+        Button button2 = new Button("打开非模式对话框");
+
+        dialog1.setBounds(20, 30 , 300, 400);
+        dialog2.setBounds(20, 30 , 300, 400);
+
+        button1.addActionListener(e -> dialog1.setVisible(true));
+        button2.addActionListener(e -> dialog2.setVisible(true));
+
+        frame.add(button1);
+        frame.add(button2, BorderLayout.SOUTH);
+
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        new WindowAndPanel().init();
+    }
+}
+```
+
+`FileDialog` 是 `Dialog` 的子类，它代表一个对话框文件，用于打开或保存文件，它的构造器可支持：`parent`、`title` 和 `model` 三个参数，其中 `parent`、`title` 指定文件对话框的所属父窗口和标题，而 `mode` 用于指定该窗口用于打开文件或保存文件，该参数支持两个参数值：`FileDialog.LOAD`、`FileDialog.SAVE`。
+
+`FileDialog` 提供了如下两个方法来获取被打开/保存文件的路径：
+
+* `getDirectory()` ：获取被打开/保存文件的绝对路径
+* `getFile()` ：获取被打开/保存文件的文件名
+
+```java
+public class WindowAndPanel {
+    private Frame frame = new Frame("FileDialog 测试");
+
+    public void init() {
+        FileDialog openDialog = new FileDialog(frame, "打开文件", FileDialog.LOAD);
+        FileDialog saveDialog = new FileDialog(frame, "保存文件", FileDialog.SAVE);
+
+        Button openButton = new Button("打开文件");
+        Button saveButton = new Button("保存文件");
+
+        openButton.addActionListener(e -> {
+            openDialog.setVisible(true);
+            System.out.println(openDialog.getDirectory() + openDialog.getFile());
+        });
+
+        saveButton.addActionListener(e -> {
+            saveDialog.setVisible(true);
+            System.out.println(saveDialog.getDirectory() + saveDialog.getFile());
+        });
+
+        frame.add(openButton);
+        frame.add(saveButton, BorderLayout.SOUTH);
+
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        new WindowAndPanel().init();
+    }
+}
+```
+
+#### 事件处理
+
+##### Java 事件模型的流程
+
+在事件处理过程中，主要涉及三类对象：
+
+* `Event Source（事件源）` ：事件发生的场所，通常就是各个组件，例如按钮、窗口、菜单等
+* `Event（事件）` ：事件封装了 `GUI` 组件上发生的特定事件（通常就是一次用户操作）。如果程序需要获得 `GUI` 组件上所发生事件的相关信息，都通过 `Event` 对象来获取
+* `Event Listener（事件监听器）` ：负责监听事件源所发生的事件，并对各种事件做出监听处理
+
+[![6BB9eg.png](https://s3.ax1x.com/2021/03/15/6BB9eg.png)](https://imgtu.com/i/6BB9eg)
+
+实现 `AWT` 事件处理机制的步骤如下：
+
+1. 实现事件监听类，该监听类是一个特殊的 `Java` 类，必须实现一个 `XxxListener` 接口
+2. 创建普通组件（事件源），创建事件监听器对象
+3. 调用 `addXxxListener()` 方法将事件监听器对象注册给普通组件（事件源）。当事件源上发生指定事件时，`AWT` 会触发事件监听器，由事件监听器调用相应的方法（事件处理器）来处理事件，事件源上所发生的事件会作为参数传入事件处理器
+
+##### AWT 事件分类
+
+* 低级事件
+
+  指基于特定动作的事件。比如进入、点击、拖放等动作的鼠标事件，当组件得到焦点、失去焦点触发焦点事件
+
+  * `ComponentEvent` ：组件事件，当组件尺寸发生变化、位置发生移动、显示/隐藏状态发生改变时触发该事件
+  * `ContainerEvent` ：容器事件，当容器里发生添加组件、删除组件时触发该事件
+  * `WindowEvent` ：窗口事件，当窗口状态发生改变（如打开、关闭、最大化、最小化）时触发该事件
+  * `FocusEvent` ：焦点事件，当组件得到焦点或失去焦点时触发该事件
+  * `KeyEvent` ：键盘事件，当按键被按下、松开、单击时触发该事件
+  * `MouseEvent` ：鼠标事件，当进行按下、松开、单击、移动鼠标等动作时触发该事件
+  * `PaintEvent` ：组件绘制事件，该事件是一个特殊的事件类型，当 `GUI` 组件调用 `update/paint` 方法来呈现自身时触发该事件，该事件并非专用于事件处理模型
+
+* 高级事件
+
+  基于语义的事件，它可以不和特定的动作相关联，而依赖于触发此事件的类。比如，在 `TextField` 中按 `Enter` 键会触发 `ActionEvent` 事件，在滑动条上移动滑块会触发 `AdjustmentEvent` 事件，选中项目列表的某一项就会触发 `ItemEvent` 事件
+
+  * `ActionEvent` ：动作事件，当按钮、菜单被单击，在 `TextField` 中按 `Enter` 键时触发该事件
+  * `AdjustmentEvent` ：调节事件，在滑动条上移动滑块以调节数值时触发该事件
+  * `ItemEvent` ：选项事件，当用户选中某项，或取消选中某项时触发该事件
+  * `TextEvent` ：文本事件，当文本框、文本域里的文本发生改变时触发该事件
+
+[![6BBSOS.png](https://s3.ax1x.com/2021/03/15/6BBSOS.png)](https://imgtu.com/i/6BBSOS)
+
+| 事件              | 监听器接口           | 处理器及触发时间                                             |
+| ----------------- | -------------------- | ------------------------------------------------------------ |
+| `ActionEvent`     | `ActionListener`     | `actionPerformed`：按钮、文本框、菜单被单击时触发            |
+| `AdjustmentEvent` | `AdjustmentListener` | `adjustmentValueChanged`：滑块位置发生变化时触发             |
+| `ContainerEvent`  | `ContainerListener`  | `componentAdded`：向容器中添加组件时触发；`componentRemoved`：从容器中删除组件时触发<br/> |
+| 未完待续……        |                      |                                                              |
+
+```java
+public class WindowAndPanel {
+    private Frame frame = new Frame("事件监听 测试");
+    private TextArea textArea = new TextArea(6, 40);
+    private Button bu1 = new Button("按钮一");
+    private Button bu2 = new Button("按钮二");
+
+    public void init() {
+        FirstListener firstListener = new FirstListener();
+        bu1.addActionListener(firstListener);
+        bu1.addActionListener(new SecondListener());
+
+        bu2.addActionListener(firstListener);
+
+        frame.add(textArea);
+        Panel panel = new Panel();
+        panel.add(bu1);
+        panel.add(bu2);
+        frame.add(panel, BorderLayout.SOUTH);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    class FirstListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            textArea.append("第一个事件监听器被触发，事件源是：" + e.getActionCommand() + "\n");
+        }
+    }
+
+    class SecondListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            textArea.append("单击了：" + e.getActionCommand() + "按钮\n");
+        }
+    }
+
+    public static void main(String[] args) {
+        new WindowAndPanel().init();
+    }
+}
+```
+
+#### AWT 菜单
+
+`AWT` 中的菜单由如下几个类组成：
+
+* `MenuBar` ：菜单条，菜单的容器
+* `Menu` ：菜单组件，菜单项的容器，它也是 `MenuItem` 的子类，所以可作为菜单项使用
+* `PopupMenu` ：上下文菜单组件（右键菜单组件）
+* `MenuItem` ：菜单项组件
+* `CheckboxMenuItem` ：复选框菜单项组件
+* `MenuShortcut` ：菜单快捷键组件
+
+[![6B0vSP.png](https://s3.ax1x.com/2021/03/15/6B0vSP.png)](https://imgtu.com/i/6B0vSP)
+
+从图中可以看出，`MenuBar` 和 `Menu` 都实现了菜单容器接口，所以 `MenuBar` 可以盛装 `Menu`，而 `Menu` 可以盛装 `MenuItem`（包括 `Menu` 和 `CheckboxMenuItem` 两个子类对象）。`Menu` 还有一个子类：`PopupMenu`，代表上下文菜单，上下文菜单无须使用 `MenuBar` 盛装。
+
+## 第XX章 Swing
+
+### 创建窗口
+
+`JFrame` 代表一个窗口，通过 `JFrame` 相关的 `API` 就可以创建窗口：
+
+```java
+JFrame frame = new JFrame("这是窗口的标题内容");
+```
+
+### 监听器
+
+监听器 `Listener` 是 `Swing` 里界面事件处理的一种方式，使用步骤如下：
+
+1. 创建监听器对象 `Listener`
+2. 将监听器对象交给要监听的组件
+3. 当按钮被点击时，`Swing` 框架会自动调用监听器对象里的方法，进行处理
+
+```java
+public class ShowCurTime {
+
+    private static Label label;
+    private static Button button;
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("显示当前时间", 400, 300);
+
+        Container contentPane = frame.getContentPane();
+        contentPane.setLayout(new FlowLayout());
+
+        button = new Button("显示时间");
+        contentPane.add(button);
+        label = new Label("00:00:00");
+        contentPane.add(label);
+
+        // 当按钮被点击时，Swing 框架会调用监听器的 actionPerformed() 方法
+        button.addActionListener(e -> showTime());
+    }
+
+    public static void showTime() {
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        label.setText(sdf.format(new Date()));
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(ShowCurTime::createGUI);
+    }
+}
+```
+
+### 回调
+
+回调，`Callback()`，一个设计上的术语。
+
+* 当我们调用系统的一个方法时，叫 `Call`（调用）
+* 当我们写的一个方法被系统调用时，叫 `Callback`（回调）
+
+> Java 中，使用 interface 语法实现回调
+
+### 控件
+
+#### JLabel
+
+用于显示短文本，或者图标
+
+* `setText()` ：设置文本
+* `setFont()` ：设置字体
+* `setForeground()` ：设置文本颜色
+* `setToolTipText()` ：设置工具提示
+
+#### JTextField
+
+用于显示单行文本
+
+* `new JTextField(16)` ：`16` 表示列数，用于计算宽度（并不是字数限制）
+* `setText()/getText()` ：设置文本/获取文本
+* `setFont()` ：设置字体
+
+```java
+public class DemoJTextField {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("JTextField 演示", 500, 200);
+
+        Container contentPane = frame.getContentPane();
+        contentPane.setLayout(new FlowLayout());
+
+        contentPane.add(new JLabel("请输入你的名字"));
+        JTextField textField = new JTextField(16);
+        contentPane.add(textField);
+        JButton button = new JButton("确定");
+        contentPane.add(button);
+
+        button.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String text = textField.getText();
+                JOptionPane.showMessageDialog(frame, "你输入的名字是：" + text);
+            }
+        });
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoJTextField::createGUI);
+    }
+}
+```
+
+#### JCheckBox
+
+复选框
+
+* `isSelected()/setSelected()` ：获取/设置选中状态
+* `setText()` ：选项文字
+* `addActionListener()` ：用户选中/取消时触发
+
+```java
+public class DemoJCheckBox {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("JCheckBox 练习", 400, 200);
+
+        Container contentPane = frame.getContentPane();
+        contentPane.setLayout(new FlowLayout());
+
+        JCheckBox checkBox = new JCheckBox("我想订阅邮件通知");
+        contentPane.add(checkBox);
+        JTextField textField = new JTextField(16);
+        contentPane.add(textField);
+
+        checkBox.setSelected(true);
+
+        checkBox.addActionListener(e -> textField.setEnabled(checkBox.isSelected()));
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoJCheckBox::createGUI);
+    }
+}
+```
+
+#### JComboBox
+
+下拉列表
+
+* `addItem(Object)` ：添加指定的对象成为列表项
+* `Object getItemAt(int index)` ：获取第 `index` 个索引
+* `Object getSelectedItem()` ：获得被选中的元素
+* `int getItemCount()` ：获取列表项的数目
+
+```java
+public class DemoJComboBox {
+
+    private static JComboBox<String> colors;
+    private static JLabel label;
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("JComboBox 练习", 400, 300);
+
+        Container contentPane = frame.getContentPane();
+        contentPane.setLayout(new FlowLayout());
+
+        colors = new JComboBox<>();
+        colors.addItem("红色");
+        colors.addItem("绿色");
+        colors.addItem("蓝色");
+
+        colors.setSelectedIndex(2);
+
+        colors.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                changeTextColor();
+            }
+        });
+
+        contentPane.add(colors);
+        label = new JLabel("文本样例 This is a sample");
+        contentPane.add(label);
+
+        changeTextColor();
+    }
+
+    private static void changeTextColor() {
+        int index = colors.getSelectedIndex();
+        if (index == 0)
+            label.setForeground(Color.red);
+        else if (index == 1)
+            label.setForeground(Color.green);
+        else if (index == 2)
+            label.setForeground(Color.blue);
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoJComboBox::createGUI);
+    }
+}
+```
+
+#### 综合小练习——彩色标签
+
+```java
+public class ColorLabel {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("彩色标签实战", 400, 200);
+
+        Container contentPane = frame.getContentPane();
+        contentPane.setLayout(new FlowLayout());
+
+        Color[] colors = {Color.yellow, Color.green, Color.gray, new Color(0, 116, 122)};
+
+        // 下面是第一种方式，不完全面向对象
+        /*for (int i = 0; i < colors.length; i++) {
+            JLabel label = new JLabel((i + 1) + "");
+            // 设置背影为不透明，JLabel 背影默认为透明的
+            label.setOpaque(true);
+            // 设置最佳尺寸
+            label.setPreferredSize(new Dimension(60, 30));
+            label.setBackground(colors[i]);
+            label.setHorizontalAlignment(SwingConstants.CENTER);
+            contentPane.add(label);
+        }*/
+
+        // 下面是第二种方式，面向对象
+        for (int i = 0; i < colors.length; i++) {
+            contentPane.add(new ColorLabel().new ColorfulLabel((i + 1) + "", colors[i]));
+        }
+    }
+
+    private class ColorfulLabel extends JLabel {
+        public ColorfulLabel(String text, Color color) {
+            super(text);
+
+            setOpaque(true);
+            setPreferredSize(new Dimension(60, 30));
+            setBackground(color);
+            setHorizontalAlignment(SwingConstants.CENTER);
+        }
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(ColorLabel::createGUI);
+    }
+}
+```
+
+### 卡片布局器练习
+
+```java
+public class DemoCardLayout {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("CardLayout 练习", 400, 200);
+
+        Container contentPane = frame.getContentPane();
+        contentPane.setLayout(new BorderLayout());
+
+        JComboBox<String> comboBox = new JComboBox<>();
+        comboBox.addItem("第一个卡片");
+        comboBox.addItem("第二个卡片");
+        contentPane.add(comboBox, BorderLayout.PAGE_START);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new CardLayout());
+        contentPane.add(panel);
+
+        JPanel panel1 = new JPanel();
+        panel1.add(new ColorLabel().new ColorfulLabel("1", Color.yellow));
+        panel1.add(new ColorLabel().new ColorfulLabel("2", Color.green));
+        panel1.add(new ColorLabel().new ColorfulLabel("3", Color.red));
+
+        JPanel panel2 = new JPanel();
+        panel2.add(new JLabel("请输入你的信息："));
+        panel2.add(new JTextField(16));
+
+        panel.add(panel1, "first");
+        panel.add(panel2, "second");
+
+        comboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int index = comboBox.getSelectedIndex();
+                CardLayout layout = (CardLayout) panel.getLayout();
+                if (index == 0)
+                    layout.show(panel, "first");
+                else if (index == 1)
+                    layout.show(panel, "second");
+            }
+        });
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoCardLayout::createGUI);
+    }
+}
+```
+
+### 窗口布局
+
+* 把上层窗口称为容器（`Container`）
+* 容器里可以有多个子窗口或子控件（`Component`）
+* 所谓布局，就是决定每一个子控件显示在什么位置
+* 在布局时，每个控件占据一个矩形区域（`Rectangle`）
+
+  * `Rectangle` 参数：左上角坐标 `(x,y)`、宽度 `width`、高度 `height`
+
+> 1. 取消布局器后（`setLayout(null)`），子控件默认是不显示的
+> 2. `Frame` 的窗口大小，包括了标题栏的大小
+
+```java
+public class DemoDIYLayout {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("自定义布局器 练习", 500, 400);
+
+        Container contentPane = frame.getContentPane();
+        contentPane.setLayout(null);
+
+        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("彩色标签一", Color.yellow);
+        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("彩色标签二", Color.red);
+
+        label1.setBounds(new Rectangle(0, 0, 200, 200));
+        label2.setBounds(new Rectangle(150, 150, 100, 150));
+
+        contentPane.add(label1);
+        contentPane.add(label2);
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoDIYLayout::createGUI);
+    }
+}
+```
+
+### 布局管理器
+
+负责对子控件的布局，当窗口变化的时候，动态调整子控件的位置和大小
+
+#### 布局器运行机制
+
+1. 给容器设置一个布局器：`root.setLayout(layoutMgr)`
+2. 当容器大小改变时，自动调用布局器重新布局：`layoutMgr.layoutContainer(...)` （这是`Swing`自动调用的）
+
+#### 手动布局
+
+手工定义每个控件的位置，只需要重写 `LayoutManager` 类的 `layoutContainer` 这个方法即可
+
+```java
+public class DemoLayoutManager {
+
+    private static ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("Hello World!", Color.yellow);
+    private static ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("样例文本", new Color(202, 255, 112));
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("布局管理器 练习", 300, 200);
+
+        Container contentPane = frame.getContentPane();
+        // 设置自定义的布局管理器
+        contentPane.setLayout(new DemoLayoutManager().new MyLayout());
+
+        contentPane.add(label1);
+        contentPane.add(label2);
+    }
+
+    public class MyLayout extends LayoutManagerAdapter {
+        @Override
+        public void layoutContainer(Container parent) {
+            super.layoutContainer(parent);
+
+            int width = parent.getWidth();
+            int height = parent.getHeight();
+
+            if (label1.isVisible()) {
+                int width1 = label1.getPreferredSize().width;
+                int height1 = label1.getPreferredSize().height;
+
+                label1.setBounds((width - width1) / 2, (height - height1) / 2, width1, height1);
+            }
+
+            if (label2.isVisible()) {
+                int width2 = label2.getPreferredSize().width;
+                int height2 = label2.getPreferredSize().height;
+
+                label2.setBounds(width - width2, 0, width2, height2);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoLayoutManager::createGUI);
+    }
+}
+```
+
+#### 线性布局器
+
+包含 **水平布局** 和 **垂直布局** 两种
+
+```java
+// 该类中，使用了阿发提供的 AfXLayout 工具类
+public class DemoLinearLayout {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("线性布局 练习", 300, 150);
+
+        Container contentPane = frame.getContentPane();
+        contentPane.setLayout(new AfXLayout(8));
+
+        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("Hello World!", Color.yellow);
+        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("样例文本", Color.green);
+        ColorLabel.ColorfulLabel label3 = new ColorLabel().new ColorfulLabel("Good Boy", Color.cyan);
+        ColorLabel.ColorfulLabel label4 = new ColorLabel().new ColorfulLabel("占满剩余", Color.red);
+
+        contentPane.add(label1, "100px");
+        contentPane.add(label2, "30%");
+        contentPane.add(label3, "auto");
+        contentPane.add(label4, "1w");
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoLinearLayout::createGUI);
+    }
+}
+```
+
+#### 任意布局
+
+一种不规则的布局，比规则布局使用频率低
+
+```java
+// 该类中，使用了阿发提供的 AfAnyWhere 工具类
+public class DemoAnywhereLayout {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("任意位置布局器 练习", 500, 300);
+
+        Container contentPane = frame.getContentPane();
+        contentPane.setLayout(new AfAnyWhere());
+
+        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("Hello World！", Color.yellow);
+        contentPane.add(label1, AfMargin.TOP_LEFT);
+        label1.setPreferredSize(new Dimension(90, 30));
+
+        contentPane.add(new ColorLabel().new ColorfulLabel("样例文本", Color.green), AfMargin.TOP_RIGHT);
+
+        ColorLabel.ColorfulLabel label = new ColorLabel().new ColorfulLabel("Good Boy", Color.red);
+        contentPane.add(label, AfMargin.CENTER);
+        label.setPreferredSize(new Dimension(260, 150));
+
+        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("占据剩余", Color.cyan);
+        contentPane.add(label2, new AfMargin(-1, 15, 10, 15)); // -1 表示自动计算
+        label2.setPreferredSize(new Dimension(0, 40));
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoAnywhereLayout::createGUI);
+    }
+}
+```
+
+#### 综合布局
+
+这是一个综合布局练习，请享用
+
+```java
+// 该类使用了阿发提供的 AfXLayout 工具类
+public class DemoComprehensiveLayout {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("综合布局 练习", 500, 300);
+
+        Container contentPane = frame.getContentPane();
+
+        JPanel panel1 = new JPanel();
+        panel1.setLayout(new AfXLayout());
+        JLabel label = new ColorLabel().new ColorfulLabel(">>>", Color.green);
+        label.setBackground(Color.yellow);
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        panel1.add(label, "1w");
+        JButton button = new JButton("发送");
+        panel1.add(button, "80px");
+        contentPane.add(panel1, BorderLayout.PAGE_START);
+
+        contentPane.add(new ColorLabel().new ColorfulLabel("...", Color.green), BorderLayout.CENTER);
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoComprehensiveLayout::createGUI);
+    }
+}
+```
+
+### Border
+
+每个 `JComponent` 都可以有一个或多个边框。边界是非常有用的对象，虽然它们本身不是组件，但知道如何绘制 `Swing` 组件的边缘。边框不仅用于绘制线条和漂亮的边缘，还用于提供标题和组件周围的空白。
+
+> 尽管从技术上讲，可以在继承自 `JComponent` 的任何对象上设置边框，但许多标准 `Swing` 组件的外观实现与用户设置的边框不能很好地整合在一起工作。通常，当你想在除 `JPanel` 或 `JLabel` 之外的标准 `Swing` 组件上设置边框时，建议将组件放在 `JPanel` 中，并在 `JPanel` 上设置边框。
+
+```java
+public class DemoBorderEasy {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("简单边框 练习", 500, 400);
+
+        Container contentPane = frame.getContentPane();
+        contentPane.setLayout(new AfYLayout(3));
+
+        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("1", new Color(0xceeb5f));
+        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("2", new Color(0xefe149));
+        LineBorder lineBorder = new LineBorder(Color.blue, 4, true);
+        label2.setBorder(lineBorder);
+        ColorLabel.ColorfulLabel label3 = new ColorLabel().new ColorfulLabel("3", new Color(0xb1e8a6));
+        label3.setBorder(BorderFactory.createLineBorder(Color.blue, 4));
+        ColorLabel.ColorfulLabel label4 = new ColorLabel().new ColorfulLabel("4", new Color(0xf0f0f0));
+        label4.setBorder(BorderFactory.createTitledBorder("边框标题"));
+
+        contentPane.add(label1, "25%");
+        contentPane.add(label2, "25%");
+        contentPane.add(label3, "25%");
+        contentPane.add(label4, "25%");
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoBorderEasy::createGUI);
+    }
+}
+```
+
+根据边框的样式分类，大概可以分为 `4` 种：
+
+* 简单边框：`Simple`
+* 特种边框：`Matte`（上、下、左、右边框不一样的）
+* 带标题边框：`Titled`
+* 复合边框：`Compound`
+
+```java
+public class DemoBorderAllKinds {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("四各类型的边框 练习", 400, 300);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new AfYLayout(3));
+        // 给窗口设置空边框（用于占位）
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 20));
+        frame.setContentPane(panel);
+
+        // 简单类型边框（Simple）
+        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("1", new Color(0xfcfcfc));
+        label1.setBorder(BorderFactory.createRaisedBevelBorder());
+
+        // 特种边框（Matte）
+        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("2", new Color(0xfcfcfc));
+        label2.setBorder(BorderFactory.createMatteBorder(1, 5, 1, 1, Color.red));
+
+        // 带标题边框（Titled）
+        ColorLabel.ColorfulLabel label3 = new ColorLabel().new ColorfulLabel("3", new Color(0xfcfcfc));
+        TitledBorder title = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "title");
+        title.setTitleJustification(TitledBorder.RIGHT);
+        label3.setBorder(title);
+
+        // 复合边框（Compound）
+        ColorLabel.ColorfulLabel label4 = new ColorLabel().new ColorfulLabel("4", new Color(0xfcfcfc));
+        Border outer = BorderFactory.createLineBorder(Color.blue, 4);
+        Border inner = BorderFactory.createLineBorder(Color.red, 4);
+        CompoundBorder compound = BorderFactory.createCompoundBorder(outer, inner);
+        label4.setBorder(compound);
+
+        panel.add(label1, "25%");
+        panel.add(label2, "25%");
+        panel.add(label3, "25%");
+        panel.add(label4, "25%");
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoBorderAllKinds::createGUI);
+    }
+}
+```
+
+#### 边距与填充
+
+在 `Swing` 里，边距和填充也是由 `Border` 来实现的。
+
+```java
+// 所谓的 EmptyBorder，就可以用来实现空白填充效果
+Border padding = BorderFactory.createEmptyBorder(8, 8, 8, 8);
+```
+
+> 具体代码实现见上一个示例代码
+
+* `padding`：边框线与内容之间的边距
+* `margin`：边框外的空白间距
+
+```java
+// 本类使用了阿发提供的 AfLayout、AfBorder 工具类
+public class DemoMarginUtil {
+
+    public static void createGUI() {
+
+        MyFrame frame = new MyFrame("四各类型的边框 练习", 400, 300);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new AfYLayout(3));
+        // 给窗口添加内边距
+        // AfBorder.addPadding(panel, 8);
+        AfBorder.addPadding(panel, 3, 6, 12, 24);
+        frame.setContentPane(panel);
+
+        ColorLabel.ColorfulLabel label1 = new ColorLabel().new ColorfulLabel("1", new Color(0xfcfcfc));
+        ColorLabel.ColorfulLabel label2 = new ColorLabel().new ColorfulLabel("2", new Color(0xfcfcfc));
+        ColorLabel.ColorfulLabel label3 = new ColorLabel().new ColorfulLabel("3", new Color(0xfcfcfc));
+        ColorLabel.ColorfulLabel label4 = new ColorLabel().new ColorfulLabel("4", new Color(0xfcfcfc));
+
+        panel.add(label1, "25%");
+        panel.add(label2, "25%");
+        panel.add(label3, "25%");
+        panel.add(label4, "25%");
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoMarginUtil::createGUI);
+    }
+}
+```
+
+### 使用图标
+
+* 接口：`Icon`
+* 实现类：`ImageIcon`
+
+默认情况下，`JLabel、JButton` 都可以显示图标，支持 `jpg/jepg/png` 格式的静态图片
+
+```java
+public class DemoIconLoad {
+
+    public static void createGUI() throws Exception {
+        MyFrame frame = new MyFrame("图片加载 练习", 300, 200);
+
+        JPanel panel = new JPanel();
+        JLabel label = new JLabel();
+        frame.setContentPane(panel);
+
+        Icon camera = new ImageIcon(DemoIconLoad.class.getResource("/images/camera.png"));
+        label.setIcon(camera);
+        label.setText("这是一个图标");
+        panel.add(label);
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            try {
+                createGUI();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+}
+```
+
+#### 资源文件
+
+随 `class` 文件一同打包的文件，称为资源文件
+
+资源文件的加载：内部由 `ClassLoader` 负责加载，加载时，须指定资源文件的路径（包路径
+
+```java
+public class DemoImageIconShow {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("图标按钮 练习", 500, 400);
+
+        JPanel panel = new JPanel();
+        frame.setContentPane(panel);
+
+        panel.setLayout(new BorderLayout());
+
+        JButton button1 = createButton("/images/view.png");
+        JButton button2 = createButton("/images/save.png");
+        JButton button3 = createButton("/images/print.png");
+
+        Box box = Box.createHorizontalBox();
+        panel.add(box, BorderLayout.PAGE_START);
+
+        box.add(button1);
+        box.add(button2);
+        box.add(button3);
+
+        JTextArea content = new JTextArea();
+        panel.add(content, BorderLayout.CENTER);
+        content.setBorder(BorderFactory.createLineBorder(Color.lightGray));
+    }
+
+    public static JButton createButton(String path) {
+        URL url;
+        Icon icon = new ImageIcon(DemoImageIconShow.class.getResource(path));
+
+        JButton button = new JButton();
+        button.setIcon(icon);
+
+        button.setContentAreaFilled(false);
+        button.setFocusPainted(false);
+
+        return button;
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoImageIconShow::createGUI);
+    }
+}
+```
+
+### 自定义控件
+
+* 自己写个类，继承某个系统的类
+* 重写 `paintComponent(Graphics g)` 方法，决定自定义控件的显示
+
+```java
+public class DemoDIYComponentRedSquare {
+
+    public static void createGUI() {
+        MyFrame frame = new MyFrame("自定义控件-红色方框 练习", 300, 300);
+
+        frame.setLayout(new FlowLayout());
+
+        frame.setContentPane(new DemoDIYComponentRedSquare().new MyPanel());
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoDIYComponentRedSquare::createGUI);
+    }
+
+    private class MyPanel extends JPanel {
+        @Override
+        protected void paintComponent(Graphics g) {
+            int width = this.getWidth();
+            int height = this.getHeight();
+
+            g.clearRect(0, 0, width, height);
+
+            g.setColor(Color.red);
+            g.fillRect(0, 0, width, height);
+        }
+    }
+}
+```
+
+#### 颜色
+
+在 `Swing` 里，用 `Color` 类来代表颜色
+
+```java
+Color color = Color.red;
+Color color = new Color(255, 0, 0);
+Color color = new Color(0xFF0000);
+```
+
+#### 控件的绘制
+
+在控件里可以绘制的内容：
+
+* 几何图形
+* 文本
+* 图片
+
+绘制几何图形时，使用 `Graphics` 和 `Graphics2D` 下的方法
+
+* `Line` ：直线
+* `Rect` ：矩形（含正方形）
+* `Oval` ：椭圆（含圆）
+* `Polygon` ：多边形（含三角形）
+* `Arc` ：圆弧 / 扇形
+
+几何图形的绘制方法分为两种
+
+* `drawXXX()` ：表示只画线条
+* `fillXXX()` ：表示只填充
+
+**自定义绘制正弦曲线示例**
+
+```java
+public class DemoDIYSinLine {
+    static MyClass contentPane = null;
+    static JSpinner grainSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 10, 1));
+    static JSpinner rangeSpinner = new JSpinner(new SpinnerNumberModel(50, 20, 80, 5));
+    static JSpinner periodSpinner = new JSpinner(new SpinnerNumberModel(100, 50, 150, 10));
+
+    public static void createGUI() {
+
+        MyFrame frame = new MyFrame("自定义绘制正弦曲线 练习", 500, 500);
+
+        Container pane = frame.getContentPane();
+        pane.setLayout(new BorderLayout());
+        DemoDIYSinLine.contentPane = new DemoDIYSinLine().new MyClass();
+
+        Box box = Box.createHorizontalBox();
+        pane.add(box, BorderLayout.PAGE_START);
+        box.add(new JLabel("粒度"));
+        box.add(grainSpinner);
+        box.add(new JLabel("高度"));
+        box.add(rangeSpinner);
+        box.add(new JLabel("周期"));
+        box.add(periodSpinner);
+        box.add(Box.createHorizontalGlue());
+
+        grainSpinner.setValue(DemoDIYSinLine.contentPane.grain);
+        rangeSpinner.setValue(DemoDIYSinLine.contentPane.range);
+        periodSpinner.setValue(DemoDIYSinLine.contentPane.period);
+
+        ChangeListener listener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                changeUI(e);
+            }
+        };
+
+        grainSpinner.addChangeListener(listener);
+        rangeSpinner.addChangeListener(listener);
+        periodSpinner.addChangeListener(listener);
+        pane.add(box, BorderLayout.PAGE_START);
+        pane.add(DemoDIYSinLine.contentPane, BorderLayout.CENTER);
+    }
+
+    public static void changeUI(ChangeEvent e) {
+        contentPane.grain = (int) grainSpinner.getValue();
+        contentPane.range = (int) rangeSpinner.getValue();
+        contentPane.period = (int) periodSpinner.getValue();
+
+        contentPane.repaint();
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(DemoDIYSinLine::createGUI);
+    }
+
+    private class MyClass extends JPanel {
+
+        int grain = 1; // 线条的精细度（粒度）
+        int range = 50; // 高度（振幅半径）
+        int period = 100; // x 轴，第 100 像素表示一个周期（2PI）
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            int width = getWidth();
+            int height = getHeight();
+
+            g.clearRect(0, 0, width, height);
+            g.setColor(Color.white);
+            g.fillRect(0, 0, width, height);
+
+            int center = height / 2;
+            g.setColor(Color.blue);
+            g.drawLine(0, center, width, center);
+
+            int x1 = 0, y1 = 0;
+            for (int i = 0; i < width; i += grain) {
+                // 每 100 像素表示 2PI
+                int x2 = i;
+                int y2 = (int) (range * Math.sin( 2 * Math.PI * i / period));
+                g.drawLine(x1, center + y1, x2, center + y2);
+
+                x1 = x2;
+                y1 = y2;
+            }
+        }
+    }
+}
+```
+
+#### 绘制图片
+
+位于 `java.awt.Image`，描述一个图像数据
+
+`drawImage(Image img, int x, int y, int width, int height, ImageObserver observer)` ：用于绘制图片的方法，`x, y, width, height` 为目标区域，`observer` 为通知接收者
+
+* 图片的准备
+
+  * 支持 `jpg/jpeg/png` 格式
+  * 可以是资源文件或本地文件
+
+* 加载图片
+
+  * 使用 `ImageIO` 类来加载图片，得到 `Image` 对象
+
+    `ImageIO.read(URL/File)`
