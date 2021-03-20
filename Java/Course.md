@@ -7069,13 +7069,94 @@ s;										// 仍然是 hello，没有发生任何变化
 
 ##### 2.8.1 转换和相等性
 
-由于 `JavaScript` 可以做灵活的类型转换，因此其 `==` 运算符也随相等的含义灵活多变。例如：下面的
+由于 `JavaScript` 可以做灵活的类型转换，因此其 `==` 运算符也随相等的含义灵活多变。例如：下面的比较结果均为 `true`：
 
+```javascript
+null == undefined		// 这两个值被认为相等
+"0" == 0				// 在比较之前字符串转换为数字
+0 == false				// 在比较之前布尔值转换为数字
+"0" == false			// 在比较之前字符串和布尔值都转换为数字
+```
 
+> 注意：一个值转换为另一个值并不意味着这两个值相等
 
+##### 2.8.2 显式类型转换
 
+做显式类型转换最简单的方法就是使用：`Boolean()、Number()、String()、Object()` 函数。当不通过 `new` 运算符调用这些函数时，它们会作为类型转换函数并按照 `2.8` 节一开始所描述的规则做类型转换：
 
+```javascript
+Number("3")				// 3
+String(false)			// "false"
+Boolean([])				// true
+Object(3)				// new Number(3)
+```
 
+> 除了 `null` 和 `undefined` 以外的任何值都具有 `toString()` 方法，这个方法的执行结果通常和 `String()` 方法的返回结果一致
+
+> 如果试图把 `null` 和 `undefined` 转换为对象，会抛出一个类型错误。`Object` 在这种情况下不会抛出异常，它仅简单的返回一个新创建的空对象
+
+**运算符的隐式类型转换：**
+
+* 二元 `+` 运算符的一个操作数是字符串，它会把另一个操作数转换为字符串
+* 一元 `+` 运算符将其操作数转换为数字
+* 一元 `!` 运算符将其操作数转换为布尔值并取反
+
+```javascript
+x + ''		// 等价于 String(x)
++x			// 等人于 Number(x)，也可以是 x - 0
+!!x			// 等人于 Boolean(x)。注意是双叹号
+```
+
+**数字与字符串之间的相互转换**
+
+* **整数→字符串：** `Number` 类定义的 `toString()` 方法可以接收表示转换基数的可选参数
+
+  ```javascript
+  var n = 17;
+  var binary_str = n.toString(2);		// 转换为 '10001'
+  var octal_str = n.toString(8);		// 转换为 '021'
+  var hex_str = n.toString(16);		// 转换为 '0x11'
+  var decimal_str = n.toString();		// 转换为 '17'
+  ```
+
+* **小数→字符串：**
+
+  * 控制输出中小数点的位置：`toFixed()`
+  * 控制输出中小数的有效位数：`toPrecision()`
+  * 控制输出是否需要指数计数法：`toExponential()`
+
+  ```javascript
+  var n = 123456.789;
+  n.toFixed(0);			// '123457'
+  n.toFixed(2);			// '123456.79'
+  n.toFixed(5);			// '123456.78900'
+  n.toExponential(1);		// '1.2e+5'
+  n.toExponential(3);		// '1.235e+5'
+  n.toPrecision(4);		// '1.235e+5'
+  n.toPrecision(7);		// '123456.8'
+  n.toPrecision(10);		// '123456.7890'
+  ```
+
+* **字符串→数字：**
+
+  * `parseInt()`：将一个字符串转换为整数直接量
+  * `parseFloat()`：将一个字符串转换为小数直接量
+  * 这两个方法都是全局函数，不属性任何类的方法
+  * 这两个方法都会跳过任意数量的前导空格，尽可能解析更多的数字字符
+  * 如果第一个非空格字符是一个非法的数字直接量，将最终返回 `NaN`
+
+  ```javascript
+  parseInt('3 sdf sdf');				// 3
+  parseFloat('  3.14 sdf ladkf');		// 3.14
+  parseInt('-12.34');					// -12
+  parseInt('0xFF');					// 255
+  parseInt('-0xFF');					// -255
+  parseFloat('.1');					// 0.1
+  parseInt('0.1');					// 0
+  
+  ```
+
+  
 
 
 
