@@ -5309,7 +5309,7 @@ public class JDBCUtil {
 
 数据访问对象（`Data Access Object`），实现了业务逻辑与数据库访问分离：
 
-* 对同一张表的所有操作封装在 `XxxDaoImpl` 对象中
+* 对同一张表的所有操作封装在 `XxxDaoImpl` 类中
 * 根据增删改查的不同功能实现具体的方法（`insert、update、delete、select、selectAll`）
 
 ### Date 工具类
@@ -5534,13 +5534,12 @@ public class BankCardTest {
 ```java
 public class JDBCUtil {
     private static final Properties PROPERTIES = new Properties();
-
-    private static ThreadLocal<Connection> threadLocal = new ThreadLocal<>();
+    private static final ThreadLocal<Connection> THREAD_LOCAL = new ThreadLocal<>();
 
     static { // 类加载，只执行一次
         try (InputStream is = JDBCUtil.class.getResourceAsStream("/jdbc.properties")) {
             PROPERTIES.load(is);
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName(PROPERTIES.getProperty("driverClassName"));
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
         }
@@ -5553,11 +5552,15 @@ public class JDBCUtil {
      * @return - 数据库连接对象
      * @throws SQLException - 数据库连接失败等异常
      */
-    public static Connection getConnection() throws SQLException {
-        Connection conn = threadLocal.get();
-        if (conn == null) {
-            conn = DriverManager.getConnection(PROPERTIES.getProperty("url"), PROPERTIES.getProperty("username"), PROPERTIES.getProperty("password"));
-            threadLocal.set(conn);
+    public static Connection getConnection() {
+        Connection conn = THREAD_LOCAL.get();
+        try {
+            if (conn == null) {
+                conn = DriverManager.getConnection(PROPERTIES.getProperty("url"), PROPERTIES.getProperty("username"), PROPERTIES.getProperty("password"));
+                THREAD_LOCAL.set(conn);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return conn;
     }
@@ -5566,28 +5569,40 @@ public class JDBCUtil {
      * 设置 Connection 的自动提交为 false
      * @throws SQLException - SQL 操作失败
      */
-    public static void setAutoCommit(boolean sign) throws SQLException {
-        getConnection().setAutoCommit(sign);
+    public static void beginTransaction() {
+        try {
+            Connection conn = getConnection();
+            conn.setAutoCommit(false);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * Connection 提交更改
      * @throws SQLException - SQL 操作失败
      */
-    public static void commit() throws SQLException {
-        getConnection().commit();
-        closeAll(null, null, getConnection());
-        threadLocal.remove();
+    public static void commit() {
+        try {
+            Connection conn = getConnection();
+            conn.commit();
+            close(conn, null, null);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * 设置 Connection 进行事务的回滚
-     * @throws SQLException - SQL 操作失败
      */
-    public static void rollback() throws SQLException {
-        getConnection().rollback();
-        closeAll(null, null, getConnection());
-        threadLocal.remove();
+    public static void rollback() {
+        try {
+            Connection conn = getConnection();
+            conn.rollback();
+            close(conn, null, null);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -5595,15 +5610,22 @@ public class JDBCUtil {
      * @param rs - ResultSet
      * @param sm - Statement
      * @param conn - Connection
-     * @throws SQLException - 数据库操作相关异常
      */
-    public static void closeAll(ResultSet rs, Statement sm, Connection conn) throws SQLException {
-        if (rs != null)
-            rs.close();
-        if (sm != null)
-            sm.close();
-        if (conn != null)
-            conn.close();
+    public static void close(Connection conn, Statement statement, ResultSet rs) {
+        try {
+            if (rs != null)
+                rs.close();
+
+            if (statement != null)
+                statement.close();
+
+            if (conn != null) {
+                conn.close();
+                THREAD_LOCAL.remove();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
 ```
@@ -5622,7 +5644,7 @@ public class JDBCUtil {
 
 #### 数据访问层
 
-* 命名：`XxxDao`
+* 命名：`XxxDaoImpl`
 * 职责：向业务层提供数据，将业务层加工后的数据同步到数据库
 
 [![6ka9zT.png](https://s3.ax1x.com/2021/03/02/6ka9zT.png)](https://imgtu.com/i/6ka9zT)
@@ -5749,7 +5771,7 @@ public interface RowMapper<T> {
 #### 连接池使用步骤
 
 1. 创建 `database.properties` 配置文件
-2. 引入 `druid-1.1.5.jar` 文件
+2. 引入 `druid-x.x.x.jar` 文件
 
 #### 配置文件
 
@@ -5758,8 +5780,8 @@ public interface RowMapper<T> {
 # 下面四个键名不能改变，这些都是 Druid 的实现类里面规定的名称，改变后会抛出异常
 driverClassName=com.mysql.cj.jdbc.Driver
 url=jdbc:mysql://localhost:3306/school?useUnicode=true&characterEncoding=utf-8
-username=root
-password=root
+username=****
+password=****
 # 初始化连接
 initialSize=10
 # 最大连接数量
@@ -5998,7 +6020,7 @@ public class CommonsDbutilsTest {
 
 ### 书写规范
 
-* `HTML` 标签是以尖括号包围的关键字
+* `HTML` 标签是以**尖括号**包围的**关键字**
 * `HTML` 标签通常是成对出现的，有开始就有结束
 * `HTML` 标签通常都有属性，格式：属性="属性值"（多个属性之间用空格隔开）
 * `HTML` 标签不区分大小写，建议全部小写
@@ -6044,7 +6066,7 @@ public class CommonsDbutilsTest {
 
 ### 换行与空格
 
-`html` 文档会忽略掉多与的空格，只显示为一个空格。如果需要显示多个空格或者 `< >` 等，都需要使用特殊符号代替
+`html` 文档会忽略掉多余的空格，只显示为一个空格。如果需要显示多个空格或者 `< >` 等，都需要使用特殊符号代替
 
 ### 基本标签
 
@@ -6086,7 +6108,7 @@ public class CommonsDbutilsTest {
 
 ##### 段落标签
 
-`<p>文本文字</p>`：突出显示一段文本，每一段的文本都独占一行或一块，不与其他元素同行，并且与具备垂直的空白距离
+`<p>文本文字</p>`：突出显示一段文本，每一段的文本都独占一行或一块，不与其他元素同行，并且具备垂直的空白距离
 
 * 特点：段与段之间有空行
 * 属性
@@ -6500,8 +6522,11 @@ public class CommonsDbutilsTest {
       1. 隐式提交，看不到数据提交
       2. 安全性较高
       3. 没有数据大小限制
+3. `enctype` ：表示是表单提交的类型
+   1. 默认值：`application/x-www-form-unlencoded`，普通表单
+   2. `multipart/form-data`：多部分表单（一般用于文件上传）
 
-#### 表单控件
+#### 表单控件 - input
 
 提供与用户交互的可视化组件
 
@@ -6524,6 +6549,18 @@ public class CommonsDbutilsTest {
 2. `value` ：设置当前控件的值，最终提交给服务器
 3. `checked` ：设置预选中状态，可以省略属性值，也可以使用 `"checked"` 作为值
 
+##### 日期框
+
+`<input type="date">`
+
+##### 时间框
+
+`<input type="time">`
+
+##### 时间日期框
+
+`<input type="datetime">`
+
 ##### 隐藏域
 
 需要提交给服务器但是却不需要呈现给用户的数据，都可以放在隐藏域中 `<input type="hidden">`
@@ -6531,23 +6568,31 @@ public class CommonsDbutilsTest {
 1. `name` ：控件的名称
 2. `value` ：控件的值
 
+##### 电子邮件
+
+`<input type="email">`
+
+##### 数字输入
+
+`<input type="number">`
+
+##### 电话号码
+
+`<input type="tel">`
+
+##### 取值范围
+
+`<input type="range">`
+
+##### 取色按钮
+
+`<input type="color">`
+
 ##### 文件选择
 
 `<input type="file">`
 
 1. `name` ：控件的名称
-
-##### 下拉选择框
-
-```html
-<select name="op">
-  <option value="o1">选项一</option>
-  <option value="o2">选项二</option>
-  ...
-</select>
-```
-
-假设用户选择选项一，在使用 `get` 方式提交数据时，`URL` 拼接后的数据应为：`op=o1`
 
 ##### 文本域
 
@@ -6573,9 +6618,559 @@ public class CommonsDbutilsTest {
 
 `<button>按钮显示文本</button>`  该标签可以在任何地方使用；**该标签如果使用在表单中，默认具有提交功能，等同于 `<input type="submit">` **；可以添加 `type` 属性，取值：`submit / reset / button` 进行区分；
 
-#### 特殊用法
+##### 图片提交按钮
+
+`<input type="image" src="">`
+
+##### 特殊用法
 
 `<label for="要关联的控件id">男</label><input type="radio" id="male" name="gender" value="male>"` 
+
+#### 表单控件 - select
+
+##### 下拉选择框
+
+```html
+<select name="op">
+  <option value="o1" selected="selected">选项一</option>
+  <option value="o2">选项二</option>
+  ...
+</select>
+```
+
+假设用户选择选项一，在使用 `get` 方式提交数据时，`URL` 拼接后的数据应为：`op=o1`
+
+**多选列表：**`<select multiple="multiple"></select>`
+
+#### 表单控件 - textarea
+
+**多行文本域**
+
+```html
+<textarea cols="列" rows="行">
+  内容
+</textarea>
+```
+
+#### 表单综合练习
+
+[![6HEdRs.png](https://z3.ax1x.com/2021/03/23/6HEdRs.png)](https://imgtu.com/i/6HEdRs)
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>表单练习</title>
+</head>
+<body>
+    <form action="result.html" method="get">
+        <p>
+            姓名：<input type="text" name="name" width="120px">
+        </p>
+        <p>
+            密码：<input type="password" name="password" width="120px">
+        </p>
+        <p>
+            重复密码：<input type="password" name="repassword" width="120px">
+        </p>
+        <p>
+            性别：<input type="radio" name="sex" value="male" checked>男<input type="radio" name="sex" value="femal">女
+        </p>
+        <p>
+            兴趣：<input type="checkbox" name="hobby" value="study" checked>学习<input type="checkbox" name="hobby" value="program">编程<input type="checkbox" name="hobby" value="work">工作
+        </p>
+        <p>
+            生日：<input type="date" name="birthday">
+        </p>
+        <p>
+            薪水：<input type="number">
+        </p>
+        <p>
+            学历：
+            <select multiple="multiple" name="profession">
+                <option value="1">大专</option>
+                <option value="2">本科</option>
+                <option value="3">硕士</option>
+                <option value="4">博士</option>
+            </select>
+        </p>
+        <p>
+            简介：<textarea name="info" id="info" cols="30" rows="10">这个家伙很懒，什么都没有留下...</textarea>
+        </p>
+        <p>
+            <input type="submit" value="提交">
+        </p>
+    </form>
+</body>
+</html>
+```
+
+### 框架标签
+
+通过使用框架，你可以在同一个浏览器窗口中显示不止一个页面。每份 `HTML` 文档称为一个框架，并且每个框架都独立于其他的框架
+
+使用框架的缺点：
+
+* 开发人员必须同时跟踪更多的 `HTML` 文档
+* 很难打印整张页面
+
+#### 框架结构标签 - frameset
+
+* 框架结构标签：`<frameset></frameset>`，用于定义如何将窗口分割为框架
+* 每个 `frameset` 标签定义了一系列行或列
+* `rows/columns` 的值规定了每行或每列占据屏幕的面积
+  * `<frameset rows="" cols=""></frameset>`
+
+#### 框架标签 - frame
+
+每个 `frame` 引入一个 `html` 页面
+
+```html
+<frameset clos="*,*">
+  <frame src="info1.html" />
+  <frmae src="info2.html" />
+</frameset>
+```
+
+#### 基本的注意事项
+
+* 不能将 `<body></body>` 标签与 `<frameset></frameset>` 标签同时使用
+* 假如一个框架有可见边框，用户可以手动边框来改变它的大小。为了避免这种情况发生，可以在 `<frame>` 标签中加入：`noresize="noresize"`
+
+## 第二十三章 CSS
+
+### 1. 简介
+
+#### 1.1 什么是 CSS
+
+* `CSS（Cascading Style Sheets）`：层叠样式表，定义如何显示 `HTML` 元素
+* 多个样式可以层层覆盖叠加，如果不同的 `css` 样式对同一 `html` 标签进行修饰，样式有冲突的，应用优先级高的，不冲突的共同作用
+
+#### 1.2 CSS 能干什么
+
+* 修饰美化 `html` 网页
+* 外部样式表可以提高代码利用性从而提高工作效率
+* `html` 内容与样式表现分离，便于后期维护
+
+#### 1.3 CSS 书写规范
+
+`CSS` 规则由两个主要的部分构造：选择器，以及一条或多条声明：
+
+* 选择器通常是需要改变样式的 `HTML` 元素
+
+* 每条声明由一个属性和一个值组成
+
+#### 1.4 基础语法：选择器：{属性: 值, 属性: 值, ...}
+
+[![cpid1K.md.png](https://z3.ax1x.com/2021/03/28/cpid1K.md.png)](https://imgtu.com/i/cpid1K)
+
+注意事项：
+
+* 请使用花括号来包围声明
+* 如果值为若干单词，则要给值加引号
+* 多个声明之间使用分号隔开
+* `css` 对大小写不敏感，如果涉及到与 `html` 文档一起使用时，`class` 与 `id` 名称对大小写敏感
+
+### 2. 导入方式
+
+#### 2.1 内嵌方式（内联方式）
+
+把 `css` 样式嵌入到 `html` 标签中，类似属性的用法：
+
+```html
+<div style="color: blue; font-size: 50px;">这是一个内容</div>
+```
+
+#### 2.2 内部方式
+
+在 `head` 标签中使用 `style` 标签引入 `css` 样式：
+
+```html
+<style type="text/css"> <!--告诉浏览器使用 CSS 解析器去解析-->
+  div {color: red; fonnt-size: 50px;}
+</style>
+```
+
+#### 2.3 外部方式
+
+将 `css` 样式抽成一个单独文件，使用者直接引用：
+
+```html
+创建单独文件：div.css
+内容：div{color: green; font-size: 50px;}
+引用语句写在 head 内部：
+	<link rel="stylesheet" type="text/css" href="div.css"/>
+	rel：代表当前页面与 href 所指定文档的关系
+	type: 文件类型，告诉浏览器使用 css 解析器去解析
+	href: css 文件地址
+```
+
+#### 2.4 @import 方式
+
+在页面中引入一个独立的单独文件：
+
+```html
+<style type="text/css">
+  @import url("div.css")
+</style>
+```
+
+> link 与 @import 方式的区别：
+>
+> * link 所有浏览器都支持，@import 某些版本低的 IE 浏览器不支持
+> * @import 是等待 html 加载完成才加载
+> * @import 是不支持 js 动态修改
+
+### 3. CSS选择器
+
+主要用于选择待添加样式的 `html` 元素
+
+#### 3.1 基本选择器
+
+##### 元素选择器
+
+在 `head` 中使用 `style` 标签，在其中声明元素选择器，语法：`html标签名 {属性: 属性值;...}`
+
+```html
+<style type="text/css">
+  span {color: red; font-size: 20px;}
+</style>
+```
+
+##### id 选择器
+
+给需要修改样式的 `html` 元素添加 `id` 属性标识，在 `head` 中使用 `style` 标签，在其中声明 `id` 选择器，语法：`#id值 {属性: 属性值;...}`
+
+```html
+<!-- 创建 id 选择器 -->
+<div id="d1">这是第一段</div>
+<div id="d2">这是第二段</div>
+<div id="d3">这是第三段</div>
+<!-- 根据 id 选择器进行 html 文件修饰 -->
+<style type="text/css">
+  #d1 {color: red;}
+  #d2 {color: green;}
+  #d3 {color: blue;}
+</style>
+```
+
+##### class 选择器
+
+给需要修改样式的 `html` 元素添加 `class` 属性标识，在 `head` 中使用 `style` 标签，在其中声明 `class` 选择器：`.class名 {属性: 属性值;...}`
+
+```html
+<!--创建 class 选择器-->
+<div class="d1">这是第一段</div>
+<div class="d2">这是第二段</div>
+<div class="d3">这是第三段</div>
+<!--根据 class 选择器进行 html 文件修饰-->
+<style type="text/css">
+  .d1 {color: red;}
+  .d2 {color: green;}
+  .d3 {color: blue;}
+</style>
+```
+
+> [以上基本选择器的优先级从高到低分别是：id 选择器，class 选择器，元素选择器]()
+
+#### 3.2 属性选择器
+
+* 根据元素的属性及属性的值来选择元素，在 `head` 中使用 `style` 标签引入在其中声明
+* 格式为：
+  * `html标签名[属性='属性值']{css属性: css属性值}`
+  * `html标签名[属性]{css属性：css属性值}`
+
+```html
+<!--body 内容-->
+<form action="#" name="login" method="get">
+  <font size="3">用户名：</font>
+  <input type="text" name="username" value="张三">
+  <font size="3">密码：</font>
+  <input type="password" name="password" value="123456">
+  <input type="submit" value="登录">
+</form>
+<!--head 中书写-->
+<style type="text/css">
+  input[type='text'] {background-color: pink;}
+  input[type='password'] {background-color: yellow;}
+  font[size] {color: green;}
+  a[href] {color: blue;}
+</style>
+```
+
+#### 3.3 伪元素选择器
+
+* 主要针对 `a` 标签
+* 语法
+  * 静止状态：`a:link {css属性：css属性值}`
+  * 悬浮状态：`a:hover {css属性：css属性值}`
+  * 触发状态：`a:active {css属性：css属性值}`
+  * 完成状态：`a:visited {css属性：css属性值}`
+
+```html
+<!--代码-->
+<a href="http://www.baidu.com">百度</a>
+<!--样式-->
+<style>
+  /*静止状态*/
+  a:link {color: red;}
+  /*悬浮状态*/
+  a:hover {color: green;}
+  /*触发状态*/
+  a:active {color: yellow;}
+  /*完成状态*/
+  a:visited {color: blue;}
+</style>
+```
+
+#### 3.4 层级选择器
+
+父级选择器 子级选择器 ……
+
+```html
+<div id="div1">
+  <div class="div11">
+    <span>span1-1</span>
+  </div>
+  <div class="div12">
+    <span>span1-2</span>
+  </div>
+</div>
+<div class="div2">
+  <div id="div21">
+    <span>span2-1</span>
+  </div>
+  <div id="div22">
+    <span>span2-2</span>
+  </div>
+</div>
+<style>
+  #div1 .div11 {color: red;}
+  #div1 .div12 {color: purple;}
+  .div2 #div21 {color: green;}
+  .div2 #div22 {color: blue;}
+</style>
+```
+
+### 4. 属性
+
+#### 4.1 文字属性
+
+| 属性名        | 取值                              | 描述     |
+| ------------- | --------------------------------- | -------- |
+| `font-size`   | 数值                              | 字体大小 |
+| `font-family` | 默认、宋体、楷体等                | 字体样式 |
+| `font-style`  | `normal` 正常；`italic` 斜体      | 斜体样式 |
+| `font-weight` | `100-900`数值；`bold`；`bolder`； | 粗体样式 |
+
+#### 4.2 文本属性
+
+| 属性名            | 取值                                                 | 描述                 |
+| ----------------- | ---------------------------------------------------- | -------------------- |
+| `color`           | 十六进制；表示颜色的英文单词                         | 设置文本颜色         |
+| `text-indent`     | 像素：缩进 x像素；百分比：缩进父容器宽度的 x%        | 缩进元素中文本的首行 |
+| `text-decoration` | `none；underline；overline；blink；`                 | 文本的装饰线         |
+| `text-align`      | `left；righht；center`                               | 文本水平对齐方式     |
+| `word-spacing`    | `normal`；固定值                                     | 单词之间的间隔       |
+| `line-height`     | `normal`；固定值                                     | 设置文本的行高       |
+| `text-shadow`     | 四个取值依次是：水平偏移；垂直偏移；模糊值；阴影颜色 | 阴影及模糊效果       |
+
+#### 4.3 背影属性
+
+| 属性名                | 取值                                 | 描述               |
+| --------------------- | ------------------------------------ | ------------------ |
+| `background-color`    | 16进制；用于表示颜色的英语单词       | 背景色             |
+| `background-image`    | `url('图片路径')`                    | 背景图片           |
+| `background-repeat`   | `repeat-y;repeat-x;repeat;no-repeat` | 背景图的平铺方向   |
+| `background-position` | `top;bottom;left;right;center`       | 图像在背景中的位置 |
+
+#### 4.4 列表属性
+
+| 属性名                | 取值               | 描述                             |
+| --------------------- | ------------------ | -------------------------------- |
+| `list-style-type`     | `disc` 等          | 列表的标识类型                   |
+| `list-style-image`    | `url('图片地址')`  | 用图像表示标识                   |
+| `list-style-position` | `inside；outsidee` | 标识出现在列表项内容之外还是内部 |
+
+#### 4.5 尺寸属性
+
+* `width`：设置元素的宽度
+* `height`：设置元素的高度
+
+#### 4.6 显示属性
+
+`display`：
+
+* `none`：不显示
+* `block`：块级显示
+* `inline`：行级显示
+
+#### 4.7 轮廓属性
+
+绘制于元素周围的一条线，位于边框边缘的外围，可起到突出元素的作用
+
+| 属性名          | 取值                                     | 描述       |
+| --------------- | ---------------------------------------- | ---------- |
+| `outline-style` | `solid-实线；dotted-虚线；dashed-破折线` | 轮廓的样式 |
+| `outline-color` | 16进制；用于表示颜色的英文单词           | 轮廓的颜色 |
+| `outline-width` | 数值                                     | 轮廓的宽度 |
+
+#### 4.8 浮动属性
+
+`float`
+
+* 浮动的元素可以向左或者向右移动，直到它的外边缘碰到包含框或者另一个浮动框的边框为止。由于浮动框不在文档的普通流中，所以文档的普通流中的块框表现的就像浮动框不存在一样
+
+[![cpUg10.md.png](https://z3.ax1x.com/2021/03/28/cpUg10.md.png)](https://imgtu.com/i/cpUg10)
+
+下图中：
+
+* 当框1向左浮动时，它脱离文档流并且向左移动，直到它的边缘碰到包含框的左边缘，因为它不再处于文档流中，所以它不占据空间，实际上覆盖住了框2，使框2从视图中消失
+* 如果把3个框都向左移动，那么框1向左浮动直到碰到包含框，另外两个框向左浮动直到碰到前一个浮动框
+
+[![cpaVHg.md.png](https://z3.ax1x.com/2021/03/28/cpaVHg.md.png)](https://imgtu.com/i/cpaVHg)
+
+
+
+下图中：
+
+* 如果包含框太窄，无法容纳水平排列的三个浮动元素，那么其它浮动块向下移动，直到有足够的空间
+* 如果浮动元素的高度不同，那么当它们向下移动时，可能被其它浮动元素 “卡住”
+
+[![cpaxMV.md.png](https://z3.ax1x.com/2021/03/28/cpaxMV.md.png)](https://imgtu.com/i/cpaxMV)
+
+##### clear 属性
+
+规定元素的哪一侧不允许其他浮动元素
+
+| 取值      | 描述                                  |
+| --------- | ------------------------------------- |
+| `left`    | 在左侧不允许浮动元素                  |
+| `right`   | 在右侧不允许浮动元素                  |
+| `both`    | 在左右两侧均不允许浮动元素            |
+| `none`    | 默认值。允许浮动元素出现在两侧        |
+| `inherit` | 规定应该从父元素继承 `clear` 属性的值 |
+
+#### 4.9 定位属性
+
+**相对定位（relative）：**元素框偏移某个距离，元素仍保持其未定位前的形状，它原本所占有的空间仍保留
+
+```html
+<head>
+    <meta charset="UTF-8">
+    <title>相对定位</title>
+    <style>
+        h2.post-left {position: relative; left: -20px;}
+        h2.post-right {position: relative; left: 20px;}
+    </style>
+</head>
+<body>
+    <h2>这是位于正常位置的标题</h2>
+    <h2 class="post-left">这个标题相对于其正常位置向左移动</h2>
+    <h2 class="post-right">这个标题相对于其正常位置向右移动</h2>
+    <p>相对定位会按照元素的原始位置对该元素进行移动</p>
+    <p>样式 "left: -20px" 从元素的原始左侧位置减去 20px</p>
+    <p>样式 "left: 20px" 向元素的原始左侧位置增加 20px</p>
+</body>
+```
+
+**绝对定位（absolute）：** **元素框从文档流完全删除**，并相对于其包含块进行定位。包含块可能是文档中的另一个元素或者是初始包含块。元素碑在正常文档流中所占有的空间会关闭，就好像元素原来不存在一样。元素定位后生成一个**块级框**
+
+```html
+<head>
+    <meta charset="UTF-8">
+    <title>绝对定位</title>
+    <style>
+        h2.pos-abs {position: absolute; left: 100px; top: 150px;}
+    </style>
+</head>
+<body>
+    <h2 class="pos-abs">这是带有绝对定位的标题</h2>
+    <p>通过绝对定位，元素可以放置到页面上的任何位置。下面的标题距离页面左侧 100px，距离页面顶部 150px</p>
+</body>
+```
+
+**固定定位（fixed）：**元素框的表现类似于将 `position` 设置为 `absolute`，不过其包含块是视窗本身
+
+```html
+<head>
+    <meta charset="UTF-8">
+    <title>固定定位</title>
+    <style>
+        h2 {position: fixed; left: 0px; top: 0px;}
+    </style>
+</head>
+<body>
+    <h2>本段落内容的位置不会随着滚动条的滚动而改变，会始终位于左上角，巍然不动！</h2>
+    <h3>我是一个正常的标题，滚着滚着就不见了！</h3>
+    <br><br><br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br><br><br>
+</body>
+```
+
+### 5. CSS 盒模型
+
+[![cph9eJ.md.jpg](https://z3.ax1x.com/2021/03/28/cph9eJ.md.jpg)](https://imgtu.com/i/cph9eJ)
+
+#### 5.1 边框相关属性
+
+| 属性名         | 取值                           | 描述       |
+| -------------- | ------------------------------ | ---------- |
+| `border-style` | `solid;double;dashed;dotted`等 | 边框的样式 |
+| `border-color` | 16进制；用于表示颜色的英文     | 边框的颜色 |
+| `border-width` | 数值                           | 边框的粗细 |
+
+#### 5.2 外边距相关属性
+
+`margin`：外边距，边框和边框外层的元素的距离
+
+| 属性名          | 取值                 | 描述           |
+| --------------- | -------------------- | -------------- |
+| `margin`        | 数值，顺序：左上下右 | 四个方向的距离 |
+| `margin-top`    | 数值                 | 上间距         |
+| `margin-bottom` | 数值                 | 下间距         |
+| `margin-left`   | 数值                 | 左间距         |
+| `margin-right`  | 数值                 | 右间距         |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## 第二十四章 JavaScript
 
@@ -7402,6 +7997,1341 @@ new Date
 
 * 一元操作符、赋值、三元条件运算符都具有从右至左的结全性
 
+##### 3.7.7 运算顺序
+
+`JavaScript` 总是严格按照从左至右的顺序来计算表达式，只有在任何一个表达式具有副作用而影响到其他表达式的时候，其求值顺序才会和看上去有所不同
+
+## 第二十五章 Servlet
+
+### 1. 引言
+
+#### 1.1 C/S 架构和 B/S 架构
+
+这是在软件发展过程中出现的两种软件架构方式
+
+#### C/S 架构（Client/Server：客户端/服务器）
+
+* 特点：必须在客户端安装特定软件
+* 优点：图形效果显示较好（如：3D 游戏）
+* 缺点：服务器的软件和功能进行升级，客户端也必须升级，不利于维护
+* 常见的 `C/S` 程序：`QQ`、微信等
+
+[![cpI2nS.md.png](https://z3.ax1x.com/2021/03/28/cpI2nS.md.png)](https://imgtu.com/i/cpI2nS)
+
+#### 1.3 B/S 架构（Browser/Server 浏览器/服务器）
+
+* 特点：无需安装客户端，任何浏览器都可直接访问
+* 优点：涉及到功能的升级，只需要升级服务器端
+* 缺点：图形显示效果不如 `C/S` 架构
+* 需要通过 `HTTP` 协议访问
+
+[![cpofKK.md.png](https://z3.ax1x.com/2021/03/28/cpofKK.md.png)](https://imgtu.com/i/cpofKK)
+
+### 2. 服务器
+
+#### 2.1 概念
+
+##### 什么是 Web
+
+`Web（World Wide Web）` 称为万维网，简单理解就是网站，它用来表示 `Internet` 主机上供外界访问的资源
+
+`Internet` 上供外界访问的资源分为两大类：
+
+* 静态资源：指 `web` 页面中供人们浏览的数据始终是不变的（`HTML、CSS`）
+* 动态资源：指 `web` 页面中供人们浏览的数据是由程序产生的，不同时间点，甚至不同设备访问 `Web` 页面看到的内容各不相同（`JSP/Servlet`）
+* 在 `Java` 中，动态 `web` 资源开发技术我们统称为 `Java Web`
+
+##### 什么是 web 服务器
+
+`web` 服务器是运行及发布 `web` 应用的容器，只有将开发的 `web` 项目放置到该容器中，才能使网络中的所有用户通过浏览器进行访问
+
+#### 2.2 常用服务器
+
+* 开源：`OpenSource`（1. 开放源代码；2. 免费；）
+  * `Tomcat`：主流服务器之一，适合初学者
+  * `jetty`：淘宝，运行效率比 `Tomcat` 高
+  * `resin`：新浪，所有开源服务器软件中，运行效率最高的
+  * 三者的用法从代码角度完全相同，只有在开启、关闭服服务器软件时对应的命令稍有区别，掌握一个即掌握所有
+* 收费
+  * `WebLogic`：`Oracle`
+  * `WebSphere`：`IBM`
+  * 提供相应的服务与支持，软件大，耗资源
+
+#### 2.3 Tomcat
+
+`Tomcat` 是 `Apache` 软件基金会（`Apache Software Foundation）` 的 `Jakarta` 项目中的一个核心项目，免费开源、并支持 `Servlet` 和 `JSP` 规范。目前 `Tomcat` 最新版本为 `9.0`
+
+`Tomcat` 技术先进、性能稳定，深受 `Java` 爱好者喜爱并得到了部分软件开发商的认可，成为目前比较流行的 `Web` 应用服务器
+
+#### 2.4 Tomcat 安装
+
+##### 下载
+
+[官网下载](http://tomcat.apache.org) 下载一个解压缩版本即可
+
+##### 解压安装
+
+将 `Tomcat` 解压到一个没有特殊符号的目录中（一般纯英文即可）
+
+> 注意：
+>
+> 1. 不建议将服务器软件放在磁盘层次很多的文件夹
+> 2. 不建议放在中文路径下
+
+##### 目录结构
+
+| 文件夹    | 说明                                                         | 备注                                                         |
+| --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `bin`     | 该目录下存放的是二进制可执行文件                             | `startup.sh` 启动 `Tomcat`、`shutdown.sh` 停止 `Tomcat`      |
+| `conf`    | 这是一个非常重要的目录，这个目录下有两个最为重要的文件 `server.xml` 和 `web.xml` | `server.xml`：配置整个服务器信息，例如修改商品号、编码格式等<br />`web.xml`：项目部署描述符文件，这个文件中注册了很多 `MIME` 类型，即文档类型 |
+| `lib`     | `Tomcat` 的类库，里面存放 `Tomcat` 运行所需要的 `jar` 文件   |                                                              |
+| `logs`    | 存放上场文件，记录了 `Tomcat` 启动和关闭的信息。如果启动 `Tomcat` 时有错误，异常也会记录在日志文件中 |                                                              |
+| `temp`    | `Tomcat` 的临时文件，这个目录下的东西在停止 `Tomcat` 后删除  |                                                              |
+| `webapps` | 存放 `web` 项目的目录，其中每个文件夹老师一个项目；其中 `ROOT` 是一个特殊的项目，在地址栏中没有给出项目目录时，对应的就是 `ROOT` 项目 |                                                              |
+| `work`    | 运行时生成的文件，最终运行的文件都在这里                     | 当客户端用户访问一个 `JSP` 文件时，`Tomcat` 会通过 `JSP` 生成 `Java` 文件，然后再编译 `Java` 文件生成 `.class` 文件，生成的 `Java` 文件和 `class` 文件都会放在这个目录下 |
+
+#### 2.5 Tomcat 启动和停止
+
+* 使用命令行进入 `Tomcat` 的 `bin` 目录下
+* 输入命令：`sudo chmod 755 *.sh`，设置权限
+* 输入命令：`sudo sh startup.sh` 启动 `Tomcat`
+* 验证：在浏览器中输入 `localhost:8080` 看到 `Tomcat` 主页即为成功
+* 输入命令：`sudo sh shutdown.sh` 关闭 `Tomcat`
+
+##### 修改端口号
+
+`Tomcat` 默认端口号为 `8080`，可以通过 `conf/server.xml` 文件修改：
+
+```xml
+<Connector port="8080" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443" />
+```
+
+> 注意：修改端口号需要重启 Tomcat 才能生效
+
+#### 2.6 部署项目及访问静态资源
+
+`Tomcat` 是 `web` 服务器，我们的项目应用是部署在 `webapps` 下，然后通过特定的 `url` 访问
+
+##### 创建项目
+
+* 在 `webapps` 中建立文件夹（项目应用），比如：`myweb`
+  * 创建 `WEB-INF` 文件夹，用于存放项目的核心内容
+    * 创建 `classes` 文件夹，用于存放 `.class` 文件
+    * 创建 `lib`，用于存放 `jar` 文件
+    * 创建 `web.xml`，项目配置文件（到 `ROOT` 项目下的 `WEB-INF` 复制即可）
+  * 把网页 `hello.html` 复制到 `myweb` 文件夹中，与 `WEB-INF` 在同级目录
+
+##### 通过 URL 访问资源
+
+在地址栏中输入：`http://localhost:8081/webapp/hello.html`
+
+> URL 主要有四部分组成：协议、主机、端口、资源路径
+
+[![cpOryn.md.png](https://z3.ax1x.com/2021/03/28/cpOryn.md.png)](https://imgtu.com/i/cpOryn)
+
+##### Tomcat 响应流程图
+
+[![cpjrV0.md.png](https://z3.ax1x.com/2021/03/28/cpjrV0.md.png)](https://imgtu.com/i/cpjrV0)
+
+#### 2.7 常见错误
+
+##### Tomcat 闪退
+
+闪退问题是由于 `JAVA_HOME` 配置导致的，检查该配置是否合适
+
+##### 404
+
+访问资源不存在，出现 `404` 错误
+
+### 3. Servlet【重点】
+
+#### 3.1 概念
+
+* `Servlet（Server Applet）`：是服务端的程序（代码、功能实现），可交互式的处理客户端发送到服务端的请求，并完成操作响应
+* 动态网页技术
+* `JavaWeb` 程序开发的基础，`JavaEE` 规范（一套接口）的一个组成部分
+
+##### Servlet 作用
+
+* 接收客户端请求，完成操作
+* 动态生成网页（页面数据可变）
+* 将包含操作结果的动态网页响应给客户端
+
+#### 3.2 Servlet 开发步骤
+
+##### 搭建开发环境
+
+将 `Servlet` 相关的 `jar` 包（`lib/servlet-api.jar`）配置到 `classpath` 中
+
+##### 编写 Servlet
+
+* 实现 `javax.servlet.Servlet`
+* 重写 5 个重要方法
+* 在核心的 `service()` 方法中编写输出语句，打印访问结果
+
+```java
+import javax.servlet.Servlet;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import java.io.IOException;
+
+
+public class MyServlet implements Servlet {
+	
+	public void init(ServletConfig servletConfig) throws ServletException {
+	}
+
+	public void service(ServletRequest request, ServletResponse response) throws ServletException, IOException {
+		System.out.println("Hello Servlet!");
+	}
+
+	public void destroy() {
+	}
+
+	public ServletConfig getServletConfig() {
+		return null;
+	}
+	
+	public String getServletInfo() {
+		return null;
+	}
+}
+```
+
+##### 部署 Servlet
+
+编译 `MyServlet` 后，将生成的 `class` 文件放在 `WEB-INF/classes` 文件夹中
+
+##### 配置 Servlet
+
+编写 `WEB-INF` 下项目配置文件 `web.xml`
+
+```xml
+<servlet>
+  <servlet-name>my</servlet-name>
+  <servlet-class>MyServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+  <servlet-name>my</servlet-name>
+  <url-pattern>/myservlet</url-pattern>
+</servlet-mapping>
+```
+
+> url-pattern 配置的内容就是浏览器地址栏输入的 URL 中项目名称后资源的内容
+
+#### 3.3 运行测试
+
+启动 `Tomcat`，在地址栏中输入：[http://localhost:8080/myweb/myservlet]() 进行访问，在控制台中会打印出刚刚编写的输出语句，即为成功
+
+#### 3.4 常见错误
+
+##### 500
+
+服务端出现异常
+
+### 4. 使用 IDAE 创建 Web 项目
+
+#### 4.1 创建项目
+
+`File -> New -> Project -> Java Enterprise`，具体配置如下图所示：
+
+[![c9Jzgf.md.png](https://z3.ax1x.com/2021/03/29/c9Jzgf.md.png)](https://imgtu.com/i/c9Jzgf)
+
+##### 目录说明
+
+* `src`：存放 `Java` 代码
+* `web`：存放静态资源
+  * `WEB-INF`：项目配置文件，`jar` 包和 `class` 文件
+* `External Libraries`：外部 `jar`
+
+#### 4.2 开发 Servlet
+
+##### 编写 Servlet
+
+```java
+import javax.servlet.Servlet;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import java.io.IOException;
+
+
+public class MyServlet implements Servlet {
+	
+	public void init(ServletConfig servletConfig) throws ServletException {
+	}
+
+	public void service(ServletRequest request, ServletResponse response) throws ServletException, IOException {
+		System.out.println("Hello Servlet!");
+	}
+
+	public void destroy() {
+	}
+
+	public ServletConfig getServletConfig() {
+		return null;
+	}
+	
+	public String getServletInfo() {
+		return null;
+	}
+}
+```
+
+##### 配置 Servlet
+
+```xml
+<servlet>
+  <servlet-name>my</servlet-name>
+  <servlet-class>MyServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+  <servlet-name>my</servlet-name>
+  <url-pattern>/myservlet</url-pattern>
+</servlet-mapping>
+```
+
+##### 部署 Web 项目
+
+在 `Tomcat` 的 `webapps` 目录下，新建 `anotherproject` 项目文件夹
+
+* 创建 `WEB-INF` 目录，存放核心文件
+* 在 `WEB-INF` 目录下，创建 `classes` 文件夹，将编译后的 `MyServlet.class` 文件复制到这里
+
+> [问题：每当我们编写了新的 Servlet 或者重新编译，都需要手工将新的 .class 部署到 Tomcat 中，非常麻烦，如果实现自动部署]()
+
+#### 4.3 部署 Web 项目
+
+没有使用 `IDEA` 时，需要手动将文件拷贝到相应的目录下，使用了 `IDEA` 就不再需要手动做这些操作了，可以通过 `IDEA` 集成 `Tomcat` 服务器，实现自动部署
+
+##### 集成 Tomcat
+
+* `Preferences -> Build,Execution,Deployment -> Application Servers`
+* 点击中间面板的 `+` 号
+* 在 `Add application server` 面板中，选择 `Tomcat Server`
+* 在 `Tomcat Server` 面板中，选择下载的 `Tomcat` 的解压地址，确定即可
+
+##### 项目部署 Tomcat
+
+选择 `Run/Debug Configurations`
+
+[![c9hmDg.md.png](https://z3.ax1x.com/2021/03/29/c9hmDg.md.png)](https://imgtu.com/i/c9hmDg)
+
+[![c9hBP1.md.png](https://z3.ax1x.com/2021/03/29/c9hBP1.md.png)](https://imgtu.com/i/c9hBP1)
+
+
+
+#### 4.4 其它操作
+
+##### 关联第三方 jar 包
+
+* 在 `WEB-INF` 目录下新建 `lib` 目录
+* 复制 `jar` 包到 `lib` 目录中
+* 右击 `lib` 目录，选择 `Add as Library`
+* 选择 `Project Library`，完成
+  * `Global Library` ：表示所有工程都可以使用
+  * `Project Library`：表示当前工程中所有模块都可以使用
+  * `Module Library`：表示当前模块可以使用
+
+##### 导出 war 包
+
+项目完成后，有时候需要打成 `war` 方便部署。`war` 包可以直接放入 `Tomcat` 的 `webapps` 目录中，启动 `Tomcat` 后自动解压，即可访问
+
+* 点击项目结构：`File -> Project Structure`
+* 选择 `Artifacts`
+* 点击 `+` 号
+* 选择 `Web Application: Archive`
+* 选择 `for ...`
+* 构建项目：`Build -> Build Artifacts`
+* 选择 `xx war -> build`
+* 就会在项目的  `out/artifacts/` 目录下生成所需要的 `war` 包
+
+### 5. HTTP 协议
+
+#### 5.1 什么是 HTTP
+
+超文本传输协议（`HTTP，HyperText Transfer Protocol`）是互联网上应用最为广泛的一种网络协议，是一个基于请求与响应模式的、无状态的、应用层的协议，运行于 `TCP` 协议基础之上。
+
+#### 5.2 HTTP 协议特点
+
+* 支持客户端（浏览器）/服务器模式
+* 简单快速：客户端只向服务器发送请求方法和路径，服务器即可响应数据，因而通信速度很快。请求访求常用的有 `GET、POST` 等
+* 灵活：`HTTP` 允许传输任意类型的数据，传输的数据类型由 `Content-Type` 标识
+* 无连接：无连接指的是每次 `TCP` 连接只处理一个或多个请求，服务器处理完客户的请求后，即断开连接，采用这种方式可以节省传输时间
+  * `HTTP1.0` 版本是一个请求响应之后，直接就断开了，称为短连接
+  * `HTTP1.1` 版本不是响应后直接就断开了，而是等几秒钟，这几秒钟之内有新的请求，那么还是通过之前的连接通道来收发消息，如果过了这几秒钟用户没有发送新的请求，就会断开连接，称为长连接
+* 无状态：`HTTP` 协议是无状态协议
+  * 无状态是指协议对于事务处理没有记忆能力
+
+#### 5.3 HTTP 协议通信流程
+
+* 客户与服务器建立连接（三次握手）
+* 客户向服务器发送请求
+* 服务器接受请求，并根据请求返回相应的文件作为应答
+* 客户与服务器关闭连接（四次挥手）
+
+[![cCKSy9.md.png](https://z3.ax1x.com/2021/03/29/cCKSy9.md.png)](https://imgtu.com/i/cCKSy9)
+
+#### 5.4 请求报文和响应报文【了解】
+
+##### HTTP 请求报文
+
+当浏览器向 `Web` 服务器发出请求时，它向服务器传递了一个数据块，也就是请求信息（请求报文），`HTTP` 请求信息由 4 部分信息组成：
+
+1. 请求行：请求方法/地址 `URI` 协议/ 版本
+2. 请求头：（`Request Header`）
+3. 空行
+4. 请求正文
+
+[![cCK5tK.md.png](https://z3.ax1x.com/2021/03/29/cCK5tK.md.png)](https://imgtu.com/i/cCK5tK)
+
+##### HTTP 响应报文
+
+`HTTP` 响应报文与 `HTTP` 请求报文相似：
+
+1. 状态行
+2. 响应头
+3. 空行
+4. 响应正文
+
+[![cCQSV1.md.png](https://z3.ax1x.com/2021/03/29/cCQSV1.md.png)](https://imgtu.com/i/cCQSV1)
+
+#### 5.3 常见状态码
+
+| 状态代码 | 状态描述              | 说明                                                         |
+| -------- | --------------------- | ------------------------------------------------------------ |
+| 200      | OK                    | 客户端请求成功                                               |
+| 302      | Found                 | 临时重定向                                                   |
+| 403      | Forbidden             | 服务器收到请求，但是拒绝提供服务。服务器通常会在响应正文中给出不提供服务的原因 |
+| 404      | Not Found             | 请求的资源不存在                                             |
+| 500      | Internal Server Error | 服务器发生不可预期的错误，导致无法完成客户端的请求           |
+
+### 6. Servlet 核心接口和类
+
+#### 6.1 核心接口和类
+
+在 `Servlet` 体系结构中，除了实现 `Servlet` 接口，还可以通过继承 `GenericServlet` 或 `HttpServlet` 类，完成编写
+
+##### 接口
+
+在 `Servlet API` 中最重要的是 `Servlet` 接口，所有 `Servlet` 都会直接或间接的与该接口发生联系，或是直接实现该接口，或间接继承自实现了该接口的类。
+
+该接口包括以下五个方法：
+
+```java
+void init(ServletConfig config);
+ServletConfi getServletConfig();
+service(ServletRequest req, ServletResponse res);
+String getServletInfo();
+void destroy();
+```
+
+##### GenericServlet 抽象类
+
+`GnenricServlet` 使编写 `Servlet` 变得更容易。它提供生命周期方法 `init` 和 `destroy` 的简单实现，要编写一般的 `Servlet`，只需要重写抽象 `service` 方法即可
+
+##### HttpServlet 类
+
+`HttpServlet` 是继承 `GenericServlet` 的基础上进一步的扩展
+
+提供将要被子类化以创建适用于 `Web` 站点的 `HTTP Servlet` 的抽象类。`HttpServlet` 的子类至少必须重写一个方法，该方法通常是以下这些方法之一：
+
+* `doGet`：如果 `Servlet` 支持 `HTTP GET` 请求
+* `doPost`：如果 `Servlet` 支持 `HTTP POST` 请求
+* `doPut`：如果 `Servlet` 支持 `HTTP PUT` 请求
+* `doDelete`：如果 `Servlet` 支持 `HTTP DELETE` 请求
+
+#### 6.2 Servlet 两种创建方式
+
+##### 实现接口 Servlet
+
+```java
+public class MyServlet implements Servlet {
+    @Override
+    public void init(ServletConfig servletConfig) throws ServletException {
+
+    }
+
+    @Override
+    public ServletConfig getServletConfig() {
+        return null;
+    }
+
+    @Override
+    public void service(ServletRequest servletRequest, ServletResponse servletResponse) throws ServletException, IOException {
+        System.out.println("Hello Servlet!");
+    }
+
+    @Override
+    public String getServletInfo() {
+        return null;
+    }
+
+    @Override
+    public void destroy() {
+
+    }
+}
+```
+
+> 该方法比较麻烦，需要实现接口中全部的 5 个方法
+
+##### 继承 HttpServlet【推荐】
+
+```java
+public class HelloServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("这是通过 get 请求过来的！");
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("这是通过 post 请求过来的！");
+    }
+}
+```
+
+##### 常见错误
+
+* `HTTP Status 404` ：资源找不到
+  * 第一种情况：地址书写错误
+  * 第二种情况：地址没有问题，把 `IDEA` 项目中 `out` 目录删除，然后重新运行
+* `Servlet` 地址配置重复：`both mapped to the url-pattern [xxx] which is not permitted`
+* `Servlet` 地址配置错误：比如没有写 `/`，`Invalid <url-pattern> [helloservlet2] in servlet mapping`
+
+#### 6.3 Servlet 两种配置方式
+
+##### 使用 web.xml（Servlet 2.5 之前使用）
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+    <servlet>
+        <servlet-name>my</servlet-name>
+        <servlet-class>com.ch.wchya.servlet.MyServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>my</servlet-name>
+        <url-pattern>/my</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>hello</servlet-name>
+        <servlet-class>com.ch.wchya.servlet.HelloServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>hello</servlet-name>
+        <url-pattern>/hello</url-pattern>
+    </servlet-mapping>
+
+</web-app>
+```
+
+###### url-pattern 取值说明
+
+* 精确匹配：`/具体的名称`，只有 `url` 路径是具体的名称的时候才会触发 `Servlet`
+* 后缀匹配：`*.xxx`，只要是以 `xxx` 结尾的就匹配触发 `Servlet`
+* 通配符匹配：`/*`，匹配所有请求，包含服务器的所有资源。`注意：并不会影响精确匹配和后缀匹配`
+* 通配符匹配：`/`，匹配所有请求，包含服务器的所有资源，不包括 `.jsp`
+
+###### load-on-startup 属性说明
+
+* 标记容器是否应该在 `web` 应用程序启动的时候就加载这个 `servlet`
+* 它的值必须是一个整数，表示 `Servlet` 被加载的先后顺序
+* 如果该元素的值为负数或者没有设置，则容器会当 `servlet` 被请求时再加载
+* 如果值为正整数或者 0 时，表示容器在应用启动时就加载并初始化这个 `servlet`，值越小，`servlet` 的优先级越高，就越先被加载。值相同时，容器就会自己选择顺序来加载
+
+> 该属性配置在 <servlet></servlet> 标签中
+
+##### 使用注解（Servlet 3.0 后支持，推荐）
+
+```java
+@WebServlet("/hello")
+public class AnotherServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("使用注解的 Servlet 的 GET 方法！");
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        System.out.println("使用注解的 Servlet 的 POST 方法！");
+    }
+}
+```
+
+###### @WebServlet 注解常用属性
+
+* `name`：`Servlet` 名字（可选）
+
+* `value`：配置 `url` 路径，可以配置多个
+
+* `urlPatterns`：配置 `url` 路径，和 `value` 作用一样，不能同时使用
+
+* `loadOnStartup`：配置 `Servlet` 的创建的时机，如果是 0 或者正数启动程序时创建，如果是负数，则访问时创建。数字越小优先级越高
+
+> [注解和 xml 配置 Servlet 的方式可以同时存在、同时生效，不冲突]()
+
+### 7. Servlet 应用【重点】
+
+#### 7.1 request 对象
+
+在 `Servlet` 中用来处理客户端请求需要用 `doGet` 或 `doPost` 方法的 `request` 对象
+
+[![cCXGcQ.md.png](https://z3.ax1x.com/2021/03/29/cCXGcQ.md.png)](https://imgtu.com/i/cCXGcQ)
+
+##### get 和 post 区别
+
+* `get` 请求
+  * `get` 提交的数据会放在 `URL` 之后，以 `？` 分割 `URL` 和传输数据，参数之间以 `&` 相连
+  * `get` 方式明文传递，数据量小，不安全
+  * 效率高，浏览器默认请求方式为 `GET` 请求
+  * 对应的 `Servlet` 方法是 `doGet`
+* `post` 请求
+  * `post` 方法是把提交的数据放在 `HTTP` 包的 `Body` 中
+  * 密文传递数据，数据量大，安全
+  * 效率相对没有 `GET` 高
+  * 对应的 `Servlet` 的方法是 `doPost`
+
+##### request 主要方法
+
+| 方法名                                      | 说明                           |
+| ------------------------------------------- | ------------------------------ |
+| `String getParameter(String name)`          | 根据表单组件名称获取提交的数据 |
+| `void setCharacterEncoding(String charset)` | 指定每个请求的编码             |
+
+##### request 应用
+
+`HTML` 页面
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎页面</title>
+</head>
+<body>
+    <h1>欢迎你！</h1>
+    <div>
+        <form action="/welcome" method="get">
+            <label for="name">姓名：</label><input type="text" id="name" name="name"><br>
+            <label for="age">年龄</label><input type="text" id="age" name="age"><br>
+            <button type="submit">提交</button>
+        </form>
+    </div>
+</body>
+</html>
+```
+
+`Servlet` 代码
+
+```java
+@WebServlet("/welcome")
+public class WelcomeServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String name = req.getParameter("name");
+        String age = req.getParameter("age");
+        System.out.println("请求的参数值是：" + name + "\t" + age);
+    }
+}
+```
+
+##### get 请求收参问题
+
+产生乱码是因为服务器和客户端沟通的编码不一致造成的，因此解决的办法是：在客户端和服务器之间设置一个统一的编码，之后就按照此编码进行数据的传输和接收
+
+##### get 中文乱码
+
+在 `Tomcat7` 及以下版本，客户端以 `UTF-8` 的编码传输数据到服务器端，而服务器端的 `request` 对象使用的是 `ISO-8859-1` 这个字符编码来接收数据，服务器和客户端沟通的编码不一致，因此才会产生中文筹码的。
+
+解决办法：在接收到数据后，先获取 `request` 对象以 `ISO-8859-1` 字符编码接收到的原始数据的字节数组，然后通过字节数组以指定的编码构建降低串，解决筹码问题
+
+`Tomcat8` 的版本中 `get` 方式不会出现筹码了，因为服务器对 `url` 的编码格式可以进行自动转换
+
+解决 `Tomcat8` 以前版本乱码的问题：
+
+```java
+@WebServlet("/welcome")
+public class WelcomeServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String name = req.getParameter("name");
+        name = new String(name.getBytes(Charset.forName("ISO-8859-1")), Charset.forName("utf-8"));
+        String age = req.getParameter("age");
+        System.out.println("请求的参数值是：" + name + "\t" + age);
+    }
+}
+```
+
+##### post 中文乱码
+
+由于客户端是以 `UTF-8` 字符编码将表单数据传输到服务器端的，因此服务器也需要设置以 `UTF-8` 字符编码进行接收
+
+解决方案：使用从 `ServletRequest` 接口继承而来的 `setCharacterEncoding(charset)` 方法进行统一的编码设置
+
+```java
+@WebServlet("/welcome")
+public class WelcomeServlet extends HttpServlet {
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setCharacterEncoding("utf-8");
+        String name = req.getParameter("name");
+        String age = req.getParameter("age");
+        System.out.println("请求的参数值是：" + name + "\t" + age);
+    }
+}
+
+```
+
+#### 7.2 Response 对象
+
+用于响应客户端请求并向客户端输出信息
+
+[![cPFwpn.md.png](https://z3.ax1x.com/2021/03/29/cPFwpn.md.png)](https://imgtu.com/i/cPFwpn)
+
+##### 主要方法
+
+| 方法名称                       | 作用                               |
+| ------------------------------ | ---------------------------------- |
+| `setHeader(name, value)`       | 设置响应信息头                     |
+| `setContentType(String)`       | 设置响应文件类型、响应式的编码格式 |
+| `setCharacterEncoding(String)` | 设置服务端响应内容编码格式         |
+| `getWriter()`                  | 获取字符输出流                     |
+
+案例：使用 `response` 对象向浏览器输出 `HTML` 内容，实现用户登录后，输出 登录成功
+
+```java
+@WebServlet("/welcome")
+public class WelcomeServlet extends HttpServlet {
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setCharacterEncoding("utf-8");
+        String name = req.getParameter("name");
+        String age = req.getParameter("age");
+        resp.setCharacterEncoding("utf-8");
+
+        PrintWriter writer = resp.getWriter();
+        writer.println("<html>");
+        writer.println("<head><title>登录</title></head>");
+        writer.println("<body>");
+        writer.println("<h1>登录成功！</body>");
+        writer.println("</body>");
+        writer.println("</html>");
+    }
+}
+```
+
+> [如果输出内容包含中文，则出现乱码，因为服务器默认采用 IOS-8859-1 编码响应内容]()
+
+##### 解决输出中文乱码【不推荐】
+
+* 设置服务器端响应的编码格式
+* 设置客户端响应内容的头内容的文件类型及编码格式
+
+```java
+response.setCharacterEncoding("utf-8"); // 设置响应编码格式为 utf-8
+response.setHeader("Content-type", "text/html;charset=UTF-8");
+```
+
+##### 解决输出中文筹码【推荐】
+
+同时设置服务端的编码格式和客户端响应的文件类型及响应时的编码格式
+
+```java
+response.setContentType("text/html;charset=UTF-8");
+```
+
+> 注意：在获取输出流（getWriter()）之前设置上面的代码
+
+#### 7.3 综合案例（Servlet + JDBC）
+
+##### 项目结构
+
+[![cVFGh8.png](https://z3.ax1x.com/2021/04/01/cVFGh8.png)](https://imgtu.com/i/cVFGh8)
+
+
+
+##### Entity
+
+```java
+@Data
+public class User {
+    private int userId;
+    private String username;
+    private String password;
+    private String address;
+    private String phone;
+}
+```
+
+##### Dao
+
+```java
+public interface UserDao {
+
+    int add(User t);
+
+    int delete(int id);
+
+    int delete(String id);
+
+    int update(User t);
+
+    User findOne(String id);
+
+    User findOne(String username, String password);
+
+    List<User> findAll();
+}
+
+public class UserDaoImpl implements UserDao {
+    private QueryRunner queryRunner = new QueryRunner();
+
+    @Override
+    public int add(User user) {
+        return 0;
+    }
+
+    @Override
+    public int delete(int id) {
+        return 0;
+    }
+
+    @Override
+    public int delete(String id) {
+        return 0;
+    }
+
+    @Override
+    public int update(User user) {
+        return 0;
+    }
+
+    @Override
+    public User findOne(String id) {
+        return null;
+    }
+
+    @Override
+    public User findOne(String username, String password) {
+        User user = null;
+        try {
+            user = queryRunner.query(JDBCUtil1.getConnection(), "select * from user where username=? and password=?", new BeanHandler<User>(User.class), username, password);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return user;
+    }
+
+    @Override
+    public List<User> findAll() {
+        List<User> userList = null;
+        try {
+            userList = queryRunner.query(JDBCUtil1.getConnection(), "select * from user", new BeanListHandler<User>(User.class));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return userList;
+    }
+}
+```
+
+##### Service
+
+```java
+public interface UserService {
+
+    User login(String username, String password) throws Exception;
+    List<User> findAllUsers();
+}
+
+public class UserServiceImpl implements UserService {
+    private UserDaoImpl userDaoImpl = new UserDaoImpl();
+
+    @Override
+    public User login(String username, String password) {
+        User user = null;
+        try {
+            JDBCUtil1.beginTransaction();
+            user = userDaoImpl.findOne(username, password);
+            JDBCUtil1.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            JDBCUtil1.rollback();
+        }
+        return user;
+    }
+
+    @Override
+    public List<User> findAllUsers() {
+        List<User> userList = null;
+        try {
+            userList = userDaoImpl.findAll();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return userList;
+    }
+}
+```
+
+##### Controller
+
+```java
+@WebServlet(value = {"/login", "/userlist"})
+public class UserServlet extends HttpServlet {
+    private UserService userService = new UserServiceImpl();
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setCharacterEncoding("utf-8");
+        resp.setContentType("text/html; charset=UTF-8");
+
+        String username = req.getParameter("username");
+        String password = req.getParameter("password");
+
+        User user = null;
+        try {
+            user = userService.login(username, password);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        PrintWriter writer = resp.getWriter();
+        if (user != null) {
+            writer.println("登录成功！欢迎 " + username + "！");
+        } else {
+            writer.println("用户不存在！");
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setCharacterEncoding("utf-8");
+        resp.setContentType("text/html; charset=UTF-8");
+
+        List<User> allUsers = userService.findAllUsers();
+
+        PrintWriter writer = resp.getWriter();
+        writer.println("<html>");
+        writer.println("<head>");
+        writer.println("<title>用户列表</title>");
+        writer.println("</head>");
+        writer.println("<body>");
+        writer.println("<table border='1' align='center'>");
+        writer.println("<tr>");
+        writer.println("    <td>姓名</td>");
+        writer.println("    <td>住址</td>");
+        writer.println("    <td>电话</td>");
+        writer.println("</tr>");
+
+        for (User user : allUsers) {
+            writer.println("<tr>");
+            writer.println("    <td>" + user.getUsername() + "</td>");
+            writer.println("    <td>" + user.getAddress() + "</td>");
+            writer.println("    <td>" + user.getPhone() + "</td>");
+            writer.println("</tr>");
+        }
+
+        writer.println("</table>");
+        writer.println("</body>");
+        writer.println("</html>");
+    }
+}
+```
+
+### 8. 转发与重定向
+
+#### 8.1 现有问题
+
+在之前案例中，调用业务逻辑和显示结果页面都在同一个 `Servlet` 中，就会产生设计的问题：
+
+* 不符合单一职能原则、各司其职的思想
+* 不得后续的维护
+
+**结论：应该将业务逻辑和显示结果分离开**
+
+[![cmCaZR.md.png](https://z3.ax1x.com/2021/04/02/cmCaZR.md.png)](https://imgtu.com/i/cmCaZR)
+
+##### 业务、显示分离
+
+[![cmzaWD.md.png](https://z3.ax1x.com/2021/04/03/cmzaWD.md.png)](https://imgtu.com/i/cmzaWD)
+
+
+
+问题：
+
+* 业务逻辑和显示结果分离后，如何跳转到显示结果的 `Servlet`
+* 业务逻辑得到的数据结果如果传递给显示结果的 `Servlet`
+
+#### 8.2 转发
+
+转发的作用在服务端，将请求发送给服务器上的其他资源，以便共同完成一次请求的处理
+
+##### 页面跳转
+
+在调用业务逻辑的 `Servlet` 中，编写以下代码：
+
+`request.getRequestDispatcher("/目标URL-pattern").forward(request, response);`
+
+**注意：使用 forward 跳转时，是在服务器内部跳转，地址栏不发生变化，属于同一次请求**
+
+[![cnSNBn.md.png](https://z3.ax1x.com/2021/04/03/cnSNBn.md.png)](https://imgtu.com/i/cnSNBn)
+
+##### 数据传递
+
+`forward` 表示一次请求，是在服务器内部跳转，可以共享同一次 `request` 作用域中的数据
+
+* `request` 作用域：拥有存储数据的空间，作用范围是一次请求有效（一次请求可以经过多次转发）
+  * 可以将数据存入 `request` 后，在一次请求过程中的任何位置进行获取
+  * 可传递任何数据（基本数据类型、对象、数组、集合等）
+* 存数据：`request.setAttribute(key, value);`
+  * 以键值对形式存储在 `request` 作用域中，`key` 为 `String` 类型，`value` 为 `Object` 类型
+* 取数据：`request.getAttribute(key);`
+  * 通过 `String` 类型的 `key` 访问 `Object` 类型的 `value`
+
+##### 转发特点
+
+* 转发是服务器行为
+* 转发是浏览器只做了一次访问请求
+* 转发浏览器地址不变
+* 转发再次跳转之间传输的信息不会丢失，所以可以通过 `request` 进行数据的传递
+* 转发只能将请求转发给同一个 `web` 应用中的组件
+
+#### 8.3 重定向
+
+重定向作用在客户端，客户端将请求发送给服务器后，服务器响应给客户端一个新的请求地址，客户端重新发送新请求
+
+##### 页面跳转
+
+在调用业务逻辑的 `Servlet` 中，编写以下代码：
+
+`response.sendRedirect("目标URI");`
+
+> URI：统一资源标识符（Uniform Resource Identifier），用来表示服务器定位一个资源，资源在 web 项目中的路径（/project/source）
+
+[![cnt2NR.md.png](https://z3.ax1x.com/2021/04/03/cnt2NR.md.png)](https://imgtu.com/i/cnt2NR)
+
+##### 数据传递
+
+`sendRedirect` 跳转时，地址栏改变，代表客户端重新发送的请求，属于两次请求：
+
+* `response` 没有作用域，再次 `request` 请求中的数据无法共享
+* 传递数据：通过 `URI` 的拼接进行数据传递（`/WebProject/b?username=tom`）
+* 获取数据：`request.getParameter("username");`
+
+##### 重定向特点
+
+* 重定向是客户端行为
+* 重定向是浏览器做了至少两次的访问请求
+* 重定向浏览器地址改变
+* 重定向再次跳转之间传输的信息会丢失（`request` 范围）
+* 生定向可以指向任何的资源，包括当前应用程序中的其它资源、同一个站点上的其它应用程序中的资源、其它站点的资源
+
+#### 8.4 转发、重定向总结
+
+当两个 `Servlet` 需要传递数据时，选择 `forward` 转发，不建议使用 `sendRedirect` 进行传递
+
+### 9. Servlet 生命周期
+
+#### 9.1 生命周期四个阶段
+
+##### 实例化
+
+当用户第一次访问 `Servlet` 时，由容器调用 `Servlet` 的构造器创建具体的 `Servlet` 对象，也可以在容器启动之后立即创建实例。使用下面的代码可以设置 `Servlet` 是否在服务器启动时就创建：
+
+`<load-on-startup>1</load-on-startup>`
+
+> 注意：只执行一次
+
+##### 初始化
+
+在初始化阶段，`init()` 方法会被调用，这个方法在 `javax.servlete.Servlet` 接口中定义，其中，方法以一个 `ServletConfig` 类型的对象作为参数
+
+> 注意：init 方法只被执行一次
+
+##### 服务
+
+当客户端有一个请求时，容器就会将请求 `ServletRequest` 与响应 `ServletResponse` 对象转给 `Servlet`，以参数的形式传给 `service` 方法
+
+> 注意：此方法会执行多次
+
+##### 销毁
+
+当 `Servlet` 容器停止或者重新启动都会引起销毁 `Servlet` 对象并调用 `destroy` 方法
+
+>注意：destory 方法执行一次
+
+[![cnWUpT.md.png](https://z3.ax1x.com/2021/04/03/cnWUpT.md.png)](https://imgtu.com/i/cnWUpT)
+
+```java
+@WebServlet(value = {"/lifecycle"})
+public class LifeCycleServlet implements Servlet {
+
+    public LifeCycleServlet() {
+        System.out.println("1. 实例化");
+    }
+
+    @Override
+    public void init(ServletConfig servletConfig) throws ServletException {
+        System.out.println("2. 初始化");
+    }
+
+    @Override
+    public ServletConfig getServletConfig() {
+        return null;
+    }
+
+    @Override
+    public void service(ServletRequest servletRequest, ServletResponse servletResponse) throws ServletException, IOException {
+        System.out.println("3. 服务中");
+    }
+
+    @Override
+    public String getServletInfo() {
+        return null;
+    }
+
+    @Override
+    public void destroy() {
+        System.out.println("4. 销毁");
+    }
+}
+```
+
+### 10. Servlet 特性
+
+#### 10.1 线程安全问题
+
+`Servlet` 在访问之后，会执行实例化操作，创建一个 `Servlet` 对象。而我们 `Tomcat` 容器可以同时多个线程迸发访问同一个 `Servlet`，如果在方法中对成员变量做修改操作，就会有线程安全的问题
+
+#### 10.2 如何保证线程安全
+
+* `synchronized`
+  * 将存在线程安全问题的代码放到同步代码块中
+* 实现 `SingleThreadModel` 接口
+  * `Servlet` 实现 `SingleThreadModel` 接口后，每个线程都会创建 `Servlet` 实例，这样每个客户端请求就不存在共享资源的问题，但是 `Servlet` 响应客户端请求的效率太低，所以已经 **淘汰**
+* 尽可能使用局部变量
+
+### 11. 状态管理
+
+#### 11.1 现有问题
+
+* `HTTP` 协议是无状态的，不能保存每次提交的信息
+* 如果用户发来一个新的请求，服务器无法知道它是否与上次的请求有联系
+* 对于那些需要多次提交数据才能完成的 `web` 操作，比如登录来说，就成问题了
+
+#### 11.2 概念
+
+将浏览器与 `web` 服务器之间多次交互当作一个整体来处理，并且将多次交互所涉及的数据（即状态）保存下来
+
+#### 11.3 状态管理分类
+
+* 客户端状态管理技术：将状态保存在客户端，代表性的是 `cookie` 技术
+* 服务器状态管理技术：将状态保存在服务器端。代表性的是 `session` 技术（服务器传递 `sessionID` 时需要使用 `cookie` 的方式）和 `application`
+
+### 12. Cookie 的使用
+
+#### 12.1 什么是 Cookie
+
+* `Cookie` 是在浏览器访问 `Web` 服务器的某个资源时，由 `web` 服务器在 `HTTP` 响应消息头中附带传送给浏览器的一小段数据
+* 一旦 `web` 浏览器保存了某个 `Cookie`，那么它在以后每次访问该 `web` 服务器时，都应在 `HTTP` 请求头中将这个 `Cookie` 回传给 `web` 服务器
+* 一个 `Cookie` 主要由标识该信息的名称（`name`）和值（`value`）组成
+
+[![cnoXvV.md.png](https://z3.ax1x.com/2021/04/03/cnoXvV.md.png)](https://imgtu.com/i/cnoXvV)
+
+#### 12.2 创建 Cookie
+
+```java
+// 创建 Cookie
+Cookie ck = new Cookie("code", code);
+ck.setPath("/webs"); // 设置 Cookie 的路径
+ck.setMaxAge(-1); // 内存存储，取值有三种：>0 有效期，单位秒；=0 立即失效；<0 内存存储。默认值： -1
+response.addCookie(ck); // 添加到 response 对象中，响应时发送给客户端
+
+// 注意：有效路径：当前访问资源的上一级目录，不带主机名
+```
+
+> chrome 浏览器查看 cookie 信息：chrome://settings/content/cookies
+
+#### 12.3 获取 Cookie
+
+```java
+// 获取所有的 Cookie
+Cookie[] cks = request.getCookies();
+// 遍历 Cookie
+for (Cookie ck : cks) {
+  // 检索出自己的 Cookie
+  if (ck.getName().equals("code")) {
+    // 记录 cookie 的值
+    code = ck.getValue()；
+    break;
+  }
+}
+```
+
+#### 12.4 修改 Cookie
+
+需要保证 `Cookie` 的名称和路径一致即可修改
+
+```java
+// 创建 Cookie
+Cookie ck = new Cookie("code", code);
+ck.setPath("/webs"); // 设置 Cookie 的路径
+ck.setMaxAge(-1); // 内存存储，取值有三种：>0 有效期，单位秒；=0 立即失效；< 0 内存存储
+response.addCookie(ck); // 让浏览器添加 Cookie
+```
+
+> 注意：如果改变 cookie 的 name 和有效路径会新建 cookie，而改变 cookie 值、有效期会覆盖原有 cookie
+
+#### 12.5 Cookie 编码与解码
+
+`Cookie` 默认不支持中文，只能包含 `ASCII` 字符，所以 `Cookie` 需要对 `Unicode` 字符进行编码，否则会出现乱码：
+
+* 编码可以使用 `java.net.URLEncoder` 类的 `encode(String str, Strign encoding)` 方法
+* 解码使用 `java.net.URLDecoder` 类的 `decode(String str, String encoding)` 方法
+
+##### 创建带中文 Cookie
+
+```java
+Cookie cookie = new Cookie(URLEncoder.encode("姓名", "UTF-8"), URLEncoder.encode("张三", "UTF-8"));
+// 发送到客户端
+response.addCookie(cookie);
+```
+
+##### 读取带中文 Cookie
+
+```java
+if (request.getCookies() != null) {
+  for (Cookie cc : request.getCookies()) {
+    String CookieName = URLDecoder.decode(cc.getName(), "UTF-8");
+    String cookieValue = URLDecoder.decode(cc.getValue(), "UTF-8");
+    out.println(cookieName + "=");
+    out.println(cookieValue + ";<br/>");
+  }
+} else {
+  out.println("Cookie 未写入客户端。请刷新页面。");
+}
+```
+
+#### 12.6 Cookie 优缺点
+
+优点：
+
+* 可配置到期规则
+* 简单性：`Cookie` 是一种基于文本的轻量结构，包含简单的键值对
+* 数据持久性：`Cookie` 默认在过期之前是可以一直存在客户端浏览器上的
+
+缺点：
+
+* 大小受到限制：大多数浏览器对于 `Cookie` 的大小有 4K、8K 字节的限制
+* 用户配置为禁用：有些用户禁用了浏览器或客户端设备接收 `Cookie` 的能力，因此限制了这一功能
+* 潜在的安全风险：`Cookie` 可能会被篡改，会对安全性造成潜在风险或者导致依赖于 `Cookie` 的应用程序失败
+
+### 13. Session 对象【重点】
+
+#### 13.1 Sesssion 概述
+
+* `Session` 用于记录用户的状态。`Session` 指的是在一段时间内，单个客户端与 `web` 服务器的一连串相关的交互过程
+* 在一个 `Session` 中，客户可能会多次请求访问同一个资源，也有可能请求访问各种不同的服务器资源
+
+#### 13.2 Session 原理
+
+* 服务器会为每一次会话分配一个 `Session` 对象
+* 同一个浏览器发起的多次请求，同属于一次会话（`Session`）
+* 首次用到 `Session` 时，服务器会自动创建 `Session`，并创建 `Cookie` 存储 `SessionId` 发送回客户端
+
+> 注意：session 是由服务端创建的
+
+#### 13.3 Session 使用
+
+* `Session` 作用域：拥有存储数据的空间，作用范围是一次会话有效
+  * 一次会话是使用同一浏览器发送的多次请求，一旦浏览器关闭，则结束会话
+  * 可以将数据存入 `Session` 中，在一次会话的任意位置进行获取
+  * 可传递任何数据（基本数据类型、对象、集合、数组）
+
+##### 获取 Session
+
+```java
+// 获取 Session 对象
+HttpSession session = reqeust.getSession();
+// 唯一标识
+System.out.println("Id," + session.getId());
+```
+
+#####  Session 保存数据
+
+`setAttribute(属性名, Object);` ：保存数据到 `Session` 中，以键值对形式存储在 `Session` 作用域中
+
+##### Session 获取数据
+
+`getAttribute(属性名);` ：获取 `Session` 中数据，通过 `String` 类型的 `key` 访问 `Object` 类型的 `value`
+
+##### Session 移除数据
+
+`removeAttribute(属性名)` ：从 `Session` 中删除数据，通过键移除 `Session` 作用域中的值
+
+#### 13.4 Session 与 Request 的应用区别
+
+* `request` 是一次请求有效，请求改变，则 `request` 改变
+* `session` 是一次会话有效，浏览器改变，则 `session` 改变
+
+#### 13.5 Session 的生命周期
+
+* 开始：第一次使用到 `Session` 的请求产生，则创建 `Session`
+* 结束：
+  * 浏览器关闭，则失效
+  * `Session` 超时，则失效
+    * `session.setMaxinactiveInterval(seconds); // 设置最大有效时间（单位：秒）` 
+  * 手工销毁，则失效
+    * `session.invalidate(); // 登录退出、注销`
+
+#### 13.6 浏览器禁用 Cookie 的解决方案【了解】
+
+#####  浏览器禁用 Cookie 的后果
+
+服务器在默认情况下，会使用 `Cookie` 的方式将 `sessionID` 发给浏览器，如果用户禁止 `Cookie`，则 `sessionID` 不会被浏览器保存，此时，服务器可以使用如 `URL` 重写这样的方式发送 `sessionID`
+
+##### URL 重写
+
+浏览器在访问服务器上的某个地址时，不再使用原来的那个地址，而是使用经过改写的地址（即在原来的地址后面加上了 `sessionID`）
+
+##### 实现 URL 重写
+
+`response.encodeRedirectURL(String url)` 生成重写的 `URL`
+
+```java
+HttpSession session = request.getSession();
+// 重写 URL 追加 SessionId
+String newURL = response.encodeRedirectURL("/项目名称/cs");
+System.out.println(newURL);
+
+response.sendRedirect(newURL);
+```
+
+#### 13.7 Session 实战权限验证
+
+[![cKNaa4.md.png](https://z3.ax1x.com/2021/04/04/cKNaa4.md.png)](https://imgtu.com/i/cKNaa4)
 
 
 
@@ -7413,6 +9343,61 @@ new Date
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 第三十三章 Boot Strap
+
+### 环境搭建
+
+1. 下载 `Boot Strap` 相关资料（[说明：版本为 3.3.7]()）
+
+   1. [下载地址](https://v3.bootcss.com/getting-started/#download)
+
+2. 下载完成后解压 `Boot Strap` 压缩包
+
+3. 将 `Boot Strap` 文件夹全部放入项目中
+
+4. 页面使用
+
+   ```html
+   <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- 移动设备优先 -->
+   <link rel="stylesheet" href="../boot/css/bootstrap.min.css">
+   ```
+
+### Boot Strap 容器
+
+```html
+<!--两边留有一定宽度的 padding-->
+<div class="container" style="border: 1px red solid;"></div>
+<!--战用页面 100% 的宽度-->
+<div class="container-fluid" style="border: 1px red solid;"></div>
+
+<!--注意：两种容器不能互相嵌套-->
+```
 
 
 
