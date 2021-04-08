@@ -9335,13 +9335,625 @@ response.sendRedirect(newURL);
 
 
 
+```java
+// 实体类
+@Data
+public class User {
+
+  private long userId;
+  private String username;
+  private String password;
+  private String address;
+  private String phone;
+  private java.sql.Date birthday;
+
+  public User() {
+  }
+
+  public User(String username, String password, String address, String phone, Date birthday) {
+    this.username = username;
+    this.password = password;
+    this.address = address;
+    this.phone = phone;
+    this.birthday = birthday;
+  }
+}
+
+// Dao 层
+public abstract class AbstractDao {
+
+    public abstract int add(User user) throws Exception;
+    public abstract int delete(long id) throws Exception;
+    public abstract int update(User user) throws Exception;
+    public abstract User findOne(long id) throws Exception;
+    public abstract List<User> findAll() throws Exception;
+}
+public class UserDao extends AbstractDao {
+    private static final QueryRunner QUERY_RUNNER = new QueryRunner();
 
 
+    @Override
+    public int add(User user) throws Exception {
+        return QUERY_RUNNER.update(DBUtil.getConnection(), "insert into user (username, password, address, phone, birthday) values (?, ?, ?, ?, ?)", user.getUsername(), user.getPassword(), user.getAddress(), user.getPhone(), user.getBirthday());
+    }
 
+    @Override
+    public int delete(long id) throws Exception {
+        return 0;
+    }
 
+    @Override
+    public int update(User user) throws Exception {
+        return 0;
+    }
 
+    @Override
+    public User findOne(long id) throws Exception {
+        return null;
+    }
 
+    public User findOneByName(String username) throws Exception {
+        return QUERY_RUNNER.query(DBUtil.getConnection(), "select * from user where username=?", new BeanHandler<User>(User.class), username);
+    }
 
+    @Override
+    public List<User> findAll() throws Exception {
+        return QUERY_RUNNER.query(DBUtil.getConnection(), "select * from user", new BeanListHandler<>(User.class));
+    }
+}
+
+// Service 层
+public interface UserService {
+
+    boolean addUsers(List<User> users) throws Exception;
+
+    User login(String username, String password) throws Exception;
+
+    List<User> getAllUsers() throws Exception;
+}
+public class UserServiceImpl implements UserService {
+    private static final UserDao USER_DAO = new UserDao();
+
+    @Override
+    public boolean addUsers(List<User> users) throws Exception {
+        DBUtil.beginTransaction();
+        try {
+            for (User user : users) {
+                USER_DAO.add(user);
+            }
+
+            DBUtil.commit();
+            return true;
+        } catch (Exception ex) {
+            DBUtil.rollback();
+            throw ex;
+        }
+    }
+
+    @Override
+    public User login(String username, String password) throws Exception {
+        User user = null;
+        try {
+            // 1. 根据用户名查找
+            user = USER_DAO.findOneByName(username);
+            if (user != null) {
+                if (!user.getPassword().equals(password)) {
+                    throw new Exception("密码不正确！");
+                }
+            } else {
+                throw new Exception("用户不存在！");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw ex;
+        }
+        return user;
+    }
+
+    @Override
+    public List<User> getAllUsers() throws Exception {
+        List<User> users;
+        try {
+            users = USER_DAO.findAll();
+        } catch (Exception ex) {
+            throw ex;
+        }
+        return users;
+    }
+}
+
+// Servlet 层
+@WebServlet("/addUsersServlet")
+public class AddUsersServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        res.setContentType("text/html; charset=UTF-8");
+        UserService userService = new UserServiceImpl();
+        List<User> users = new ArrayList<>();
+        PrintWriter writer = res.getWriter();
+
+        try {
+            users.add(new User("张三", "123", "兰州市城关区段家滩", "12332112332", DateUtil.utilDateToSqlDate(DateUtil.strToUtilDate("1983-03-02"))));
+            users.add(new User("李四", "234", "兰州市城关区高新区", "23423423423", DateUtil.utilDateToSqlDate(DateUtil.strToUtilDate("1984-04-02"))));
+            users.add(new User("刘六", "345", "兰州市城关区宋家滩", "34534534534", DateUtil.utilDateToSqlDate(DateUtil.strToUtilDate("1985-05-02"))));
+
+            userService.addUsers(users);
+
+            res.sendRedirect("/login.html");
+        } catch (Exception e) {
+            e.printStackTrace();
+            writer.println("<h1>添加用户失败，原因：</h1>");
+            writer.println(e.getMessage());
+        }
+    }
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        this.doPost(req, res);
+    }
+}
+@WebServlet("/login")
+public class Login extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        UserService userService = new UserServiceImpl();
+
+        req.setCharacterEncoding("utf-8");
+        res.setContentType("text/html; charset=UTF-8");
+
+        String username = req.getParameter("username");
+        String password = req.getParameter("password");
+
+        PrintWriter writer = res.getWriter();
+
+        try {
+            User user = userService.login(username, password);
+            if (user != null) {
+                HttpSession session = req.getSession();
+                session.setAttribute("user", user);
+
+                res.sendRedirect("/showallController");
+            } else {
+                res.sendRedirect("/login.html");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            writer.println("<h1>" + e.getMessage() + "</h1>");
+        }
+    }
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        this.doPost(req, res);
+    }
+}
+@WebServlet("/showallController")
+public class ShowAllUsersController extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        HttpSession session = req.getSession();
+        Object username = session.getAttribute("user");
+        if (username == null) {
+            resp.sendRedirect("/login.html");
+        } else {
+            UserService userService = new UserServiceImpl();
+
+            try {
+                List<User> users = userService.getAllUsers();
+
+                req.setAttribute("users", users);
+                req.getRequestDispatcher("/showalljsp").forward(req, resp);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doGet(req, resp);
+    }
+}
+@WebServlet("/showalljsp")
+public class ShowAllJSP extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        Object user1 = req.getSession().getAttribute("user");
+
+        if (user1 == null) {
+            resp.sendRedirect("/login.html");
+        } else {
+            List<User> users = (List<User>) req.getAttribute("users");
+            resp.setContentType("text/html; charset=UTF-8");
+            PrintWriter writer = resp.getWriter();
+            writer.println("<html>");
+            writer.println("<head>");
+            writer.println("<title>用户列表页面</title>");
+            writer.println("</head>");
+            writer.println("<body>");
+            writer.println("<table border='1' align='center'>");
+            writer.println("    <tr>");
+            writer.println("        <th>姓名</th>");
+            writer.println("        <th>密码</th>");
+            writer.println("        <th>电话</th>");
+            writer.println("        <th>地址</th>");
+            writer.println("        <th>生日</th>");
+            writer.println("    </tr>");
+
+            for (User user : users) {
+                writer.println("    <tr>");
+                writer.println("        <td>" + user.getUsername() + "</td>");
+                writer.println("        <td>" + user.getPassword() + "</td>");
+                writer.println("        <td>" + user.getPhone() + "</td>");
+                writer.println("        <td>" + user.getAddress() + "</td>");
+                writer.println("        <td>" + DateUtil.utilDateToStr(DateUtil.sqlDateToUtilDate(user.getBirthday())) + "</td>");
+                writer.println("    </tr>");
+            }
+
+            writer.println("</table>");
+            writer.println("</body>");
+            writer.println("</html>");
+        }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doGet(req, resp);
+    }
+}
+
+// login.html 页面
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+</head>
+<body>
+    <form action="/login" method="post">
+        <label for="username">用户名：</label><input type="text" id="username" name="username">
+        <label for="password">密码：</label><input type="password" id="password" name="password">
+        <button type="submit">登录</button>
+    </form>
+</body>
+</html>
+```
+
+#### 13.8 Session 实战之验证码
+
+##### 导入 ValidateCode.jar 包
+
+[下载地址](https://www.jianshu.com/p/86669357074b)
+
+`jar` 包作用：帮助生成验证码图片
+
+##### 编写 ValidateCode Servlet
+
+```java
+@WebServlet("/validateCode")
+public class ValidateCode extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        cn.dsna.util.images.ValidateCode validateCode = new cn.dsna.util.images.ValidateCode(200, 40, 4, 20);
+
+        req.getSession().setAttribute("codes", validateCode.getCode());
+
+        validateCode.write(res.getOutputStream());
+    }
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        this.doPost(req, res);
+    }
+}
+```
+
+##### 修改 login.html 页面
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+</head>
+<body>
+    <form action="/login" method="post">
+        <label for="username">用户名：</label><input type="text" id="username" name="username"><br>
+        <label for="password">密码：</label><input type="password" id="password" name="password"><br>
+        <label for="code">验证码：</label><input type="text" id="code" name="code"><img src="/validateCode"/> <br>
+        <button type="submit">登录</button>
+    </form>
+</body>
+</html>
+```
+
+##### 修改 login servlet
+
+```java
+@WebServlet("/login")
+public class Login extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        UserService userService = new UserServiceImpl();
+
+        req.setCharacterEncoding("utf-8");
+        res.setContentType("text/html; charset=UTF-8");
+
+        String username = req.getParameter("username");
+        String password = req.getParameter("password");
+        String code = req.getParameter("code");
+
+        String codes = (String) req.getSession().getAttribute("codes");
+
+        PrintWriter writer = res.getWriter();
+
+        try {
+            if (codes != null && codes.equalsIgnoreCase(code)) {
+                User user = userService.login(username, password);
+                if (user != null) {
+                    HttpSession session = req.getSession();
+                    session.setAttribute("user", user);
+
+                    res.sendRedirect("/showallController");
+                } else {
+                    res.sendRedirect("/login.html");
+                }
+            } else {
+                res.sendRedirect("/login.html");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            writer.println("<h1>" + e.getMessage() + "</h1>");
+        }
+    }
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        this.doPost(req, res);
+    }
+}
+```
+
+### 14. ServletContext 对象【重点】
+
+#### 14.1 概述
+
+* 全局对象，也拥有作用域，对应一个 `Tomcat` 中的 `Web` 应用
+* 当 `Web` 服务器启动时，会为每一个 `Web` 应用程序创建一块共享的存储区域（`ServletContext`）
+* `ServletContext` 在 `Web` 服务器启动时创建，服务器关闭时销毁
+
+#### 14.2 获取
+
+* `GenericServlet` 提供了 `getServletContext()` 方法（推荐）`this.getServletContext();`
+* `HttpServletRequest` 提供了 `getServletContext()` 方法（推荐）
+* `HttpSession` 提供了 `getServletContext()` 方法
+
+#### 14.3 作用
+
+##### 获取项目真实路径
+
+获取当前项目在服务器发布的真实路径：
+
+`String realpath = servletContext.getRealPath("/");`
+
+##### 获取项目上下文路径
+
+获取当前项目上下文路径（应用程序名称）：
+
+```java
+System.out.println(servletContext.getContextPath()); // 上下文路径（应用程序名称）
+System.out.println(request.getContextPath());
+```
+
+##### 全局容器
+
+`ServletContext` 拥有作用域，可以存储数据到全局容器中：
+
+* 存储数据：`servletContext.setAttribute("name", value);`
+* 获取数据：`servletContext.getAttribute("name");`
+* 移除数据：`servletContext.removeAttribute("name");`
+
+#### 14.4 特点
+
+* 唯一性：一个应用对应一个 `servlet` 上下文
+* 生命周期：只要容器不关闭或者应用不卸载，`servlet` 上下文就一直存在
+
+#### 14.5 应用场景
+
+统计当前项目的访问次数：
+
+```java
+@WebServlet("/CountController")
+public class CountController extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        ServletContext servletContext = getServletContext();
+
+        Integer count = (Integer) servletContext.getAttribute("count");
+
+        if (count == null) {
+            count = 1;
+            servletContext.setAttribute("count", count);
+        } else
+            servletContext.setAttribute("count", ++count);
+
+        System.out.println("当前访问次数：" + count);
+    }
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        this.doPost(req, res);
+    }
+}
+```
+
+#### 14.6 作用域总结
+
+* `HttpservletRequest`：一次请求，请求响应之前有效
+* `HttpSession`：一次会话开始，浏览器不关闭或不超时之前有效
+* `ServletContext`：服务器启动开始，服务器停止之前有效
+
+### 15. 过滤器【重点】
+
+#### 15.1 现有问题
+
+在以往的 `servlet` 中，是否有冗余的代码，多个 `servlet` 都要进行编写？
+
+#### 15.2 概念
+
+过滤器（`Filter`）是处于客户端与服务器目标资源之间的一道过滤技术
+
+[![cGrvAH.md.png](https://z3.ax1x.com/2021/04/07/cGrvAH.md.png)](https://imgtu.com/i/cGrvAH)
+
+#### 15.3 作用
+
+* 执行地位在 `servlet` 之前，客户端发送请求时，会先经过 `Filter`，再到达目标 `Servlet` 中，响应时，会根据执行流程再次反向执行 `Filter`
+* 可以解决多个 `Servlet` 共性代码的冗余问题（例如：乱码处理、登录验证等）
+
+#### 15.4 编写过滤器
+
+`Servlet API` 中提供了一个 `Filter` 接口，开发人员编写一个 `Java` 类实现了这个接口即可，这个 `Java` 类称之为过滤器
+
+##### 实现过程
+
+* 编写 `Java` 类实现 `Filter` 接口
+* 在 `doFilter` 方法中编写拦截逻辑
+* 设置拦截路径
+
+```java
+@WebFilter("/t")
+public class MyFilter implements Filter {
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        System.out.println("Filter");
+
+        filterChain.doFilter(servletRequest, servletResponse);
+
+        System.out.println("end");
+    }
+}
+
+@WebServlet("/t")
+public class TargetController extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        System.out.println("target");
+    }
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        this.doPost(req, res);
+    }
+}
+```
+
+#### 15.5 配置
+
+##### 注解配置
+
+在自定义的 `Filter` 类上使用注解 `@WebFilter(value="/过滤目标资源")`
+
+##### xml 配置
+
+在 `web.xml` 中进行过滤器的配置
+
+```xml
+<!-- 过滤器的 xml 配置-->
+<filter>
+  <!--名称-->
+  <filter-name>sf</filter-name>
+  <!--过滤器类全称-->
+  <filter-class>com.qf.web.filter.SecondFilter</filter-class>
+</filter>
+<!--映射路径配置-->
+<filter-mapping>
+  <!--名称-->
+  <filter-name>sf</filter-name>
+  <!--过滤的 url 匹配的规则和 Servlet 类似-->
+  <url-pattern>/*</url-pattern>
+</filter-mapping>
+```
+
+##### 关于拦截路径
+
+过滤器的拦截路径通常有三种形式：
+
+* 精确拦截匹配：`/index.jsp`、`/myservlet` 等
+* 后缀拦截匹配：`*.jsp`、`*.html`、`*.jpg`
+* 通配符拦截匹配 `/*` ：表示拦截所有。注意过滤器不能使用 `/` 匹配，`/aaa/bbb/*` 允许
+
+#### 15.6 过程器链和优先级
+
+##### 过滤器链
+
+客户端对服务器请求之后，服务器调用 `Servlet` 之前会执行一组过滤器（多个过滤器），那么这组过滤器就称为一条过滤器链
+
+每个过滤器实现某个特定的功能，当第一个 `Filter` 的 `doFilter` 方法被调用时，`web` 服务器会创建一个代表 `Filter` 链的 `FilterChain` 对象传递给该方法。在 `doFilter` 方法中，开发人员如果调用了 `FilterChain` 对象的 `doFilter` 方法，则 `web` 服务器会检查 `FilterChain` 对象中是否还有 `filter`，如果有，则调用第 2 个 `filter`，如果没有，则调用目标资源
+
+[![cY9gZq.md.png](https://z3.ax1x.com/2021/04/08/cY9gZq.md.png)](https://imgtu.com/i/cY9gZq)
+
+##### 过滤器优先级
+
+在一个 `web` 应用中，可以开发编写多个 `Filter`，这些 `Filter` 组合起来称之为一个 `Filter` 链
+
+优先级：
+
+* 如果为注解的话，是按照类全名称的字符串顺序决定作用顺序
+* 如果 `web.xml`，按照 `filter-mapping` 注册顺序，从上往下
+* `web.xml` 配置高于注解方式
+* 如果注解和 `web.xml` 同时配置，会创建多个过滤器对象，造成过滤多次
+
+#### 15.7 过滤器典型应用
+
+##### 解决乱码
+
+```java
+@WebFilter("/*")
+public class EncodingFilter implements Filter {
+
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws ServletException, IOException {
+        // 对 request 对象请求消息增强
+        req.setCharacterEncoding("utf-8");
+        // 放行
+        chain.doFilter(req, res);
+
+        // 对 response 对象响应消息增强
+        res.setContentType("text/html; charset=UTF-8");
+    }
+
+    public void destroy() {
+    }
+
+    public void init(FilterConfig config) throws ServletException {
+
+    }
+}
+```
+
+##### 权限验证
+
+```java
+// 创建了该过滤器后，原来在 showallController 中写的权限判断的代码就可以不使用了
+@WebFilter("/showallController")
+public class AuthorityFilter implements Filter {
+
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws ServletException, IOException {
+        // 对 request 对象请求消息增强
+        HttpServletRequest request = (HttpServletRequest) req;
+        HttpServletResponse response = (HttpServletResponse) res;
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
+
+        if (user != null) {
+            // 放行
+            chain.doFilter(req, res);
+        } else {
+            response.sendRedirect(req.getServletContext().getContextPath() + "/login.html");
+            chain.doFilter(req, res);
+        }
+
+        // 对 response 对象响应消息增强
+    }
+
+    public void destroy() {
+    }
+
+    public void init(FilterConfig config) throws ServletException {
+
+    }
+}
+```
 
 
 
