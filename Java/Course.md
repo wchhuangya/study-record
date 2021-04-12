@@ -6228,7 +6228,7 @@ public class CommonsDbutilsTest {
 
 | 字符实体 | 表示意义   |
 | -------- | ---------- |
-| `&nbsp`  | 空格       |
+| `&nbsp;` | 空格       |
 | `&lt;`   | 小于号 `<` |
 | `&gt;`   | 大于号 `>` |
 | `&copy;` | 版权符号   |
@@ -9955,7 +9955,855 @@ public class AuthorityFilter implements Filter {
 }
 ```
 
+### 16. 综合案例
 
+
+
+
+
+
+
+## 第二十六章 JSP
+
+### 1. 现有问题
+
+在之前学习 `Servlet` 时，服务端通过 `Servlet` 响应客户端页面，有以下不足之处：
+
+* 开发方式麻烦：继承父类、覆盖方法、配置 `web.xml` 或注解
+* 代码修改麻烦：重新编译、部署、重启服务
+* 显示方式麻烦：获取流、使用 `println("")` 逐行打印
+* 协同开发麻烦：`UI` 负责美化页面、程序员负责编写代码。`UI` 不懂 `Java` ，程序员又不能将所有前端页面的内容通过流输出
+
+### 2. JSP（Java Server Page）
+
+#### 2.1 概念
+
+简化的 `Servlet` 设计，在 `HTML` 标签中嵌套 `Java` 代码，用以高效开发 `Web` 应用的动态网页
+
+#### 2.2 作用
+
+替换显示页面部分的 `Servlet`（使用 `*.jsp` 文件替换 `xxxJSP.java`）
+
+### 3. jsp 开发【重点】
+
+#### 3.1 创建 JSP
+
+在 `web` 目录下新建 `*.jsp` 文件（与 `WEB-INF` 平级）
+
+##### JSP 编写 Java 代码
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Hello World</title>
+</head>
+<body>
+    <%=new java.util.Date() %>
+</body>
+</html>
+```
+
+> 使用 `<%= %>` 标签编写 ` Java ` 代码在页面中打印当前系统时间
+
+##### 访问 JSP
+
+在浏览器地址栏中输入：`http://ip:port/项目路径/资源名称`
+
+#### 3.2 JSP 与 Servlet
+
+* 关系
+  * `JSP` 文件在容器中会转换成 `Servlet` 执行
+  * `JSP` 是对 `Servlet` 的一种高级封装，本质还是 `Servlet`
+* 区别
+  * 与 `Servlet` 相比，`JSP` 可以很方便的编写或者修改 `HTML` 网页而不用去面对大量的 `println` 语句
+
+[![cNveKA.md.png](https://z3.ax1x.com/2021/04/09/cNveKA.md.png)](https://imgtu.com/i/cNveKA)
+
+#### 3.3 实现原理
+
+`Tomcat` 会将 `xxx.jsp` 转换成 `Java` 代码，进而编译成 `.class` 文件运行，最终将运行结果通过 `response` 响应给客户端
+
+[![cNvdaV.md.png](https://z3.ax1x.com/2021/04/09/cNvdaV.md.png)](https://imgtu.com/i/cNvdaV)
+
+##### Jsp.java 源文件存放目录
+
+使用 `IDEA` 开发工具，`Tomcat` 编译后的 `JSP` 文件（`Xxx_jsp.class` 和 `Xxx_jsp.java`）的dhyty地址：
+
+启动应用后，在控制台查找 `catalina.base=路径` ，路径就是实际的项目部署地址，在 `路径/work/Catalina/localhost/应用上下文/` 下就是真实的存放路径
+
+### 4. JSP 与 HTML 集成开发
+
+#### 4.1 脚本
+
+脚本可以编写 `Java` 语句、变量、方法或表达式
+
+##### 普通脚本
+
+语法：`<% java 代码%>`
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Hello World</title>
+</head>
+<body>
+    Hello World!<br>
+    <%
+        // jsp 中，使用小脚本嵌入 java 代码
+        out.println("hi"); // 打印内容在客户端页面
+        System.out.println("hi"); // 打印内容在控制台
+    %>
+</body>
+</html>
+```
+
+* 经验：普通脚本可以使用所有 `Java` 语法，除了定义函数
+* 注意：脚本与脚本之间不可嵌套，脚本与 `HTML` 标签不可嵌套
+
+##### 声明脚本
+
+语法：`<%! 定义变量、函数 %>`
+
+```jsp
+<body>
+    <%! int i = 0; %>
+    <% int a, b, c; %>
+    <% Object object = new Object(); %>
+    <%!
+        // 定义方法
+        public void m1() {
+            System.out.println("你好！");
+        }
+    %>
+</body>
+```
+
+* 注意：声明脚本中声明的变量是全局变量
+* 声明脚本的内容必须在普通脚本 `<% %>` 中调用
+* 如果声明脚本中的函数具有返回值，使用输出脚本调用 `<%= %>`
+
+##### 输出脚本
+
+语法：`<%=Java表达式%>`
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>JSP基本使用</title>
+</head>
+<body>
+    <p>
+        今天的日期是：<%= new java.util.Date() %>
+    </p>
+</body>
+</html>
+```
+
+* 经验：输出脚本可以输出带有返回值的函数
+* 注意：输出脚本中不能加 `;`
+
+#### 4.2 JSP 注释
+
+`JSP` 注释主要有两个作用：为脚本代码作注释以及 `HTML` 内容注释
+
+##### 语法规则
+
+| 语法             | 描述                                                    |
+| ---------------- | ------------------------------------------------------- |
+| `<%-- 注释 --%>` | `JSP` 注释，注释内容不会被发送至浏览器甚至不会被编译    |
+| `<!-- 注释 -->`  | `HTML` 注释，通过浏览器查看网页源代码时可以看见注释内容 |
+
+#### 4.3 JSP 指令
+
+`JSP` 指令用来设置与整个 `JSP` 页面相关的属性
+
+| 指令                 | 描述                                                      |
+| -------------------- | --------------------------------------------------------- |
+| `<%@ page ... %>`    | 定论页面的依赖属性，比如脚本语言、`error`页面、缓存需求等 |
+| `<%@ include ... %>` | 包含其它文件                                              |
+| `<%@ taglib ... %>`  | 引入标签库的定义，可以是自定义标签                        |
+
+##### page 指令
+
+* 语法：`<%@ page attribute1="value1" attribute2="value2" %>`
+* `page` 指令为容器指代当前页面的使用说明，一个 `JSP` 页面可以包含多个 `page` 指令
+
+| 属性           | 描述                                                         |
+| -------------- | ------------------------------------------------------------ |
+| `contentType`  | 指定当前 `jsp` 页面的 `MIME` 类型和字符编码格式              |
+| `errorPage`    | 指定当 `jsp` 页面发生异常时需要转身的错误处理页面            |
+| `isErrorPage`  | 指定当前页面是否可以作为另一个 `jsp` 页面的错误处理页面      |
+| `import`       | 导入要使用的 `java` 类                                       |
+| `language`     | 定义 `jsp` 页面所使用的脚本语言，默认是 `java`               |
+| `session`      | 指定 `jsp` 页面是否使用 `session`。默认为 `true` 立即创建，`false` 为使用时创建 |
+| `pageEncoding` | 指定 `jsp` 页面的解码格式                                    |
+
+##### include 指令
+
+* 语法：`<%@ include file="被包含的jsp路径"%>`
+* 通过 `include` 指令来包含其他文件
+* 被包含的文件可以是 `jsp` 文件、`html` 文件或文本文件。包含的文件就好像是当前 `jsp` 文件的一部分，会被同时编译执行（静态包含）
+
+```jsp
+<%@ include file="header.jsp"%>
+...
+...
+<%@ include file="fotter.jsp"%>
+```
+
+* 注意：可能会有重名的冲突问题，不建议使用
+
+##### taglib 指令
+
+* 语法：`<%@ taglib uri="外部标签库路径" prefix="前缀" %>`
+* 引入 `jsp` 的标准标签库
+
+`<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %@>`
+
+#### 4.4 动作标签
+
+语法：`<jsp:action_name attribute="value" />`
+
+动作标签指的是 `jsp` 页面在运行期间的命令
+
+##### include
+
+* 语法：`<jsp:iinclude page="相对 URL 地址" />`
+* `<jsp:include> `动作元素会将外部文件输出结果包含在 JSP 中（动态包含）
+
+| 属性 | 描述                        |
+| ---- | --------------------------- |
+| page | 包含在页面中的相对 URL 地址 |
+
+`<jsp:include page="index.jsp" />`
+
+* 注意：前面已经介绍过 `include` 指令，它是将外部文件的输出代码复制到了当前 `jsp` 文件中。而这里的 `jsp:include` 动作不同，是将外部文件的输出结果引入到了当前的 `jsp` 文件中
+
+##### useBean
+
+* 语法：`<jsp:useBean id="name" class="package.className" />`
+* `jssp:useBean` 动作用来加载一个将在 `jsp` 页面中使用的 `JavaBean`
+
+`<jssp:useBean id="user" class="com.ch.wchya.entity.User" />`
+
+* 在类载入后，我们可以通过 `jsp:setProperty` 和 `jsp:getProperty` 动作来修改和获取 `bean` 的属性
+
+###### setProperty
+
+可以在 `jsp:useBean` 元素之后使用 `jsp:setProperty` 进行属性的赋值
+
+| 属性       | 描述                                  |
+| ---------- | ------------------------------------- |
+| `name`     | 必需的，表示要设置的属性是哪个 `Bean` |
+| `property` | 必需的，表示要设置哪个属性            |
+| `value`    | 可选的，用来指定 `Bean` 属性的值      |
+
+```jsp
+<jsp:useBean id="user" class="com.ch.wchya.entity.User" />
+<jsp:setProperty name="user" property="name" value="Jack" />
+```
+
+###### getProperty
+
+`jsp:getProperty` 动作提取指定 `Bean` 属性的值，转换成字符串，然后输出
+
+| 属性       | 描述                                        |
+| ---------- | ------------------------------------------- |
+| `name`     | 要检索的 `Bean` 属性名称，`Bean` 必须已定义 |
+| `property` | 表示要提取 `Bean` 属性的值                  |
+
+```jsp
+<jsp:useBean id="user" class="com.ch.wchya.entity.User" />
+<jsp:setProperty name="user" property="name" value="Jack" />
+<jsp:getProperty name="user" property="name" />
+```
+
+##### forward
+
+* 语法：`<jsp:forward page="相对 URL 地址" />`
+* `jsp:forward` 动作把请求转到另外的页面
+
+| 属性   | 描述                              |
+| ------ | --------------------------------- |
+| `page` | `page` 属性包含的是一个相对 `URL` |
+
+`<jsp:forward page="index.jsp" />`
+
+##### param
+
+* 语法：`<jsp:param name="" value="" />`
+* 在转发动作内部使用，做参数传递
+
+```jsp
+<jsp:forward page="index.jsp">
+  <%!--http 请求参数传递--%>
+  <jsp:param name="sex" value="man" />
+</jsp:forward>
+```
+
+#### 4.5 内置对象
+
+由 `jsp` 自动创建的对象，可以直接使用
+
+| 对象名        | 类型                                     | 说明                          |
+| ------------- | ---------------------------------------- | ----------------------------- |
+| `request`     | `javax.servlet.http.HttpServletRequest`  |                               |
+| `response`    | `java.xservlet.http.HttpServletResponse` |                               |
+| `session`     | `javax.servlet.http.HttpSessiion`        | 由 `session="true"` 开关      |
+| `application` | `javax.servlet.ServletContext`           |                               |
+| `config`      | `javax.servlet.ServletConfig`            |                               |
+| `exception`   | `java.lang.Throwable`                    | 由 `isErrorPage="false"` 开关 |
+| `out`         | `javax.servlet.jsp.JspWriiter`           |                               |
+| `pageContext` | `javaxservletjspPageContext`             |                               |
+| `page`        | `java.lang.Object` 当前对象 `this`       | 当前 `servlet` 实例           |
+
+##### 四大域对象
+
+`Jsp` 有四大作用域对象，存储数据和获取数据的方式一样，不同的是取值的范围有差别：
+
+* `pageContext(javax.servlet.jsp.PageContext)`：当前 `jsp` 页面范围
+* `request(javax.servlet.http.HttpServletRequest)`：一次请求有效
+* `session(javax.servlet.http.HttpSession)`：一次会话有效（关闭浏览器失效）
+* `application(javax.servlet.ServletContext)`：整个 `web` 应用有效（服务器重启或关闭失效）
+
+##### pageContext 对象
+
+* `pageContext` 对象是 `javax.servlet.jsp.PageContext` 类的实例，拥有作用域，用来代表整个 `jsp` 页面
+* 当前页面的作用域对象，一旦跳转则失效
+* 通过 `setAttribute("name", value);` 存储值
+* 通过 `getAttribute("name");` 获取值
+* 用于获取其他 8 个内置对象或者操作其他对象的作用域
+
+```jsp
+<%
+	pageContext.setAttribute("name", value); // 当前作用域有效
+%>
+```
+
+##### pageContext 获取其它内置对象
+
+```jsp
+<%
+  pageContext.getRequest();
+  pageContext.getResponse();
+  pageContext.getServletContext();
+  pageContext.getSession();
+  pageContext.getOut();
+  pageContext.getException();
+  pageContext.getPage();
+  pageContext.getServletConfig();
+%>
+```
+
+##### pageContext 操作其它内置对象的作用域
+
+`pageContext` 对象可以操作其它作用域存储和获取
+
+```jsp
+<%
+  pageContext.setAttribute("name", value); // 当前页面有效
+  pageContext.setAttribute("name", value, PageContext.REQUEST_SCOPE); // request 作用域
+  pageContext.setAttribute("name", value, PageContext.SESSION_SCOPE);	// session 作用域
+  pageContext.setAttribute("name", value, PageContext.APPLICATION_SCOPE); // application 作用域
+%>
+<%
+  pageContext.getAttribute("name");   // 当前作用域
+  pageContext.getAttribute("name", PageContext.REQUEST_SCOPE);    // request 作用域
+  pageContext.getAttribute("name", PageContext.SESSION_SCOPE);    // session 作用域
+  pageContext.getAttribute("name", PageContext.APPLICATION_SCOPE);// application 作用域
+  pageContext.findAttribute("name");  // 从 pageContext、request、session、application 依次查找
+%>
+```
+
+#### 4.6 整合
+
+将 `emp` 项目所有显示页面 `jsp` 的 `servlet` 替换为 `jsp` 页面，使用脚本进行显示
+
+### 5. EL 表达式（Expression Language）
+
+#### 5.1 概念
+
+`EL` 使 `Jsp` 写起来更简单、简洁。主要用于获取作用域中的数据
+
+#### 5.2 作用
+
+`用于替换作用域对象.getAttribute("name")`
+
+#### 5.3 EL 的应用（获取基本类型、字符串）
+
+* `${scope.name}` ：获取具体某个作用域中的数据
+* `${name}` ：获取作用域中的数据，逐级查找 `pageContext、request、session、application`
+
+##### 应用案例
+
+```jsp
+<%
+	// 存储在 request 作用域
+	request.setAttribute("name", "tom");
+	request.setAttribute("age", 18);
+%>
+
+${requestScope.name} <%--获取request作用域中 name 对应的值，找到就返回值，没找到返回"" --%>
+${name}  <%--从最小作用域逐级查找 name 对应的值，找到就返回值，没找到返回 ""--%>
+```
+
+##### EL 和 JSP 脚本的区别
+
+* `<%=request.getAttribute() %>  <%--没有找到返回null--%>`
+* `${requestScope.name}  <%--没有找到返回 "" --%>`
+
+#### 5.4 EL 的应用（获取引用类型）
+
+使用 `EL` 获取作用域中的对象调用属性时，只能访问对象的 `get` 方法，必须遵守命名规范定义
+
+```jsp
+<%
+	Emp e = new Emp();
+	e.setName("gavin");
+	e.setAge(19);
+	request.setAttribute("e", e);
+%>
+${requestScope.e.name} <%--调用getName()方法--%>
+```
+
+#### 5.5 EL 的应用（获取数组、集合的元素）
+
+`EL` 可以获取 `Array、List、Map` 中的元素，`Set` 由于没下标，无法直接访问元素，后续可遍历
+
+```jsp
+<%
+	int[] array = new int[]{1, 2, 3, 4, 5};
+	request.setAttribute("array", array);
+
+	List<Emp> emps = new ArrayList<>();
+	emps.add(new Emp(1, "gavin", 2000, 19);
+  emps.add(new Emp(2, "marry", 3000, 29);
+  emps.add(new Emp(3, "jack", 4000, 39);
+  request.setAttribute("emps", emps);
+           
+  Map<String, String> maps = new HashMap<>();
+  maps.put("CN", "中国");
+  maps.put("FK", "法国");
+  maps.put("US", "美国");
+  request.setAttribute("maps", maps);
+%>
+${requestScope.array[0]}
+${requestScope.emps[0]} <%-- 也可以使用 ${requestScope.emps.get(0)} --%>
+${requestScope.maps[0]} <%-- 也可以使用 ${requestScope.maps["US"]} -->
+```
+
+#### 5.5 EL 运算符
+
+| 操作符              | 描述                                 |
+| ------------------- | ------------------------------------ |
+| `.`                 | 访问一个 `Bean` 属性或者一个映射条目 |
+| `[]`                | 访问一个数组或者链表的元素           |
+| `+、-、*、/ or div` | 加、减或负、乘、除                   |
+| `% or mod`          | 取模                                 |
+| `== or eq`          | 测试是否相等                         |
+| `!= or ne`          | 测试是否不等                         |
+| `< or lt`           | 测试是否小于                         |
+| `> or gt`           | 测试是否大于                         |
+| `<= or le`          | 测试是否小于等于                     |
+| `>= or ge`          | 测试是否大于等于                     |
+| `&& or and`         | 测试逻辑与                           |
+| `|| or or`          | 测试逻辑或                           |
+| `! or not`          | 测试取反                             |
+| `empty`             | 测试是否空值                         |
+
+#### 5.7 隐式对象
+
+`EL` 表达式定义了 11 个隐式对象
+
+| 隐式对象           | 描述                             |
+| ------------------ | -------------------------------- |
+| `pageScope`        | `page` 作用域                    |
+| `requestScope`     | `request` 作用域                 |
+| `sessionScope`     | `session` 作用域                 |
+| `applicationScope` | `application` 作用域             |
+| `param`            | `Request` 对象的参数，字符串     |
+| `paramValues`      | `Request` 对象的参数，字符串集合 |
+| `header`           | `HTTP` 信息头，字符串            |
+| `initParam`        | 上下文初始化参数                 |
+| `cookie`           | `Cookie` 值                      |
+| `pageContext`      | 当前页面的 `pageContext`         |
+
+##### 获得应用上下文
+
+```jsp
+<%=request.getContextPath() %>
+{pageContext.request.contextPath}
+```
+
+##### 获取 Cookie 对象
+
+```jsp
+${cookie.username} //获取名为 username 的 cookie 对象
+${cookie.password} // 获取名为 password 的 cookie 对象
+${cookie.password.value} // 获取 password 的 cookie 的 value 值
+```
+
+### 6. JSTL 标准标签库
+
+#### 6.1 现有问题
+
+* `EL` 主要是用于作用域获取数据，kjad可以做运算判断，但是得到的都是一个结果，做展示
+* `EL` 不存在流程控制，比如判断
+* `EL` 对于集合只能做单点访问，不能实现遍历操作，比如循环
+
+#### 6.2 什么是 JSTL
+
+* 全称：`Java Server Pages Standard Tag Library`
+* `JSP` 标准标签库（`JSTL`）是一个 `JSP` 标签集合
+
+#### 6.3 作用
+
+* 可对 `EL` 获取到的数据进行逻辑操作
+* 与 `EL` 合作完成数据的展示
+
+#### 6.4 JSTL 使用
+
+* 导入两个 `jar` 文件：`standard.jar` 和 `jstl.jar` 文件都放到 `/WEB-INF/lib/` 目录下
+* 在 `jsp` 页面引入标签库 `<%@ tablib uri="http://java.sun.com/jsp/jstl/core" prefix="c" >`
+
+#### 6.5 核心标签
+
+##### 条件判断 if 判断
+
+语法：`<c:if test="条件"></c:if>`
+
+```jsp
+<!-- test 属性中是条件，但条件需要使用 EL 表达式来书写 -->
+<h3>条件标签：if</h3>
+<c:if test="${8 > 3}">
+  8 大于 3 是成立的
+</c:if>
+<c:if test="${8 < 3}">
+  8 小于 3 是成立的
+</c:if>
+```
+
+##### 多条件判断 choose
+
+```jsp
+<c:choose>
+  <c:when test="条件1">结果1</c:when>
+  <c:when test="条件2">结果2</c:when>
+  <c:when test="条件3">结果3</c:when>
+  <c:otherwise>结果4</c:otherwise>
+</c:choose>
+```
+
+```jsp
+<c:set var="score" value="85"></c:set>
+<c:choose>
+  <c:when test="${score < 60}">不及格</c:when>
+  <c:when test="${score >= 60 and score < 80}">合格</c:when>
+  <c:when test="${score >= 80 and score < 90}">优良</c:when>
+  <c:otherwise>优秀</c:otherwise>
+</c:choose>
+```
+
+##### 迭代标签 foreach
+
+```jsp
+<c:foreach
+           var="变量名"
+           items="集合"
+           begin="起始下标"
+           end="结束下标"
+           step="步长"
+           varstatus="遍历状态">
+</c:foreach>
+<%--varstatus 有四个值：first（是否第一行）, last（是否最后一行）, count（当前行数）, index（当前元素的下标）--%>
+```
+
+```jsp
+<%
+  List<String> list = new ArrayList<>();
+  list.add("A");
+  list.add("B");
+  list.add("C");
+  list.add("D");
+
+  request.setAttribute("list", list);
+%>
+<c:forEach var="list" items="${list}" varStatus="var" begin="0" step="1" end="${list.size() - 1}">
+  
+<h1>${list}&nbsp;&nbsp;${var.index}&nbsp;&nbsp;${var.first}&nbsp;&nbsp;${var.last}&nbsp;&nbsp;${var.count}&nbsp;&nbsp;${var.index}</h1>
+  
+</c:forEach>
+```
+
+##### url 标签
+
+在 `Cookie` 彬的情况下，通过重写 `URL` 拼接 `JSESSIONID` 来传递 `ID` 值，便于下一次访问时仍可查找到上一次的 `Session` 对象
+
+```jsp
+<c:url context="${pageContext.request.contextPath}" value="/xxxController" />
+
+// 在 form 表单的 action 中嵌套动态路径
+<form action="<c:url context='${pageContext.request.contextPath}'" value='/xxxController'>
+  
+</form>
+```
+
+* 经验：所有涉及到页面跳转或者重定向跳转时，都应该使用 `URL` 重写
+
+#### 6.6 整合
+
+使用 `EL + JSTL` 替换 `emp` 项目中的脚本代码
+
+### 7. MVC 框架（Model View Controller）
+
+#### 7.1 MVC 概念
+
+`MVC` 又称为编程模式，是一种软件设计思想，将数据操作、页面展示、业务逻辑分为三个层级（模块），独立完成，相互调用
+
+* 模型层（`Model`)
+* 视图（`View`）
+* 控制器（`Controller`）
+
+#### 7.2 MVC 模式详解
+
+`MVC` 并不是 `Java` 独有的，现在几乎所有的 `B/S` 的架构都采用了 `MVC` 模式
+
+* 视图 `View`：视图即是用户看到并与之交互的界面，比如 `HTML`（静态资源）、`JSP`（动态资源）等
+* 控制器 `Controller`：控制器即是控制请求的处理逻辑，对请求进行处理，负责流程跳转（转发和重定向）
+* 模型 `Model`：对客观世界的一种代表和模拟（业务模拟、对象模拟）
+
+[![cwMPlF.md.png](https://z3.ax1x.com/2021/04/11/cwMPlF.md.png)](https://imgtu.com/i/cwMPlF)
+
+#### 7.3 优点
+
+* 低耦合性：模块与模块之间的关联性不强，不与某一种具体实现产生密不可分的关联性
+* 高维护性：基于低耦合性，可做到不同层级的功能模块灵活更换、插拔
+* 高重用性：相同的数据库操作，可以服务于不同的业务处理。将数据作为独立模块，提高重用性
+
+#### 7.4 MVC 在框架中的应用
+
+`MVC` 模式被广泛用于 `Java` 的各种框架中，比如 `Struts2`、`SpringMVC` 等等都用到了这种思想
+
+#### 7.5 三层架构与 MVC
+
+##### 三层架构
+
+`View` 层（表示|界面层）、`Service`（业务逻辑层）、`DAO`（数据访问层）
+
+[![cwMW1U.md.png](https://z3.ax1x.com/2021/04/11/cwMW1U.md.png)](https://imgtu.com/i/cwMW1U)
+
+##### MVC 与三层架构的区别
+
+* `MVC` 强调的是视图和业务代码的分享，严格的说 `MVC` 其实关注的是 `Web` 层。`View` 就是单独的页面，如 `JSP`、`HTML` 等，不负责业务处理，只负责数据的展示。而数据封装到 `Model` 里，由 `Controller` 负责在 `V` 和 `M` 之间传递。`MVC` 强调业务和视图分离
+* 三层架构是”数据访问层“、”业务逻辑层“、”表示层“，指的是代码之间的解耦，方便维护和复用
+
+### 9. 分页
+
+#### 9.1 概念
+
+分布是 `Web` 应用程序非常重要的一个技术，数据库中的数据可能是成千上万的，不可能把这么多的数据一次显示在浏览器上面。一般根据每行数据在页面上所占的空间设置每页显示若干行，比如一般 20 行是一个比较理想的显示状态
+
+#### 9.2 分布实现思路
+
+对于少量的数据查询，需要多少就取多少，显示是最佳的解决方法，假如某个表中有 200 万条记录，第一页取前 20 条，第二页取 21~40 条记录
+
+```sql
+select * from 表名 order by id limit 0,20;
+select * from 表名 order by id limit 20,20;
+select * from 表名 order by id limit 40,20;
+```
+
+#### 9.3 分布代码实现
+
+步骤：
+
+1. 确定每页显示的数据量
+2. 确定分布显示所需的总页数
+3. 编写 `SQL` 查询语句，实现数据查询
+4. 在 `JSP` 页面中进行分布显示设置
+
+## 第二十七章 综合项目
+
+### 1. 场景
+
+* 在项目中，文件的上传和下载是最常见的功能，很多程序或者软件中都经常使用到文件的上传和下载
+* 邮箱中有附件的上传和下载
+* `OA` 办公系统中有附件材料的上传
+
+### 2. 文件上传
+
+#### 2.1 概念
+
+当用户在前端页面点击文件上传后，用户上传的文件数据提交给服务器端，实现保存
+
+#### 2.2 文件上传实现步骤
+
+##### 提交方式
+
+* 提供 `form` 表单，`method` 必须是 `post`，因为 `post` 请求无数据限制
+
+`<form method="post"></form>`
+
+##### 提交数据格式
+
+* 表单的 `enctype` 的属性值必须为 `multipart/form-data`
+* 以多段的形式进行拼接提交。以二进制流的方式来处理表单数据，会把指定的文件内容封装进请求参数中
+
+```html
+<form enctype="multipart/form-data" method="post"></form>
+```
+
+##### 提供组件
+
+* 提供 `file` 表单组件，提供给用户上传文件
+
+```html
+<from enctype="multipart/form-data" method="post">
+  上传用户：<input type="text" name="username"><br>
+  上传文件：<input type="file" name="file1"><br>
+  <input type="submit" value="提交">
+</form>
+```
+
+##### Controller 编写
+
+在 `Servlet 3.0` 及其以上版本的容器中进行服务器端文件上传的编程，是围绕着注解类型 `MultipartConfig` 和 `javax.servlet.http.Part` 接口进行的。处理已上传文件的 `Servlet` 必须以 `@MultipartConfig` 进行注解：
+
+```html
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>上传文件示例</title>
+</head>
+<body>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        用户名：<input type="text" name="username"><br>
+        上传文件：<input type="file" name="file1"><br>
+        <input type="submit" value="上传">
+    </form>
+</body>
+</html>
+```
+
+```java
+@WebServlet("/upload")
+@MultipartConfig(maxFileSize = 1024 * 1024 * 100, maxRequestSize = 1024 * 1024 * 200)
+public class Upload extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        req.setCharacterEncoding("utf-8");
+        res.setContentType("text/html; charset=UTF-8");
+
+        String username = req.getParameter("username");
+
+        Part file = req.getPart("file1");
+
+        String realPath = req.getServletContext().getRealPath("/WEB-INF/upload");
+
+        File file1 = new File(realPath);
+        if (!file1.exists()) {
+            file1.mkdirs();
+        }
+
+        file.write(realPath + File.separator + file.getSubmittedFileName());
+
+        res.getWriter().println(file.getSubmittedFileName() + "文件上传成功！");
+    }
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        this.doPost(req, res);
+    }
+}
+```
+
+> 注意：getRealPath() 获取的是项目部署后的真实路径，即在 IDEA 中项目的 out 目录下进行查看上传是否成功
+
+#### 2.3 文件上传细节
+
+##### 安全问题
+
+为保证服务器安全，上传文件应该放在外界无法直接访问的目录下，比如放于 `WEB-INF` 目录下
+
+```java
+String filepath = request.getServletContext().getRealPath("/WEB-INF/upload");
+```
+
+##### 文件覆盖
+
+当上传重名文件时，为防止文件覆盖的现象发生，要为上传文件产生一个唯一的文件名
+
+```java
+public class UploadUtils {
+  // 使用 UUID 生成唯一标识码，拼接上图片的名称
+  public static String newFileName(String filename) {
+    return UUID.randomUUID().toString.replaceAll("-", "") + "_" + filename;
+  }
+}
+```
+
+##### 散列存储
+
+为防止一个目录下面出现太多文件，要使用 `hash` 算法打散存储
+
+```java
+public static String newFilePath(String basePath, String filename) {
+  int hashcode = filename.hashCode();
+  int path1 = hashcode & 15; // 与运算 0~15 二级
+  int path2 = (hashcode >> 4) & 15; // 与运算 0~15 三级
+  String dir = basePath + "/" + path1 + "/" + path2; // 与一级目录拼接在一起
+  File file = new File(dir); // 创建文件夹对象
+  if (!file.exists()) { // 不存在则新建
+    file.mkdirs();
+  }
+  return dir; // 返回新路径
+}
+```
+
+[![cDk3p4.md.png](https://z3.ax1x.com/2021/04/12/cDk3p4.md.png)](https://imgtu.com/i/cDk3p4)
+
+
+
+##### 文件类型上传限制
+
+要限制上传文件的类型，在收到上传文件名时，判断后缀名是否合法
+
+```java
+// 创建一个集合存放允许上传的文件的类型（后缀名）
+// 判断所上传的文件在当前集合当中是否包含
+List<String> nameList = new ArrayList<String>();
+nameList.add(".jpg");
+nameList.add(".bmp");
+nameList.add(".png");
+String extName = filename.substring(filename.lastIndexOf("."));
+if(!nameList.contains(extName)) {
+  System.out.println("上传失败！");
+  continue;
+}
+```
+
+### 3. 文件下载
+
+#### 3.1 概念
+
+我们要将 `web` 应用系统中的文件资源提供给用户进行下载，首先我们要有一个页面列出上传文件目录下的所有文件，当用户点击文件下载超链接时就进行下载操作
+
+#### 3.2 获取文件列表
+
+
+
+#### 3.3 下载
+
+
+
+
+
+
+
+
+
+ 
 
 
 
