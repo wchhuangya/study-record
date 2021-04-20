@@ -7136,872 +7136,13 @@ public class CommonsDbutilsTest {
 
 | 属性名          | 取值                 | 描述           |
 | --------------- | -------------------- | -------------- |
-| `margin`        | 数值，顺序：左上下右 | 四个方向的距离 |
+| `margin`        | 数值，顺序：上右下左 | 四个方向的距离 |
 | `margin-top`    | 数值                 | 上间距         |
 | `margin-bottom` | 数值                 | 下间距         |
 | `margin-left`   | 数值                 | 左间距         |
 | `margin-right`  | 数值                 | 右间距         |
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## 第二十四章 JavaScript
-
-### 第一部分 语言核心
-
-### 0. 概述
-
-完整的 `JavaScript` 包含以下几个部分：`ECMAScript`、`DOM`、`BOM`
-
-#### ECMAScript
-
-它只是对实现规范描述的所有方面的一门语言的称呼。要成为 `ECMA-262` 实现，必须满足下列条件：
-
-* 支持 `ECMA-262` 中描述的所有 “类、值、对象、属性、函数，以及程序语法及语义”
-* 支撑 `Unicode` 字符标准
-
-此外，符合性实现还可以满足下列要求：
-
-* 增加 `ECMA-262` 中未提及的 “额外的类型、值、对象、属性和函数”。`ECMA-262` 所说的这些额外内容主要指规范中未给出的新对象或对象的新属性
-* 支持 `ECMA-262` 中没有定义的 “程序和正则表达式语法”（意思是允许修改和扩展内置的正则表达式特性）
-
-#### DOM
-
-`DOM（Document Object Model）`：文档模型对象，是一个应用编程接口，用于在 `HTML` 中使用扩展的 `XML`。
-
- `DOM` 将整个页面抽象为一组分层节点，`HTML` 或 `XML` 页面的每个组成部分都是一种节点，包含不同的数据，例如：
-
-```html
-<html>
-  <head>
-    <title>Sample Page</title>
-  </head>
-  <body>
-    <p>Hello World!</p>
-  </body>
-</html>
-```
-
-上面的代码可以通过 `DOM` 表示为一组分层节点：
-
-[![6cyfI0.png](https://s3.ax1x.com/2021/03/17/6cyfI0.png)](https://imgtu.com/i/6cyfI0)
-
-#### BOM
-
-`BOM(Broswer Object Model)`：浏览器对象模型，用于支持访问和操作浏览器的窗口。
-
-#### 小结
-
-`JavaScript` 是一门用来与网页交互的脚本语言，包含以下三个组成部分：
-
-* `ECMAScript`：由 `ECMA-262` 定义并提供核心内容
-* 文档对象模型（`DOM`）：提供与网页内容交互的方法和接口
-* 浏览器对象模型（`BOM`）：提供与浏览器交互的方法和接口
-
-#### &lt;script&gt; 标签
-
-`script` 元素的 8 个属性：
-
-| 属性名        | 是否可选 | 解释                                                         |
-| ------------- | -------- | ------------------------------------------------------------ |
-| `async`       | 可选     | 表示应该立即开始下载脚本，但不能阻止页面上的其它动作，比如下载资源或者等待其它脚本加载。只对外部脚本文件有效 |
-| `charset`     | 可选     | 使用 `src` 属性指定的代码字符集。这个属性很少使用，因为大多数浏览器不在乎它的值 |
-| `crossorigin` | 可选     | 配置相关请求的 `CORS`（跨源资源共享）设置。默认不使用 `CORS` |
-| `defer`       | 可选     | 表示脚本可以延迟到文档完全被解析和显示之后再执行。只对外部脚本文件有效 |
-| `integrity`   | 可选     | 允许比对接收到的资源和指定的加密签名以验证子资源的完整性     |
-| `language`    | 废弃     | 用于表示代码块中的脚本语言                                   |
-| `src`         | 可选     | 表示包含要执行的代码的外部文件                               |
-| `type`        | 可选     | 代替 `language`，表示代码块中脚本语言的内容类型              |
-
-使用 `<script>` 的两种方式：
-
-* 通过它直接在网页中嵌入 `JavaScript` 代码
-  * 这种方式下，代码中不能出现字符串：`“</script>”`
-* 通过它在网页中包含外部 `JavaScript` 文件
-  * 要包含外部文件中的 `JavaScript`，就必须使用 `src` 属性，这个属性的值是一个 `URL`，指向包含 `JavaScript` 代码的文件
-
-##### 标签位置
-
-* 原来 `<script>` 标签都在 `<head>` 中放置，便于管理，但是会影响页面加载速度，影响用户体验
-* 建议放在 `<body>` 标签内容的最后，`</body>` 标签的前面
-
-##### 推迟执行脚本
-
-`defer` 属性只对外部脚本才有效，会使脚本被延迟到整个页面都解析完毕之后再执行
-
-### 1. 词法结构
-
-#### 1.1 字符集
-
-`JavaScript` 程序是用 `Unicode` 字符集编写的
-
-##### 1.1.1 区分大小写
-
-`JavaScript` 是区分大小写的语言，关键字、变量名、函数名和所有的标识符都区分大小写
-
-> 注意：HTML 不区分大小写
-
-##### 1.1.2 空格、空行、格式控制符
-
-各种表示空格的字符：
-
-| 含义       | 转义字符 |
-| ---------- | -------- |
-| 普通空格符 | `\u0020` |
-| 水平制表符 | `\u0009` |
-| 垂直制表符 | `\u000B` |
-| 换页符     | `\u000C` |
-| 不中断空白 | `\u00A0` |
-| 字节序标记 | `\uFEFF` |
-
-表示行结束符的字符：
-
-| 含义     | 转义字符 |
-| -------- | -------- |
-| 换行符   | `\u000A` |
-| 回车符   | `\u000D` |
-| 行分隔符 | `\u2028` |
-| 段分隔符 | `\u2029` |
-
-> 注意：回车符加换行符在一起被解析为一个单行结束符
-
-##### 1.1.3 Unicode 转义序列
-
-在有些计算机硬件和软件里，无法显示或输入 `Unicode` 字符全集，为了支持那些使用老旧技术的程序员，`JavaScript` 定义了一种特殊序列，使用 6 个 `ASCII` 码字符来代表任意 16 位 `Unicode` 内码。
-
-这些 `Unicode` 转义序列均以 `\u` 为前缀，其后跟随 4 个十六进制数。
-
-这种 `Unicode` 转义写法可以用在 `JavaScript` 字符串直接量、正则表达式直接量和标识符中（关键字除外）。
-
-```javascript
-"café" === "caf\u00e9"  // true
-```
-
-#### 1.2 注释
-
-`JavaScript` 支持两种格式的注释：
-
-* 单行注释：`//`，在行尾 `//` 之后的文本都会被 `JavaScript` 当作注释忽略掉
-* 多行注释：`/* 注释内容 */`，`/* ` 和 `*/` 之间的文本会被当作注释
-  * 这种注释可以跨行书写
-  * 这种注释不能够嵌套
-
-#### 1.3 直接量
-
-所谓直接量（`literal`），就是程序中直接使用的数据值，下面的都是直接量：
-
-```javascript
-12							// 数字
-1.2							// 小数
-"hello world"		// 字符串文本
-'Hi'						// 也是字符串
-true						// 布尔值
-false						// 另一个布尔值
-/javascript/gi	// 正则表达式直接量（用作模式匹配）
-null						// 空
-{x:1, y:2}			// 对象
-[1, 2]					// 数组
-```
-
-#### 1.4 标识符和保留字
-
-**标识符**就是一个名字，用来对变量和函数进行命名，或者用作代码中某些循环语句的跳转位置的标记。
-
-标识符命名规则：
-
-* 必须以 **字母、下划线、美元符** 开始
-* 后续的字符可以是 **字母、下划线、美元符、数字**
-* 标识符不能是保留字
-
-> 数字不允许作为标签符的首字符出现，以便 `JavaScript` 可以轻易区分开标识符和数字
-
-**保留字**：`JavaScript` 把一些标识符拿出来用做自己的关键字，因此，这些关键字就不能在程序中被用作标签符了。
-
-[![6RSwDS.md.png](https://s3.ax1x.com/2021/03/18/6RSwDS.md.png)](https://imgtu.com/i/6RSwDS)
-
-`JavaScript` 的具体实现可能定义独有的全局变量和函数，每一种特定的 `JavaScript` 运行环境都自己的一个全局属性列表，**这一点是需要牢记的**
-
-#### 1.5 可选的分号
-
-和其它许多编程语言一样，`JavaScript` 使用分号将语句分隔开
-
-可以省略分号的地方：
-
-* 语句各自独占一行
-* 程序结尾
-* 右花括号（`}`）之前
-
-> * `return、break、continue` 和随后的表达式之间不能有换行
-> * `++、--` 在做后缀表达式时，和前面的表达式应该在一行
-
-### 2. 类型、值、变量
-
-`JavaScript` 的数据类型分为两类：
-
-* 原始类型
-  * 数字
-  * 字符串
-  * 布尔值
-  * `null`（空）
-  * `undefined`（未定义）
-* 对象类型
-  * 对象（`Object`）是属性（`property`）的集合，每个属性都由 `键/值` 对组成
-  * 特殊对象——全局对象（`global object`）
-  * 特殊对象——数组，表示带编号的值的有序集合
-  * 特殊对象——函数，是具有与它相关联的可执行代码的对象
-
-#### 2.1 数字
-
-和其它编程语言不同，`JavaScript` 不区分整数值和浮点数值，所有数字均用浮点数值表示。`JavaScript` 能表示的最大数值是：$\pm 1.7976931348623157 \times 10^{308}$ ，最小值是：$\pm 5 \times 10^{-324} $
-
-按照 `JavaScript` 中的数字格式，能够表示整数的范围是：$-2^{53}$ ~ $2^{53}$ ，包含边界值
-
-> 需要注意的是：`JavaScript` 中的实际操作（比如数组索引、位操作符）则是基于 32 位整数
-
-##### 2.1.1 整形直接量
-
-用一个数字序列表示一个十进制数：
-
-```javascript
-0
-3
-10000
-```
-
-`JavaScript` 同样能识别十六进制值——以 `0x` 或 `0X` 为前缀，其后跟随十六进制数串的直接量：
-
-```javascript
-0xff
-0xCAFE91
-```
-
-> 有些 `JavaScript` 的实现不支持八进制，`ECMAScript 6` 的严格模式下，八进制是禁止的。因此，最后不要使用以 0 为前缀的整形直接量
-
-##### 2.1.2 浮点直接量
-
-* 浮点直接量可以含有小数点
-* 可以使用指数记数法表示浮点直接量
-  * 语法：`[digits][.digits][(E|e)[(+|-)]digits]`
-
-```javascript
-3.14
-2345.789
-.3333333
-6.02e23
-1.4738223E-32
-```
-
-##### 2.1.3 算术运算
-
-运行符：
-
-| 运算符 | 含义       |
-| ------ | ---------- |
-| +      | 加法运算符 |
-| -      | 减法运算符 |
-| *      | 乘法运算符 |
-| /      | 除法运算符 |
-| %      | 求余运算符 |
-
-**上溢：**当数字运算结果超过了 `JavaScript` 所能表示的数字上限，结果为一个特殊的无穷大值：`Infinity`；当负数的值超过了 `JavaScript` 所能表示的最大负数范围，结果为负无数大：`-Infinity`
-
-**下溢：**当运算结果无限接近于 0 并比 `JavaScript` 所能表示的最小值还小的时候发生的一种情形。这种情况下，`JavaScript` 会返回 0
-
-**被零整除：**在 `JavaScript` 中并不报错，只是简单的返回无穷大（$\pm$ `Infinity`）
-
-**零除以零：**没有意义，返回一个非数字（`not-a-number`）的值，用 `NaN` 表示。**无穷大除以无穷大、给任意负数做开方运算、算术运算符与不是数字或无法转换为数字的操作数一起使用时，都将返回 NaN**
-
-_**NaN 与任何值都不相等，包括自身**_
-
-判断一个值是 `NaN` 的方法：`x != x` 或者 `isNaN(x)`
-
-`isFinite(参数)`：在参数不是 `NaN、Infinity、-Infinity` 时返回 `true`
-
-##### 2.1.4 二进制和四舍五入错误
-
-实数有无数个，但 `JavaScript` 通过浮点数的形式只能表示其中有限的个数。也就是说，当在 `JavaScript` 使用实数的时候，常常只是真实值的一个近似表示。
-
-```javascript
-var x = .3 - .2;
-var y = .2 - .1;
-x == y						// false，两值不相等
-x == .1						// false，.3 - .2 不等于 .1
-y == .1						// true，.2 - .1 等于 .1
-```
-
-> 以上的问题不只在 `JavaScript` 中才会出现，在任何使用二进制浮点数的编程语言中都会有这个问题
-
-##### 2.1.5 时间和日期
-
-* `JavaScript` 语言核心包括 `Date()` 构造函数，用来创建表示时间和日期的对象
-* 日期对象的方法为日期的计算提供了简单的 `API`
-
-日期对象简单用法：
-
-```javascript
-var then = new Date(2021, 2, 18);					// 2021年3月18日
-var later = new Date(2021, 2, 18, 17, 10, 30);		// 同一天，当地时间下午 17:10:30
-var now = new Date();											// 当前日期和时间
-var elapsed = now - then;									// 日期减法，计算间隔的毫秒数
-later.getFullYear();											// 2021
-later.getMonth();													// 2：从 0 开始计数的月份
-later.getDate();													// 18：从 1 开始计数的开数
-later.getDay();														// 4：得到星期几，0代表星期日
-later.getHours();													// 22：得到当地小时数
-```
-
-#### 2.2 文本
-
-* 字符串是一组由 16 位值组成的不可变的有序序列
-* 字符串的索引从 0 开始
-* `JavaScript` 中并没有表示单个字符的字符型，要表示一个 16 位值，只需要将其赋值给字符串变量即可，这个字符串长度为 1
-
-##### 2.2.1 字符串直接量
-
-字符串直接量：由单引号或又引号括起来的字符序列
-
-```javascript
-""								// 空字符串：包含 0 个字符
-'testing'
-"3.14"
-'name="myForm"'
-"Are you OK?"
-"This string \nhas two lines"
-```
-
-##### 2.2.2 转义字符
-
-在 `JavaScript` 字符串中，反斜线 `\` 有着特殊的用途，反斜线符号后加一个字符，就不再表示它们的字面含义了。
-
-| 转义字符 | 含义                                        |
-| -------- | ------------------------------------------- |
-| `\0`     | `NUL` 字符（`\u0000`）                      |
-| `\b`     | 退格符（`\u0008`）                          |
-| `\t`     | 水平制表符（`\u0009`）                      |
-| `\v`     | 换行符（`\u000A`）                          |
-| `\n`     | 垂直制表符（`\u000B`）                      |
-| `\f`     | 换页符（`\u000C`）                          |
-| `\r`     | 回车符（`\u000D`）                          |
-| `\"`     | 双引号（`\u0022`）                          |
-| `\'`     | 撇号或单引号（`\u0027`）                    |
-| `\\`     | 反斜线（`\u005C`）                          |
-| `\xXX`   | 由两位十六进制 `XX` 指定的 `Lantin-1` 字符  |
-| `\uXXXX` | 由四位十六进制 `XXXX` 指定的 `Unicode` 字符 |
-
-##### 2.2.3 字符串的使用
-
-* 字符串连接：`+`
-* 字符串长度：`string.length`
-* 访问单个字符：`string[index]`
-
-> 所有对字符串改变的操作，都会返回一个新的字符串，也就是说，字符串是不可变的
-
-常用方法：
-
-```javascript
-var s = 'hello,world'						// 定义一个字符串
-s.charAt(0)												// 'h'，第一个字符串
-s.charAt(s.length - 1)						// 'd'，最后一个字符串
-s.substring(1, 4)									// 'ell',第 2 ~ 4 个字符
-s.indexOf('l')										// 2，字符 l 首次出现的位置
-s.lastIndexOf('l')								// 10，字符 l 最后一次出现的位置
-s.indexOf('l', 3)									// 3，在位置 3 及以后首次出现字符 l 的位置
-s.split(',')											// ['hello', 'world']，分割成子串
-s.replace('h','H')								// 'Hello,world'，全文字符替换
-s.toUpperCase()										// 'HELLO,WORLD'
-```
-
-##### 2.2.4 模式匹配
-
-`JavaScript` 定义了 `RegExp()` 构造函数，用来创建表示匹配模式的对象。这些模式称为 ”正则表达式“（`regular expression`），`JavaScript` 采用 `Perl` 中的正则表达式语法。
-
-正则表达式直接量：
-
-* 在两条斜线之间的文本构成了一个正则表达式直接量
-* 第二条斜线之后也可以跟随一个或多个字母，用来修饰匹配模式的含义
-
-```javascript
-/^HTML/							// 匹配以 HTML 开始的字符串
-/[1-9][0-9]*/				// 匹配一个非零数字，后面是任意个数字
-/\bjavascript\b/i		// 匹配单词 javascript，忽略大小写
-```
-
-正则表达式示例：
-
-```javascript
-var text = "testing: 1, 2, 3";				// 文本
-var pattern = /\d+/g;									// 匹配所有包含一个或多个数字的实例
-pattern.test(text);										// true，匹配成功
-text.search(pattern);									// 9，首次匹配成功的位置
-text.match(pattern);									// ['1', '2', '3']，所有匹配成功的数组
-text.replace(pattern, '#');						// 'testing: #, #, #'
-text.split(/\D+/);										// ['', '1', '2', '3']，用非数字字符截取字符串
-```
-
-#### 2.3 布尔值
-
-布尔值指代真或假、开或关、是或否，这个类型只有两个值：`true`、`false`
-
-**任意的 JavaScript 的值都可以转换为布尔值**
-
-下面这些值会被转换成 `false`：
-
-```javascript
-undefined
-null
-0
--0
-NaN
-""
-```
-
-除上面的 6 个值以外的其它值，都会转换成 `true`
-
-#### 2.4 null、undefined
-
-* `null` ：是一个特殊的对象值，含义是 “非对象”，用来描述 “空值”
-  * 是关键字
-
-* `undefined`：是变量的一种取值，表示变量没有初始化
-  * 是预定义的全局变化，不是关键字
-  * 如果要查询对象属性或数组元素的值时返回 `undefined` 则说明这个属性或元素不存在
-  * 如果函数没有返回任何值，则返回 `undefined`
-  * 函数引用没有提供实参时，函数形参的值也只会得到 `undefined`
-
-> 注意：如果使用 null == undefined，返回的是 true
->
-> ​           要判断 null 和 undefined 的相等性，需要使用 null === undefined 进行判断
-
-#### 2.5 全局对象
-
-全局对象（`global object`）在 `JavaScript` 中有着重要的用途：
-
-* 全局对象的属性是全局定义的符号，`JavaScript` 程序可以直接使用
-* 当 `JavaScript` 解释器启动时（或者任何 `Web` 浏览器加载新页面时），它将创建一个全新的全局对象，并给它一组定义的初始属性
-  * 全局属性，比如：`undefined、Infinity、NaN`
-  * 全局函数，比如：`isNaN()、parseInt()、eval()`
-  * 构造函数，比如：`Date()、RegExp()、String()、Object()、Array()`
-  * 全局对象，比如：`Math、JSON`
-
-在代码的最顶级——不在任何函数内的 `JavaScript` 代码——可以使用 `JavaScript` 关键字 `this` 来引用全局对象：
-
-`var global = this;  // 定义一个引用全局对象的全局变量`
-
-在客户端 `JavaScript` 中，在其表示的浏览器窗口中的所有 `JavaScript` 代码中，`Window` 对象充当了全局对象。这个全局 `Window` 对象有一个属性 `window` 引用其自身，它可以代替 `this` 来引用全局对象
-
-#### 2.6 包装对象
-
-本章一开始就说了，`JavaScript` 的数据类型分为：**原始类型**、**对象类型**，对象类型有方法和属性，原始类型不应该有方法和属性。但是，在讲解字符文本（原始类型）时，也讲解了它们的一些属性和方法。它们的方法到底是怎么来的？
-
-原因是：只要引用了字符串的属性，`JavaScript` 就会将字符串值通过调用 `new String(s)` 的方式转换为对象，这个对象继承了字符串的方法，并被用来处理属性的引用。一旦属性引用结束，这个新创建的对象就会销毁。
-
-同字符串一样，数字和布尔值也各具有各自的方法：通过 `Number()` 和 `Boolean()` 构造函数创建一个临时对象，这些方法的调用均是来自于这个临时对象。
-
-**`null` 和 `undefined` 没有包装对象**
-
-查看如下的示例，思考最终的执行结果：
-
-```javascript
-var s = 'test';
-s.len = 4;
-var t = s.len;
-console.log(t);    // 结果是？
-```
-
-#### 2.7 不可变的原始值和可变的对象引用
-
-原始值是不可变的：任何方法都无法更改（或 “突变”）一个原始值。要请注意的原始值是字符串，字符串的很多操作看上去像是修改了原始值，其实都只是返回了一个新的字符串：
-
-```javascript
-var s = 'hello';			// 原始字符串小写
-s.toUpperCase();			// 返回一个新的大写的字符串
-s;										// 仍然是 hello，没有发生任何变化
-```
-
-**原始类型的比较是值的比较：只有值相等，两个原始类型的变量才相等**
-
-**对象的比较是引用的比较：当且仅当它们引用同一基对象时，它们才相等**
-
-#### 2.8 类型转换
-
-当 `JavaScript` 期望使用某个类型的值时，程序可以提供任意类型的值，`JavaScript` 将根据需要自行转换类型。
-
-转换的规则如下：
-
-[![6WoffS.md.png](https://s4.ax1x.com/2021/03/19/6WoffS.md.png)](https://imgtu.com/i/6WoffS)
-
-注意：
-
-* 转换为数字的情况比较微秒，那些以数字表示的字符串可以直接表示为数字，也允许在开始和结尾处带有空格，但在开始和结尾处的任意非空字符都不会被当成数字直接量的一部分，进而造成字符串转换为数字的结果为 `NaN`
-* 转换为数字时：`true` 转换为 1， `false` 转换为 0
-
-##### 2.8.1 转换和相等性
-
-由于 `JavaScript` 可以做灵活的类型转换，因此其 `==` 运算符也随相等的含义灵活多变。例如：下面的比较结果均为 `true`：
-
-```javascript
-null == undefined		// 这两个值被认为相等
-"0" == 0				// 在比较之前字符串转换为数字
-0 == false				// 在比较之前布尔值转换为数字
-"0" == false			// 在比较之前字符串和布尔值都转换为数字
-```
-
-> 注意：一个值转换为另一个值并不意味着这两个值相等
-
-##### 2.8.2 显式类型转换
-
-做显式类型转换最简单的方法就是使用：`Boolean()、Number()、String()、Object()` 函数。当不通过 `new` 运算符调用这些函数时，它们会作为类型转换函数并按照 `2.8` 节一开始所描述的规则做类型转换：
-
-```javascript
-Number("3")				// 3
-String(false)			// "false"
-Boolean([])				// true
-Object(3)				// new Number(3)
-```
-
-> 除了 `null` 和 `undefined` 以外的任何值都具有 `toString()` 方法，这个方法的执行结果通常和 `String()` 方法的返回结果一致
-
-> 如果试图把 `null` 和 `undefined` 转换为对象，会抛出一个类型错误。`Object` 在这种情况下不会抛出异常，它仅简单的返回一个新创建的空对象
-
-**运算符的隐式类型转换：**
-
-* 二元 `+` 运算符的一个操作数是字符串，它会把另一个操作数转换为字符串；如果一个操作数是对象，则 `JavaScript` 使用特殊的方法将对象转换为原始值，而不是使用其它运算符的方法执行对象到数字的转换
-* 一元 `+` 运算符将其操作数转换为数字
-* 一元 `!` 运算符将其操作数转换为布尔值并取反
-
-```javascript
-x + ''		// 等价于 String(x)
-+x			// 等人于 Number(x)，也可以是 x - 0
-!!x			// 等人于 Boolean(x)。注意是双叹号
-```
-
-**数字与字符串之间的相互转换**
-
-* **整数→字符串：** `Number` 类定义的 `toString()` 方法可以接收表示转换基数的可选参数
-
-  ```javascript
-  var n = 17;
-  var binary_str = n.toString(2);		// 转换为 '10001'
-  var octal_str = n.toString(8);		// 转换为 '021'
-  var hex_str = n.toString(16);		// 转换为 '0x11'
-  var decimal_str = n.toString();		// 转换为 '17'
-  ```
-
-* **小数→字符串：**
-
-  * 控制输出中小数点的位置：`toFixed()`
-  * 控制输出中小数的有效位数：`toPrecision()`
-  * 控制输出是否需要指数计数法：`toExponential()`
-
-  ```javascript
-  var n = 123456.789;
-  n.toFixed(0);			// '123457'
-  n.toFixed(2);			// '123456.79'
-  n.toFixed(5);			// '123456.78900'
-  n.toExponential(1);		// '1.2e+5'
-  n.toExponential(3);		// '1.235e+5'
-  n.toPrecision(4);		// '1.235e+5'
-  n.toPrecision(7);		// '123456.8'
-  n.toPrecision(10);		// '123456.7890'
-  ```
-
-* **字符串→数字：**
-
-  * `parseInt()`：将一个字符串转换为整数直接量
-  * `parseFloat()`：将一个字符串转换为小数直接量
-  * 这两个方法都是全局函数，不属性任何类的方法
-  * 这两个方法都会跳过任意数量的前导空格，尽可能解析更多的数字字符
-  * 如果第一个非空格字符是一个非法的数字直接量，将最终返回 `NaN`
-
-  ```javascript
-  parseInt('3 sdf sdf');				// 3
-  parseFloat('  3.14 sdf ladkf');		// 3.14
-  parseInt('-12.34');					// -12
-  parseInt('0xFF');					// 255
-  parseInt('-0xFF');					// -255
-  parseFloat('.1');					// 0.1
-  parseInt('0.1');					// 0
-  parseInt('.1');						// NaN，整数不能以 . 开始
-  parseFloat('$72.47');			// NaN，数字不能以 $ 开始
-  ```
-  
-  > `parseInt()` 可以接收第二个可选参数，这个参数指定数字转换的基数，合法的取值范围是 2 ~ 36
-
-##### 2.8.3 对象转换为原始值
-
-* **对象→布尔值：**
-  * 所有的对象（包括数组和函数）都转换为 `true`
-* **对象→字符串：**
-  * 如果对象具有 `toString()` 方法，则调用这个方法。如果它返回一个原始值，`JavaScript` 将这个原始值转换为字符串（如果本身不是字符串的话），并返回这个字符串的结果
-  * 如果对象没有 `toString()` 方法，或者这个方法并不返回一个原始值，那么 `JavaScript` 会调用 `valueOf()` 方法。如果存在这个方法，则 `JavaScript` 调用它。如果返回的是原始值，`JavaScript` 将这个值转换为字符串（如果本身不是字符串的话），并返回这个字符串结果
-  * 否则，`JavaScript` 无法从 `toString()` 或者 `valueOf()` 获得一个原始值，因此这时它将抛出一个类型错误异常
-* **对象→数字：**
-  * 如果对象具有 `valueOf()` 方法，后者返回一个原始值，则 `Javascript` 将这个原始值转换为数字（如果有需要的话）并返回这个数字
-  * 否则，如果对象具有 `toString()` 方法，后者返回一个原始值，则 `JavaScript` 将其转换并返回
-  * 否则，`JavaScript` 抛出一个类型错误异常
-
-#### 2.9 变量声明
-
-使用一个变量之前应当先声明，变量是使用关键字 `var` 来声明的：
-
-```javascript
-var i;				// i -> undefined
-var num;			// num -> undefined
-var i, sum;         // i,num -> undefined
-var msg = 'hello';	// msg -> 'hello'
-```
-
-> `JavaScript` 变量可以是任意数据类型
-
-* 在严格模式下，给一个没有声明的变量赋值会报错
-* 非严格模式下，给一个没有声明的变量赋值，`Javascript` 会给全局对象创建一个同名属性
-  * **使用未声明的变量是一个非常不好的习惯，应该始终使用 var 来声明变量**
-
-#### 2.10 变量作用域
-
-一个变量的作用域（`scope`）是程序源代码中定义这个变量的区域。
-
-* 全局变量拥有全局作用域，在 `JavaScript` 代码中的任何地方都是有定义的
-* 在函数内声明的变量只在函数体内有定义，它们是局部变量，作用域是局部的
-* 函数参数也是局部变量，它们只在函数体内有定义
-
-```javascript
-var scope = 'global scope';			// 全局变量
-function checkScope() {
-    var scope = 'local scope';		// 局部变量
-    function nested() {
-        var scope = 'nested scope';	// 嵌套作用域内的局部变量
-        return scope;				// 返回当前作用域内的值
-    }
-    return nested();					
-}
-
-checkScope();						// 嵌套作用域
-```
-
-##### 2.10.1 函数作用域和声明提前
-
-函数作用域：变量在声明它们的函数体以及这个函数体嵌套的任意函数体内都是有定义的。
-
-上句话也就意味着：变量在声明前基本已经可以用了——声明提前
-
-```javascript
-var scope = 'global';
-function f() {
-    console.log(scope);		// 输出 'undefined'，而不是 'global'
-    var scope = 'local';	// 变量在这里赋初值，但变量本身在函数体内任何地方均是有定义的
-    console.log(scope);		// 'local'
-}
-```
-
-> 良好的编程习惯：将变量声明放在函数体顶部，这样会非常清晰的反应真实的变量作用域
-
-##### 2.10.2 作为属性的变量
-
-* 当使用 `var` 声明一个变量时，创建的这个属性是不可配置的，即，无法使用 `delete` 运算符删除
-* 当没有使用严格模式并给一个未定义的变量赋值的话，`JavaScript` 会自动创建一个全局变量，以这种方式创建的变量是全局对象的正常的可配置的属性，可以被删除
-
-```javascript
-var temp = 1;						// 声明一个不可删除的全局变量
-tmp = 2;								// 创建全局对象的一个可删除属性
-this.tmp2 = 2;					// 同上
-delete temp;						// false：变量并没有被删除
-delete tmp;							// true：变量被删除
-delete this.tmp2;				// true：变量被删除
-```
-
-##### 2.10.3 作用域链（重要）
-
-* 每一段 `JavaScript` 代码（全局代码或函数）都有一个与之相关联的作用域链（`scope chain`）
-* 这个作用域链是一个对象列表或链表，这组对象定义了这段代码 “作用域中” 的变量
-* 当 `JavaScript` 需要查找变量 `x` 的值时（这个过程叫做变量解析（`variable resolution`）），它会从链中的第一个对象开始查找，如果这个对象有一个名为 `x` 的属性，则会直接使用这个属性的值，如果第一个对象中不存在名为 `x` 的属性，则会继续查找下一个对象，以此类推。如果作用域上没有任何一个对象含有属性 `x`，那么就认为这段代码的作用域链上不存在 `x`，并最终抛出一个引用错误（`RefferenceError`）异常
-
-### 3. 表达式和运算符
-
-**表达式（expression）：**`JavaScript` 中的一个短语，`JavaScript` 解释器会将其计算（`evaluate`）出一个结果。
-
-表达式举例：变量名，数组访问表达式，函数调用表达式等等
-
-#### 3.1 原始表达式
-
-原始表达式是表达式的最小单位——它们不再包含其它表达式。`JavaScript` 中的原始表达式包含常量或直接量、关键字和变量
-
-```javascript
-// 直接量表达式
-1.23
-'hello'
-/pattern/
-  
-// 保留字表达式
-true
-false
-null
-this
-
-// 变量表达式
-i
-sum
-undefined
-```
-
-#### 3.2 对象和数组的初始化表达式
-
-对象和数组初始化表达式实际上是一个新创建的对象和数组，也可以叫做：对象直接量、数组直接量。
-
-数组初始化表达式：通过一对方括号和其内由逗号隔开的列表构成的。初始化的结果是一个新创建的数组，数组的元素是逗号分隔的表达式的值：
-
-```javascript
-[]								// 一个空数组：[]内留空即表示该数组没有任何元素
-[1+2, 3+4]				// 拥有两个元素的数组，第一个是 3，第二个是 7
-```
-
-数组直接量中的列表逗号之间的元素可以省略，这时省略的空位会填充值 `undefined`：
-
-```javascript
-var arr = [1,,,,5];
-```
-
-> 数组直接量的元素列表结尾处可以留下单个逗号，这时并不会创建一个新的值为 undefined 的元素
-
-对象初始化表达式和数组初始化表达式非常类似，只是方括号被花括号代替，并且每个子表达式都包含一个属性名和一个冒号作为前缀：
-
-```javascript
-var p = {x: 2.3, y:-1.2}				// 一个拥有两个属性成员的对象
-var q = {};											// 一个空对象
-q.x = 2.3; q.y = -1.2;					// q 的属性成员和 p 的一样
-```
-
-> 对象和数组都可以进行嵌套
-
-#### 3.3 函数定义表达式
-
-**函数定义表达式定义一个 JavaScript 函数，表达式的值是这个新定义的函数**
-
-一个典型的函数定义表达式包含关键字 `function`，跟随其后的是一对圆括号，括号内是一个以逗号分割的列表，列表含有 0 个或多个标识符（参数名），然后再跟随一个由花括号包裹的 `JavaScript` 代码段（函数体）：
-
-```javascript
-// 这个函数返回传入参数值的平方
-var square = function(x) {return x * x;}
-```
-
-#### 3.4 属性访问表达式
-
-`JavaScript` 为属性访问定义了两种语法：
-
-```javascript
-expression.indetifier						// 表达式后跟随一个句点和标识符
-expression[ expression ]				// 使用方括号，方括号内是另外一个表达式（这种方法适用于对象和数组）
-```
-
-```javascript
-var o = {x:1, y:{z:3}};					// 一个对象
-var a = [o, 4, [5, 6]];					// 一个包含这个对象的数组
-o.x															// 1：表达式 o 的 x 属性
-o.y.z														// 3：表达式 o.y 的 z 属性
-o['x']													// 1：对象 o 的 x 属性
-a[1]														// 4：表达式 a 中索引为 1 的元素
-a[2]['1']												// 6：表达式 a[2] 中索引为 1 的元素
-a[0].x													// 1：表达式 a[0] 的 x 属性
-```
-
-> * 如果属性名称是一个保留字或者包含空格或标点符号，或是一个数字（对于数组来说），则必须使用方括号的写法
-> * 当属性名是通过运算得出的值而不是固定的值的时候，必须使用方括号写法
-
-#### 3.5 调用表达式
-
-`JavaScript` 中的调用表达式（`invocation expression`）是一种调用（或执行）函数或方法的语法表示：它以一个函数表达式开始，这个函数表达式指代了要调用的函数。函数表达式后跟随一对圆括号，括号内是一个以逗号隔开的参数列表，参数可以有 0 个，也可以有多个：
-
-```javascript
-f(0)					// f 是一个函数表达式，0 是一个参数表达式
-Math.max(x,y,z)			// Math.max 是一个函数，x，y，z 是参数
-a.sort()				// a.sort 是一个函数，它没有参数
-```
-
-#### 3.6 对象创建表达式
-
-对象创建表达式创建一个对象并调用一个函数（这个函数称作构造函数）初始化新对象的属性：
-
-```javascript
-new Object()
-new Point(2, 3)
-
-// 如果一个对象创建表达式不需要传入任何参数给构造函数的话，那么这对空圆括号可以省略
-
-new Object
-new Date
-```
-
-#### 3.7 运算符
-
-[![6oXtsI.png](https://z3.ax1x.com/2021/03/22/6oXtsI.png)](https://imgtu.com/i/6oXtsI)
-
-##### 3.7.1 操作数的个数
-
-* 大多数操作符是 二元运算符
-* 小部分是 一元运算符（例如：`-、!`）
-* 只有一个三元运算符：`? :`
-
-##### 3.7.2 操作数类型和结果类型
-
-`JavaScript` 运算符通常会根据需要对操作数进行类型转换（转换规则参照 `2.8` 节内容）
-
-##### 3.7.3 左值
-
-左值：表达式只能出现在赋值运算符的左侧
-
-##### 3.7.4 运算符的副作用
-
-有副作用的运算符：
-
-`=、++、--、delete`
-
-##### 3.7.5 运算符优先级
-
-运算符优先级在上面的表格中，从上到下依次递减。
-
-> 小技巧：
->
-> * 如果你真的不确定你所使用的运算符的优先级，最简单的方法就是使用圆括号来强行指定运算次序。
-> * 有些重要规则需要熟记：乘除法的优先级高于加减法，赋值运算的优先级非常低，通常总是最后执行
-
-##### 3.7.6 运算符的结合性
-
-上面的表中标题为 `A` 的列说明了运算符的结合性。`L` 指从左至右结合，`R` 指从右至左结合
-
-* 一元操作符、赋值、三元条件运算符都具有从右至左的结全性
-
-##### 3.7.7 运算顺序
-
-`JavaScript` 总是严格按照从左至右的顺序来计算表达式，只有在任何一个表达式具有副作用而影响到其他表达式的时候，其求值顺序才会和看上去有所不同
-
-## 第二十五章 Servlet
+## 第二十四章 Servlet
 
 ### 1. 引言
 
@@ -8125,7 +7266,7 @@ new Date
 
 ##### 通过 URL 访问资源
 
-在地址栏中输入：`http://localhost:8081/webapp/hello.html`
+在地址栏中输入：`http://localhost:8081/myweb/hello.html`
 
 > URL 主要有四部分组成：协议、主机、端口、资源路径
 
@@ -8305,7 +7446,7 @@ public class MyServlet implements Servlet {
 * 创建 `WEB-INF` 目录，存放核心文件
 * 在 `WEB-INF` 目录下，创建 `classes` 文件夹，将编译后的 `MyServlet.class` 文件复制到这里
 
-> [问题：每当我们编写了新的 Servlet 或者重新编译，都需要手工将新的 .class 部署到 Tomcat 中，非常麻烦，如果实现自动部署]()
+> [问题：每当我们编写了新的 Servlet 或者重新编译，都需要手工将新的 .class 部署到 Tomcat 中，非常麻烦，如何实现自动部署？]()
 
 #### 4.3 部署 Web 项目
 
@@ -9963,7 +9104,7 @@ public class AuthorityFilter implements Filter {
 
 
 
-## 第二十六章 JSP
+## 第二十五章 JSP
 
 ### 1. 现有问题
 
@@ -10543,15 +9684,16 @@ ${cookie.password.value} // 获取 password 的 cookie 的 value 值
 在 `Cookie` 彬的情况下，通过重写 `URL` 拼接 `JSESSIONID` 来传递 `ID` 值，便于下一次访问时仍可查找到上一次的 `Session` 对象
 
 ```jsp
-<c:url context="${pageContext.request.contextPath}" value="/xxxController" />
+<c:url context="/${pageContext.request.contextPath}" value="/xxxController" />
 
 // 在 form 表单的 action 中嵌套动态路径
-<form action="<c:url context='${pageContext.request.contextPath}'" value='/xxxController'>
+<form action="<c:url context='/${pageContext.request.contextPath}' value='/xxxController'">
   
 </form>
 ```
 
 * 经验：所有涉及到页面跳转或者重定向跳转时，都应该使用 `URL` 重写
+* 注意：当 `<c:url/>` 中指定了 `context` 属性时，`context` 和 `value` 的值都必须以 `/` 开头
 
 #### 6.6 整合
 
@@ -10625,7 +9767,7 @@ select * from 表名 order by id limit 40,20;
 3. 编写 `SQL` 查询语句，实现数据查询
 4. 在 `JSP` 页面中进行分布显示设置
 
-## 第二十七章 综合项目
+## 第二十六章 综合项目
 
 ### 1. 场景
 
@@ -10778,8 +9920,39 @@ nameList.add(".bmp");
 nameList.add(".png");
 String extName = filename.substring(filename.lastIndexOf("."));
 if(!nameList.contains(extName)) {
-  System.out.println("上传失败！");
+  res.getWriter.println("文件格式不正确，上传失败！");
   continue;
+}
+```
+
+#### 多文件上传
+
+```java
+@WebServlet("/moreUpload")
+@MultipartConfig(maxFileSize = 1024 * 1024 * 10, maxRequestSize = 1024 * 1024 * 20)
+public class MoreUpload extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        req.setCharacterEncoding("utf-8");
+        res.setContentType("text/html; charset=UTF-8");
+
+        Collection<Part> parts = req.getParts();
+        String rootPath = req.getServletContext().getRealPath("/WEB-INF/upload");
+        for (Part part : parts) {
+            String fileName = part.getSubmittedFileName();
+            if (fileName != null) {
+                String path = FileUploadUtil.newFilePath(rootPath, fileName);
+                String realName = FileUploadUtil.newFileName(fileName);
+                part.write(path + File.separator + realName);
+            } else {
+                String username = req.getParameter(part.getName());
+                System.out.println(username);
+            }
+        }
+    }
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        this.doPost(req, res);
+    }
 }
 ```
 
@@ -10791,10 +9964,1759 @@ if(!nameList.contains(extName)) {
 
 #### 3.2 获取文件列表
 
+```java
+@WebServlet("/fileList")
+public class FileList extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        req.setCharacterEncoding("utf-8");
+        res.setContentType("text/html; charset=UTF-8");
+        // 返回一个文件列表
+        File rootFile = new File(req.getServletContext().getRealPath("/WEB-INF/upload"));
+        Map<String, String> map = new HashMap<>();
 
+        FileUploadUtil.getFileList(rootFile, map);
+
+        req.setAttribute("map", map);
+        req.getRequestDispatcher("/filelist.jsp").forward(req, res);
+    }
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        this.doPost(req, res);
+    }
+}
+```
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<html>
+<head>
+    <title>文件列表</title>
+</head>
+<body>
+    <table border="1" cellpadding="0" cellspacing="0" align="center">
+        <caption>文件下载</caption>
+        <thead>
+        <tr>
+            <th>文件</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <c:forEach var="map" items="${map}">
+        <tr>
+            <td>${map.value}</td>
+            <td><a href="<c:url context='/${pageContext.request.contextPath}' value='/download?filename=${map.key}' />">下载</a></td>
+        </tr>
+        </c:forEach>
+        </tbody>
+    </table>
+</body>
+</html>
+```
 
 #### 3.3 下载
 
+```java
+@WebServlet("/download")
+public class Download extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        req.setCharacterEncoding("utf-8");
+        res.setContentType("text/html; charset=UTF-8");
+
+        String filename = req.getParameter("filename");
+        String realName = filename.substring(filename.indexOf("_") + 1);
+        String path = FileUploadUtil.newFilePath(getServletContext().getRealPath("/WEB-INF/upload"), realName);
+
+        res.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(realName,"UTF-8"));
+        try (FileInputStream fis = new FileInputStream(path + File.separator + filename); ServletOutputStream sos = res.getOutputStream()) {
+            byte[] buff = new byte[1024];
+            int len = 0;
+            while ((len = fis.read(buff)) != -1) {
+                sos.write(buff, 0, len);
+            }
+        }
+    }
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        this.doPost(req, res);
+    }
+}
+```
+
+### Web 开发流程
+
+在 `web` 开发流程中，遵守以下开发顺序
+
+* `Dao`
+  * `table`
+  * `entity`
+  * `DAO` 接口
+  * `DAO` 实现
+* `Service`
+  * `Service` 接口
+  * `Service` 实现（调用 `DAO` 实现类，并控制事务
+* `Controller` 处理请求的 `Servlet`
+  * [收集请求中的数据]
+  * 调用业务功能（`Service` 实现类）
+  * [在相应合适的作用域中存储数据]
+  * 流程跳转（`forward | sendRedirect -> *.jsp）`
+* `JSP`
+  * [在作用域中获取数据]
+  * 使用 `EL + JSTL` 将数据嵌套在 `HTML` 标签中
+* `Filter`
+  * `EncodingFilter`
+  * `CheckFilter`
+
+## 第二十七章 JavaScript（1）
+
+### 1. 基本语法
+
+#### 1.1 变量声明
+
+* 在 `JavaScript` 中，任何变量都用 `var` 关键字来声明，`var` 是 `variable` 的缩写
+* `var` 是声明关键字，后面跟的是变量名，语句以分号结尾
+* `JavaScript` 中的关键字，不可以作为变量名
+
+##### 关键字
+
+![6RSwDS.md.png](https://s3.ax1x.com/2021/03/18/6RSwDS.md.png)
+
+#### 1.2 基本类型
+
+* 变量的基本类型有：`Number、String、Boolean、undefined、null` 五种
+
+* 声明一个数字 `Number` 类型：`var a = 1;`
+
+* 声明一个字符串 `String` 类型：`var a = "1"/'1';`
+
+* 声明一个 `Boolean` 类型：`var a = true/false;`
+
+* `undefined`：
+
+  * 在 `Java` 中，当一个变量未被初始化的时候，它是 `null` 或者基本数据类型的默认值
+
+  * 在 `JavaScript` 中，当一个变量未被初始化的时候，它的值是 `undefined`
+
+  * 以下情况是 `undefined`：
+
+    ```javascript
+    var a;
+    document.write(a);
+    ```
+
+#### 1.3 引用类型
+
+* 在 `Java` 中需要类定义，然后再实例对象
+
+* 在 `JavaScript` 中对象可以直接写出来
+
+  ```javascript
+  var student = {id: 1, name: '张三', age: 18};
+  document.write(student.id);
+  document.write(student.name);
+  document.write(student.age);
+  ```
+
+> 事实上，student 被赋值给了一个 JSON，JSON 的全称是：JavaScript Object Notation，叫做 JavaScript 对象标记，也就是说，在 JavaScript 中，JSON 是用于标记一个对象的
+
+#### 1.4 数组类型
+
+数组就是和 `Java` 中理解的数组概念一致，而在 `JavaScript` 中成为 `Array` 类型：
+
+```javascript
+var students = [
+  {id: 1, name: '张三', age: 18},
+  {id: 2, name: '李四', age: 19},
+  {id: 3, name: '刘六', age: 20}
+]
+document.write(students[0].id);
+document.write(students[0].name);
+document.write(students[0].age);
+document.write('<br>');
+document.write(students[1].id);
+document.write(students[1].name);
+```
+
+> JavaScript 的数组中元素的类型可以不一致
+
+#### 1.5 运算符
+
+##### 逻辑运算
+
+`&  ||  !`
+
+##### 关系运算符
+
+`==  <  <=  >  >=  !=  ===`
+
+> * == ：判断值是否相等
+> * === ：判断值和类型是否都相等
+
+##### 单目运算
+
+`++   --`
+
+##### 算术运算符
+
+`+  -  *  /  %  =  +=  -=  *=  /=  %=`
+
+##### 三目运算符
+
+`? :`
+
+#### 1.6 条件分支结构
+
+##### if-else 分支
+
+##### switch 分支
+
+#### 1.7 循环结构
+
+##### for 循环
+
+##### while 循环
+
+##### do-while 循环
+
+##### break
+
+##### continue
+
+#### 1.8 函数
+
+**定义：**用 `function` 关键字来声明，后面是方法名称，参数列表里不写 var，整个方法不写返回值类型
+
+```javascript
+function functionName(parameters) {
+  // 执行的代码
+}
+```
+
+```javascript
+function add(a, b) {
+  return a + b;
+}
+var c = 1;
+var d = 2;
+var e = add(c, d);
+document.write(e);
+```
+
+#### 1.9 常见弹窗函数
+
+##### alert 弹框
+
+* 这是一个只能点击确定按钮的弹窗
+* 没有返回值
+* 要关闭弹窗，要么点“确定”按钮，要么点 “X” 关闭
+
+##### confirm 弹框
+
+* 这是一个可以点击确定或者取消的弹窗
+* 返回值是 `boolean` 类型
+* 点击确定时，返回 `true`，点击取消或 "x"，返回 `false`
+
+##### prompt 弹框
+
+* 这是一个可以输入文本内容的弹窗
+  * 第一个参数是提示信息，第二个参数是用户输入的默认值
+* 当你点击确定的时候，返回用户输入的内容。当你点击取消或者关闭的时候，返回 `null`
+
+#### 1.10 事件
+
+| 事件名称      | 描述                               |
+| ------------- | ---------------------------------- |
+| `onchange`    | `HTML` 元素内容改变                |
+| `onclick`     | 用户点击 `HTML` 元素               |
+| `onmouseover` | 用户民将鼠标移入一个 `HTML` 元素中 |
+| `onmousemove` | 用户在一个 `HTML` 元素上移动鼠标   |
+| `onmouseout`  | 用户从一个 `HTML` 元素上移开鼠标   |
+| `onkeyup`     | 键盘                               |
+| `onkeydown`   | 用户按下键盘按键                   |
+| `onload`      | 浏览器已完成页面的加载             |
+| `onsubmit`    | 表单提交                           |
+
+#### 1.11 正则表达式
+
+* 正则表达式是描述字符模式的对象
+
+* 正则表达式用于对字符串模式匹配及检索替换，是对字符串执行模式匹配的强大工具
+
+* 语法：
+
+  ```javascript
+  var patt = new RegExp(pattern, modifiers);
+  var patt = /pattern/modifiers;
+  
+  var re = new RegExp('\\w+');
+  var re = /\w+/;
+  ```
+
+**修饰符：**用于执行区分大小写和全局匹配
+
+| 修饰符 | 描述                                                   |
+| ------ | ------------------------------------------------------ |
+| `i`    | 执行对大小写不第三的匹配                               |
+| `g`    | 执行全局匹配（查找所有匹配而非在找到第一个匹配后停止） |
+| `m`    | 执行多行匹配                                           |
+
+> 方括号用于查找某个范围内的字符
+
+| 表达式             | 描述                          |
+| ------------------ | ----------------------------- |
+| `[abc\]`           | 查找方括号之间的任何字符      |
+| `[^abc]`           | sjjra任何不在方括号之间的字符 |
+| `[0-9]`            | 查找任何 0~9 的数字           |
+| `(red|blue|green)` | 查找任何指定的选项            |
+
+**元字符：**拥有特殊含义的字符
+
+| 元字符   | 描述                               |
+| -------- | ---------------------------------- |
+| `.`      | 查找单个字符，除了换行和行结束符   |
+| `\w`     | 查找单词字符                       |
+| `\W`     | 查找非单词字符                     |
+| `\d`     | 查找数字                           |
+| `\D`     | 查找非数字字符                     |
+| `\s`     | 查找空白字符                       |
+| `\S`     | 查找非空白字符                     |
+| `\b`     | 匹配单词边界                       |
+| `\B`     | 匹配非单词边界                     |
+| `\0`     | 查找 `NULL` 字符                   |
+| `\n`     | 查找换行符                         |
+| `\f`     | 查找换页符                         |
+| `\r`     | 查找回车符                         |
+| `\t`     | 查找制表符                         |
+| `\v`     | 查找垂直制表符                     |
+| `\xxx`   | 查找以八进制数 `xxx` 规定的字符    |
+| `\xdd`   | 查找以十六进制数 `dd` 规定的字符   |
+| `\uxxxx` | 查找以十六进制数 `xxxx` 规定的字符 |
+
+**量词：**用以表示重复次数的含义
+
+| 量词     | 描述                                                         |
+| -------- | ------------------------------------------------------------ |
+| `n+`     | 匹配任何包含至少一个 `n` 的字符串，例如：`/a+/` 匹配 `candy` 中的 `a`，`caaaaandy` 中所有的 `a` |
+| `n*`     | 匹配任何包含零个或多个 `n` 的字符串。例如，`/bo*/` 匹配 `A ghost booooed` 中的 `boooo` |
+| `n?`     | 匹配包含零个或一个 `n` 的字符串，例如，`/e?le?/` 匹配 `angel` 中的 `el`，`angle`  中的 `le` |
+| `n{x}`   | 匹配包含  `x` 个 `n` 的序列的字符串，例如，`/a{2}/` 不匹配 `candy` 中的 `a`，但是匹配 `caandy` 中的两个 `a` |
+| `n{x,}`  | `x` 是一个正整数。前面的模式 `n` 连续出现至少 `x` 次时匹配，例如，`/a{2,}` 不匹配 `candy` 中的 `a`，但是匹配 `caanndy` 和 `caaaaaandy` 中所有的 `a` |
+| `n{x,y}` | `x` 和 `y` 为正整数。前面的模式 `n` 连续出现至少 `x` 次，至多 `y` 次时匹配，例如，`/a{1,3}/`  不匹配 `cndy`，匹配 `candy` 中的 `a`，`caandy` 中的两个 `a`，`caaaaaandy` 中的前面三个 `a` |
+| `n[x]`   | 前面的模式 `n` 连续出现 `x` 次时匹配                         |
+| `n$`     | 匹配任何结尾为 `n` 的字符串                                  |
+| `^n`     | 匹配任何开头为 `n` 的字符串                                  |
+| `?=n`    | 匹配任何其后紧接指定字符串 `n` 的字符串                      |
+| `?!n`    | 匹配任何其后没有紧接指定字符串 `n` 的字符串                  |
+
+**RegExp 对象方法**
+
+| 方法      | 描述                                                         |
+| --------- | ------------------------------------------------------------ |
+| `compile` | 编译正则表达式                                               |
+| `exec`    | 检索字符串中指定的值，返回找到的值，并确定其位置；如果没有发现匹配，则返回 `null` |
+| `test`    | 检索字符串中指定的值，返回 `true` 或 `false`                 |
+
+**支持正则表达式的 String 对象的方法**
+
+| 方法      | 描述                           |
+| --------- | ------------------------------ |
+| `search`  | 检索与正则表达式相匹配的值     |
+| `match`   | 找到一个或多个正则表达式的匹配 |
+| `replace` | 替换与正则表达式匹配的子串     |
+| `split`   | 把字符串分割为字符串数组       |
+
+### 2. JavaScript 中的 DOM
+
+#### 2.1 概述
+
+* 通过 `HTML DOM`，可访问 `JavaScript HTML` 文档的所有元素
+* 当网页被加载时，浏览器会创建页面的文档对象模型（`Document Object Model`）
+* `HTML DOM` 模型被构造为对象的树
+
+[![c4Op40.md.png](https://z3.ax1x.com/2021/04/17/c4Op40.md.png)](https://imgtu.com/i/c4Op40)
+
+* 通过可编程的对象模型，`JavaScript` 获得了足够的能力来创建动态的 `HTML`
+  * `JavaScript` 能够改变页面中的所有 `HTML` 元素
+  * `JavaScript` 能够改变页面中的所有 `HTML` 属性
+  * `JavaScript` 能够改变页面中的所有 `CSS` 样式
+  * `JavaScript` 能够对页面中的所有事件做出反应
+
+#### 2.2 查找 HTML 元素
+
+* 通过 `JavaScript`，为了操作 `HTML` 元素，要做到下面的事情：
+  * 通过 `id` 找到 `HTML` 元素
+    * 在 `DOM` 中查找 `HTML` 元素的最简单的方法，是通过使用元素的 `id` 属性
+    * 方法：`document.getElementById("id属性值");`
+    * 如果找到该元素，则该方法将以对象（在 `x` 中）的形式返回该元素
+    * 如果未找到该元素，则 `x` 将包含 `null`
+  * 通过标签名找到 `HTML` 元素
+    * 方法：`getElementsByTagName("合法的元素名");`
+  * 通过类名找到 `HTML` 元素
+    * 方法：`getElementsByClassName("class属性的值");`
+
+#### 2.3 改变 HTML
+
+##### 改变 HTML 输出流
+
+`document.write()` 可用于直接向 `HTML` 输出流写内容
+
+##### 改变 HTML 内容
+
+使用 `innerHTML` 属性（适用于 `HTML` 的双标签）
+
+##### 改变 HTML 属性
+
+`document.getElementById("id").属性名 = 新属性;`
+
+#### 2.4 CSS 变化
+
+`对象.style.property = 新样式;`
+
+> 注意：CSS 属性中有 - 连接的属性，换成驼峰式命名法，如：font-size 变为 fontSize
+
+#### 3.5 DOM 事件
+
+`HTML DOM` 允许通过触发元素的事件来执行相应的代码
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JS学习</title>
+    <style>
+        #first {
+            width: 200px;
+            height: 200px;
+            background-color: gold;
+        }
+    </style>
+</head>
+<body>
+    <div id="first">
+
+    </div>
+    <button onclick="changeColor()">随机改变 div 的颜色</button>
+    <script>
+        function changeColor() {
+            var div = document.getElementById("first");
+            var r = Math.ceil(Math.random() * 255);
+            var g = Math.ceil(Math.random() * 255);
+            var b = Math.ceil(Math.random() * 255);
+            div.style.backgroundColor = "rgb(" + r + "," + g + "," + b + ")";
+        }
+
+    </script>
+</body>
+</html>
+```
+
+#### 2.6 EventListener
+
+* `addEventListener()` 方法用于向指定元素添加事件句柄
+* `addEventListener()` 方法添加的事件句柄不会覆盖已存在的事件句柄
+* 可以向一个元素添加多个事件句柄
+* 可以向同个元素添加多个同类型的事件句柄，如：两个 `click` 事件
+* 可以向任何 `DOM` 对象添加事件监听，不仅仅是 `HTML` 元素，如：`window` 对象
+* `addEventListener()` 方法可以更简单的控制事件（冒泡与捕获）
+* 当使用 `addEventListener()` 方法时，`JavaScript` 从 `HTML` 标记中分享开来，可读性更强，在没有控制 `HTML` 标记时也可以添加事件监听
+
+**可以使用 removeEventListener() 方法来移除事件的监听**
+
+`addEventListener(event, function, useCapture)` 方法的参数：
+
+| 参数名       | 描述                                    |
+| ------------ | --------------------------------------- |
+| `event`      | 事件的类型（如 `click` 或 `mousedown`） |
+| `function`   | 事件触发后调用的函数                    |
+| `useCapture` | 用于描述事件是冒泡还是捕获，可选        |
+
+* 事件传递有两种方式：冒泡与捕获
+* 事件传递定义了元素事件触发的顺序，如果将 `<p>` 元素插入到 `<div>` 元素中，用户点击 `<p>` 元素时：
+  * 在冒泡方式中，内部元素的事件会先被触发，然后再触发外部元素，即：`<p>` 元素的点击事件先触发，然后会触发 `<div>` 元素的点击事件
+  * 在捕获方式中，外部元素的事件会先被触发，然后才会触发内部元素的事件，即：`<div>` 元素的点击事件先触发，然后再触发 `<p>` 元素的点击事件
+* `addEventListener()` 方法中的第三个参数，默认值为 `false`，即冒泡传递；当值为 `true` 时，事件使用捕获传递
+
+#### 2.7 操作元素
+
+##### 添加元素
+
+* 创建元素：`document.createElement()`
+* 追加元素：`appendChild()`
+
+##### 移除元素
+
+* `removeChild()`
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JS学习</title>
+    <style>
+        #first {
+            width: 200px;
+            height: 200px;
+            background-color: gold;
+        }
+        p {
+            background-color: antiquewhite;
+        }
+    </style>
+</head>
+<body>
+    <div id="first"></div>
+    <br>
+    <button onclick="addItem()">添加段落元素</button>
+    <br>
+    <button onclick="removeItem()">删除子元素</button>
+    <script>
+        function addItem() {
+            var p = document.createElement("p");
+            p.style.position = "relative";
+            p.style.top = '15px';
+            var text = document.createTextNode("这是一个段落");
+            p.appendChild(text);
+
+            var div = document.getElementById("first");
+            div.appendChild(p);
+        }
+        function removeItem() {
+            var div = document.getElementById("first");
+            var child = div.children[0];
+            if (child != null)
+                div.removeChild(child);
+        }
+    </script>
+</body>
+</html>
+```
+
+### 3. 浏览器 BOM
+
+* 浏览器对象模型（`BOM-Browser Object Model`）使 `JavaScript` 有能力与浏览器 “对话”
+* 由于现代浏览器已经（几乎）实现了 `JavaScript` 交互性方面的相同方法和属性，因此常被认为是 `BOM` 的方法和属性
+
+#### 3.1 window
+
+* 所有浏览器都支持 `window` 对象，它表示浏览器窗口
+* 所有 `JavaScript` 全局对象、函数以及变量均自动成为 `window` 对象的成员
+* 全局变量是 `window` 对象的属性
+* 全局函数是 `window` 对方的方法
+* 甚至 `HTML DOM` 的 `document` 也是 `window` 对象的属性之一
+
+##### window 的尺寸
+
+* 对于 `Internet Explorer、Chrome、Firefox、Opera` 以及 `Safari`：
+
+  * `window.innerHeight`：浏览器容器的内部高度（包括滚动条）
+  * `window.innerWidth`：浏览器容器的内部宽度（包括滚动条）
+
+* 对于 `Internet Explorer 8、7、6、5`：
+
+  * `document.documentElement.clientHeight`
+  * `document.documentElement.clientWidth`
+
+  或者
+
+  * `document.body.clientHeight`
+  * `document.body.clientWidth`
+
+##### Window Screen
+
+* 可用宽度：`screen.availWidth` 属性返回访问者屏幕的宽度，以像素为单位，减去界面特性，比如窗口任务栏
+* 可用高度：`screen.availHeight` 属性返回访问都屏幕的高度，以wqge为单位，减去界面特性，比如窗口任务栏
+
+##### Window Location
+
+该对象用于获得当前页面的地址（`URL`），并把浏览器重定向到新的页面
+
+该对象在编写时不使用 `window` 这个前缀：
+
+* `location.hostname`：`web` 主机的域名
+* `location.pathname`：当前页面的路径和文件名
+* `location.port`：`web` 主机的端口（80 或 443）
+* `location.protocol`：所使用的 `web` 协议（`http://` 或 `https://`）
+* `location.href`：返回当前页面的 `URL`
+* `location.assign()`：加载新的文档
+
+##### Window History
+
+该对象在编写时可不使用 `window` 这个前缀
+
+* `history.back()`：回退，与浏览器点击后退按钮作用相同
+* `history.forward()` ：前进，与浏览器点击前进按钮作用相同
+
+##### Window Navigator
+
+用于获取浏览器等信息
+
+* `navigator.appCodeName`：浏览器代号
+* `navigator.appName`：浏览器名称
+* `navigator.appVersion`：浏览器版本
+* `navigator.cookieEnabled`：启用 `Cookies`
+* `navigator.paltform`：硬件平台
+* `navigator.userAgent`：用户代理
+* `navigator.systemLanguage`：用户代理语言
+
+#### 3.2 定时器
+
+* 定义定时器
+  * `setInterval('调用函数'，毫秒时间)`：每间隔固定毫秒值就执行一次函数
+  * `setTimeout('调用函数'，毫秒时间)`：在固定时间之后执行一次调用函数
+* 关闭定时器
+  * `clearInterval(定时器名称)`
+  * `clearTimeout(定时器名称)`
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JS学习</title>
+    <style>
+        #first {
+            width: 200px;
+            height: 200px;
+            background-color: gold;
+        }
+    </style>
+</head>
+<body>
+    <div id="first"></div>
+    <br>
+    <button onclick="stop()">停止颜色改变</button>
+    <script>
+        function changeColor() {
+            var div = document.getElementById("first");
+            var r = Math.ceil(Math.random() * 255);
+            var g = Math.ceil(Math.random() * 255);
+            var b = Math.ceil(Math.random() * 255);
+            div.style.backgroundColor = "rgb(" + r + "," + g + "," + b + ")";
+        }
+        var itv = window.setInterval("changeColor()", 1000);
+        function stop() {
+            clearInterval(itv);
+        }
+    </script>
+</body>
+</html>
+```
+
+## 第二十七章 JavaScript
+
+### 第一部分 语言核心
+
+### 0. 概述
+
+完整的 `JavaScript` 包含以下几个部分：`ECMAScript`、`DOM`、`BOM`
+
+#### ECMAScript
+
+它只是对实现规范描述的所有方面的一门语言的称呼。要成为 `ECMA-262` 实现，必须满足下列条件：
+
+* 支持 `ECMA-262` 中描述的所有 “类、值、对象、属性、函数，以及程序语法及语义”
+* 支撑 `Unicode` 字符标准
+
+此外，符合性实现还可以满足下列要求：
+
+* 增加 `ECMA-262` 中未提及的 “额外的类型、值、对象、属性和函数”。`ECMA-262` 所说的这些额外内容主要指规范中未给出的新对象或对象的新属性
+* 支持 `ECMA-262` 中没有定义的 “程序和正则表达式语法”（意思是允许修改和扩展内置的正则表达式特性）
+
+#### DOM
+
+`DOM（Document Object Model）`：文档模型对象，是一个应用编程接口，用于在 `HTML` 中使用扩展的 `XML`。
+
+ `DOM` 将整个页面抽象为一组分层节点，`HTML` 或 `XML` 页面的每个组成部分都是一种节点，包含不同的数据，例如：
+
+```html
+<html>
+  <head>
+    <title>Sample Page</title>
+  </head>
+  <body>
+    <p>Hello World!</p>
+  </body>
+</html>
+```
+
+上面的代码可以通过 `DOM` 表示为一组分层节点：
+
+[![6cyfI0.png](https://s3.ax1x.com/2021/03/17/6cyfI0.png)](https://imgtu.com/i/6cyfI0)
+
+#### BOM
+
+`BOM(Broswer Object Model)`：浏览器对象模型，用于支持访问和操作浏览器的窗口。
+
+#### 小结
+
+`JavaScript` 是一门用来与网页交互的脚本语言，包含以下三个组成部分：
+
+* `ECMAScript`：由 `ECMA-262` 定义并提供核心内容
+* 文档对象模型（`DOM`）：提供与网页内容交互的方法和接口
+* 浏览器对象模型（`BOM`）：提供与浏览器交互的方法和接口
+
+#### &lt;script&gt; 标签
+
+`script` 元素的 8 个属性：
+
+| 属性名        | 是否可选 | 解释                                                         |
+| ------------- | -------- | ------------------------------------------------------------ |
+| `async`       | 可选     | 表示应该立即开始下载脚本，但不能阻止页面上的其它动作，比如下载资源或者等待其它脚本加载。只对外部脚本文件有效 |
+| `charset`     | 可选     | 使用 `src` 属性指定的代码字符集。这个属性很少使用，因为大多数浏览器不在乎它的值 |
+| `crossorigin` | 可选     | 配置相关请求的 `CORS`（跨源资源共享）设置。默认不使用 `CORS` |
+| `defer`       | 可选     | 表示脚本可以延迟到文档完全被解析和显示之后再执行。只对外部脚本文件有效 |
+| `integrity`   | 可选     | 允许比对接收到的资源和指定的加密签名以验证子资源的完整性     |
+| `language`    | 废弃     | 用于表示代码块中的脚本语言                                   |
+| `src`         | 可选     | 表示包含要执行的代码的外部文件                               |
+| `type`        | 可选     | 代替 `language`，表示代码块中脚本语言的内容类型              |
+
+使用 `<script>` 的两种方式：
+
+* 通过它直接在网页中嵌入 `JavaScript` 代码
+  * 这种方式下，代码中不能出现字符串：`“</script>”`
+* 通过它在网页中包含外部 `JavaScript` 文件
+  * 要包含外部文件中的 `JavaScript`，就必须使用 `src` 属性，这个属性的值是一个 `URL`，指向包含 `JavaScript` 代码的文件
+
+##### 标签位置
+
+* 原来 `<script>` 标签都在 `<head>` 中放置，便于管理，但是会影响页面加载速度，影响用户体验
+* 建议放在 `<body>` 标签内容的最后，`</body>` 标签的前面
+
+##### 推迟执行脚本
+
+`defer` 属性只对外部脚本才有效，会使脚本被延迟到整个页面都解析完毕之后再执行
+
+### 1. 词法结构
+
+#### 1.1 字符集
+
+`JavaScript` 程序是用 `Unicode` 字符集编写的
+
+##### 1.1.1 区分大小写
+
+`JavaScript` 是区分大小写的语言，关键字、变量名、函数名和所有的标识符都区分大小写
+
+> 注意：HTML 不区分大小写
+
+##### 1.1.2 空格、空行、格式控制符
+
+各种表示空格的字符：
+
+| 含义       | 转义字符 |
+| ---------- | -------- |
+| 普通空格符 | `\u0020` |
+| 水平制表符 | `\u0009` |
+| 垂直制表符 | `\u000B` |
+| 换页符     | `\u000C` |
+| 不中断空白 | `\u00A0` |
+| 字节序标记 | `\uFEFF` |
+
+表示行结束符的字符：
+
+| 含义     | 转义字符 |
+| -------- | -------- |
+| 换行符   | `\u000A` |
+| 回车符   | `\u000D` |
+| 行分隔符 | `\u2028` |
+| 段分隔符 | `\u2029` |
+
+> 注意：回车符加换行符在一起被解析为一个单行结束符
+
+##### 1.1.3 Unicode 转义序列
+
+在有些计算机硬件和软件里，无法显示或输入 `Unicode` 字符全集，为了支持那些使用老旧技术的程序员，`JavaScript` 定义了一种特殊序列，使用 6 个 `ASCII` 码字符来代表任意 16 位 `Unicode` 内码。
+
+这些 `Unicode` 转义序列均以 `\u` 为前缀，其后跟随 4 个十六进制数。
+
+这种 `Unicode` 转义写法可以用在 `JavaScript` 字符串直接量、正则表达式直接量和标识符中（关键字除外）。
+
+```javascript
+"café" === "caf\u00e9"  // true
+```
+
+#### 1.2 注释
+
+`JavaScript` 支持两种格式的注释：
+
+* 单行注释：`//`，在行尾 `//` 之后的文本都会被 `JavaScript` 当作注释忽略掉
+* 多行注释：`/* 注释内容 */`，`/* ` 和 `*/` 之间的文本会被当作注释
+  * 这种注释可以跨行书写
+  * 这种注释不能够嵌套
+
+#### 1.3 直接量
+
+所谓直接量（`literal`），就是程序中直接使用的数据值，下面的都是直接量：
+
+```javascript
+12							// 数字
+1.2							// 小数
+"hello world"		// 字符串文本
+'Hi'						// 也是字符串
+true						// 布尔值
+false						// 另一个布尔值
+/javascript/gi	// 正则表达式直接量（用作模式匹配）
+null						// 空
+{x:1, y:2}			// 对象
+[1, 2]					// 数组
+```
+
+#### 1.4 标识符和保留字
+
+**标识符**就是一个名字，用来对变量和函数进行命名，或者用作代码中某些循环语句的跳转位置的标记。
+
+标识符命名规则：
+
+* 必须以 **字母、下划线、美元符** 开始
+* 后续的字符可以是 **字母、下划线、美元符、数字**
+* 标识符不能是保留字
+
+> 数字不允许作为标签符的首字符出现，以便 `JavaScript` 可以轻易区分开标识符和数字
+
+**保留字**：`JavaScript` 把一些标识符拿出来用做自己的关键字，因此，这些关键字就不能在程序中被用作标签符了。
+
+[![6RSwDS.md.png](https://s3.ax1x.com/2021/03/18/6RSwDS.md.png)](https://imgtu.com/i/6RSwDS)
+
+`JavaScript` 的具体实现可能定义独有的全局变量和函数，每一种特定的 `JavaScript` 运行环境都自己的一个全局属性列表，**这一点是需要牢记的**
+
+#### 1.5 可选的分号
+
+和其它许多编程语言一样，`JavaScript` 使用分号将语句分隔开
+
+可以省略分号的地方：
+
+* 语句各自独占一行
+* 程序结尾
+* 右花括号（`}`）之前
+
+> * `return、break、continue` 和随后的表达式之间不能有换行
+> * `++、--` 在做后缀表达式时，和前面的表达式应该在一行
+
+### 2. 类型、值、变量
+
+`JavaScript` 的数据类型分为两类：
+
+* 原始类型
+  * 数字
+  * 字符串
+  * 布尔值
+  * `null`（空）
+  * `undefined`（未定义）
+* 对象类型
+  * 对象（`Object`）是属性（`property`）的集合，每个属性都由 `键/值` 对组成
+  * 特殊对象——全局对象（`global object`）
+  * 特殊对象——数组，表示带编号的值的有序集合
+  * 特殊对象——函数，是具有与它相关联的可执行代码的对象
+
+#### 2.1 数字
+
+和其它编程语言不同，`JavaScript` 不区分整数值和浮点数值，所有数字均用浮点数值表示。`JavaScript` 能表示的最大数值是：$\pm 1.7976931348623157 \times 10^{308}$ ，最小值是：$\pm 5 \times 10^{-324} $
+
+按照 `JavaScript` 中的数字格式，能够表示整数的范围是：$-2^{53}$ ~ $2^{53}$ ，包含边界值
+
+> 需要注意的是：`JavaScript` 中的实际操作（比如数组索引、位操作符）则是基于 32 位整数
+
+##### 2.1.1 整形直接量
+
+用一个数字序列表示一个十进制数：
+
+```javascript
+0
+3
+10000
+```
+
+`JavaScript` 同样能识别十六进制值——以 `0x` 或 `0X` 为前缀，其后跟随十六进制数串的直接量：
+
+```javascript
+0xff
+0xCAFE91
+```
+
+> 有些 `JavaScript` 的实现不支持八进制，`ECMAScript 6` 的严格模式下，八进制是禁止的。因此，最后不要使用以 0 为前缀的整形直接量
+
+##### 2.1.2 浮点直接量
+
+* 浮点直接量可以含有小数点
+* 可以使用指数记数法表示浮点直接量
+  * 语法：`[digits][.digits][(E|e)[(+|-)]digits]`
+
+```javascript
+3.14
+2345.789
+.3333333
+6.02e23
+1.4738223E-32
+```
+
+##### 2.1.3 算术运算
+
+运行符：
+
+| 运算符 | 含义       |
+| ------ | ---------- |
+| +      | 加法运算符 |
+| -      | 减法运算符 |
+| *      | 乘法运算符 |
+| /      | 除法运算符 |
+| %      | 求余运算符 |
+
+**上溢：**当数字运算结果超过了 `JavaScript` 所能表示的数字上限，结果为一个特殊的无穷大值：`Infinity`；当负数的值超过了 `JavaScript` 所能表示的最大负数范围，结果为负无数大：`-Infinity`
+
+**下溢：**当运算结果无限接近于 0 并比 `JavaScript` 所能表示的最小值还小的时候发生的一种情形。这种情况下，`JavaScript` 会返回 0
+
+**被零整除：**在 `JavaScript` 中并不报错，只是简单的返回无穷大（$\pm$ `Infinity`）
+
+**零除以零：**没有意义，返回一个非数字（`not-a-number`）的值，用 `NaN` 表示。**无穷大除以无穷大、给任意负数做开方运算、算术运算符与不是数字或无法转换为数字的操作数一起使用时，都将返回 NaN**
+
+_**NaN 与任何值都不相等，包括自身**_
+
+判断一个值是 `NaN` 的方法：`x != x` 或者 `isNaN(x)`
+
+`isFinite(参数)`：在参数不是 `NaN、Infinity、-Infinity` 时返回 `true`
+
+##### 2.1.4 二进制和四舍五入错误
+
+实数有无数个，但 `JavaScript` 通过浮点数的形式只能表示其中有限的个数。也就是说，当在 `JavaScript` 使用实数的时候，常常只是真实值的一个近似表示。
+
+```javascript
+var x = .3 - .2;
+var y = .2 - .1;
+x == y						// false，两值不相等
+x == .1						// false，.3 - .2 不等于 .1
+y == .1						// true，.2 - .1 等于 .1
+```
+
+> 以上的问题不只在 `JavaScript` 中才会出现，在任何使用二进制浮点数的编程语言中都会有这个问题
+
+##### 2.1.5 时间和日期
+
+* `JavaScript` 语言核心包括 `Date()` 构造函数，用来创建表示时间和日期的对象
+* 日期对象的方法为日期的计算提供了简单的 `API`
+
+日期对象简单用法：
+
+```javascript
+var then = new Date(2021, 2, 18);					// 2021年3月18日
+var later = new Date(2021, 2, 18, 17, 10, 30);		// 同一天，当地时间下午 17:10:30
+var now = new Date();											// 当前日期和时间
+var elapsed = now - then;									// 日期减法，计算间隔的毫秒数
+later.getFullYear();											// 2021
+later.getMonth();													// 2：从 0 开始计数的月份
+later.getDate();													// 18：从 1 开始计数的开数
+later.getDay();														// 4：得到星期几，0代表星期日
+later.getHours();													// 22：得到当地小时数
+```
+
+#### 2.2 文本
+
+* 字符串是一组由 16 位值组成的不可变的有序序列
+* 字符串的索引从 0 开始
+* `JavaScript` 中并没有表示单个字符的字符型，要表示一个 16 位值，只需要将其赋值给字符串变量即可，这个字符串长度为 1
+
+##### 2.2.1 字符串直接量
+
+字符串直接量：由单引号或又引号括起来的字符序列
+
+```javascript
+""								// 空字符串：包含 0 个字符
+'testing'
+"3.14"
+'name="myForm"'
+"Are you OK?"
+"This string \nhas two lines"
+```
+
+##### 2.2.2 转义字符
+
+在 `JavaScript` 字符串中，反斜线 `\` 有着特殊的用途，反斜线符号后加一个字符，就不再表示它们的字面含义了。
+
+| 转义字符 | 含义                                        |
+| -------- | ------------------------------------------- |
+| `\0`     | `NUL` 字符（`\u0000`）                      |
+| `\b`     | 退格符（`\u0008`）                          |
+| `\t`     | 水平制表符（`\u0009`）                      |
+| `\v`     | 换行符（`\u000A`）                          |
+| `\n`     | 垂直制表符（`\u000B`）                      |
+| `\f`     | 换页符（`\u000C`）                          |
+| `\r`     | 回车符（`\u000D`）                          |
+| `\"`     | 双引号（`\u0022`）                          |
+| `\'`     | 撇号或单引号（`\u0027`）                    |
+| `\\`     | 反斜线（`\u005C`）                          |
+| `\xXX`   | 由两位十六进制 `XX` 指定的 `Lantin-1` 字符  |
+| `\uXXXX` | 由四位十六进制 `XXXX` 指定的 `Unicode` 字符 |
+
+##### 2.2.3 字符串的使用
+
+* 字符串连接：`+`
+* 字符串长度：`string.length`
+* 访问单个字符：`string[index]`
+
+> 所有对字符串改变的操作，都会返回一个新的字符串，也就是说，字符串是不可变的
+
+常用方法：
+
+```javascript
+var s = 'hello,world'						// 定义一个字符串
+s.charAt(0)												// 'h'，第一个字符串
+s.charAt(s.length - 1)						// 'd'，最后一个字符串
+s.substring(1, 4)									// 'ell',第 2 ~ 4 个字符
+s.indexOf('l')										// 2，字符 l 首次出现的位置
+s.lastIndexOf('l')								// 10，字符 l 最后一次出现的位置
+s.indexOf('l', 3)									// 3，在位置 3 及以后首次出现字符 l 的位置
+s.split(',')											// ['hello', 'world']，分割成子串
+s.replace('h','H')								// 'Hello,world'，全文字符替换
+s.toUpperCase()										// 'HELLO,WORLD'
+```
+
+##### 2.2.4 模式匹配
+
+`JavaScript` 定义了 `RegExp()` 构造函数，用来创建表示匹配模式的对象。这些模式称为 ”正则表达式“（`regular expression`），`JavaScript` 采用 `Perl` 中的正则表达式语法。
+
+正则表达式直接量：
+
+* 在两条斜线之间的文本构成了一个正则表达式直接量
+* 第二条斜线之后也可以跟随一个或多个字母，用来修饰匹配模式的含义
+
+```javascript
+/^HTML/							// 匹配以 HTML 开始的字符串
+/[1-9][0-9]*/				// 匹配一个非零数字，后面是任意个数字
+/\bjavascript\b/i		// 匹配单词 javascript，忽略大小写
+```
+
+正则表达式示例：
+
+```javascript
+var text = "testing: 1, 2, 3";				// 文本
+var pattern = /\d+/g;									// 匹配所有包含一个或多个数字的实例
+pattern.test(text);										// true，匹配成功
+text.search(pattern);									// 9，首次匹配成功的位置
+text.match(pattern);									// ['1', '2', '3']，所有匹配成功的数组
+text.replace(pattern, '#');						// 'testing: #, #, #'
+text.split(/\D+/);										// ['', '1', '2', '3']，用非数字字符截取字符串
+```
+
+#### 2.3 布尔值
+
+布尔值指代真或假、开或关、是或否，这个类型只有两个值：`true`、`false`
+
+**任意的 JavaScript 的值都可以转换为布尔值**
+
+下面这些值会被转换成 `false`：
+
+```javascript
+undefined
+null
+0
+-0
+NaN
+""
+```
+
+除上面的 6 个值以外的其它值，都会转换成 `true`
+
+#### 2.4 null、undefined
+
+* `null` ：是一个特殊的对象值，含义是 “非对象”，用来描述 “空值”
+  * 是关键字
+
+* `undefined`：是变量的一种取值，表示变量没有初始化
+  * 是预定义的全局变化，不是关键字
+  * 如果要查询对象属性或数组元素的值时返回 `undefined` 则说明这个属性或元素不存在
+  * 如果函数没有返回任何值，则返回 `undefined`
+  * 函数引用没有提供实参时，函数形参的值也只会得到 `undefined`
+
+> 注意：如果使用 null == undefined，返回的是 true
+>
+> ​           要判断 null 和 undefined 的相等性，需要使用 null === undefined 进行判断
+
+#### 2.5 全局对象
+
+全局对象（`global object`）在 `JavaScript` 中有着重要的用途：
+
+* 全局对象的属性是全局定义的符号，`JavaScript` 程序可以直接使用
+* 当 `JavaScript` 解释器启动时（或者任何 `Web` 浏览器加载新页面时），它将创建一个全新的全局对象，并给它一组定义的初始属性
+  * 全局属性，比如：`undefined、Infinity、NaN`
+  * 全局函数，比如：`isNaN()、parseInt()、eval()`
+  * 构造函数，比如：`Date()、RegExp()、String()、Object()、Array()`
+  * 全局对象，比如：`Math、JSON`
+
+在代码的最顶级——不在任何函数内的 `JavaScript` 代码——可以使用 `JavaScript` 关键字 `this` 来引用全局对象：
+
+`var global = this;  // 定义一个引用全局对象的全局变量`
+
+在客户端 `JavaScript` 中，在其表示的浏览器窗口中的所有 `JavaScript` 代码中，`Window` 对象充当了全局对象。这个全局 `Window` 对象有一个属性 `window` 引用其自身，它可以代替 `this` 来引用全局对象
+
+#### 2.6 包装对象
+
+本章一开始就说了，`JavaScript` 的数据类型分为：**原始类型**、**对象类型**，对象类型有方法和属性，原始类型不应该有方法和属性。但是，在讲解字符文本（原始类型）时，也讲解了它们的一些属性和方法。它们的方法到底是怎么来的？
+
+原因是：只要引用了字符串的属性，`JavaScript` 就会将字符串值通过调用 `new String(s)` 的方式转换为对象，这个对象继承了字符串的方法，并被用来处理属性的引用。一旦属性引用结束，这个新创建的对象就会销毁。
+
+同字符串一样，数字和布尔值也各具有各自的方法：通过 `Number()` 和 `Boolean()` 构造函数创建一个临时对象，这些方法的调用均是来自于这个临时对象。
+
+**`null` 和 `undefined` 没有包装对象**
+
+查看如下的示例，思考最终的执行结果：
+
+```javascript
+var s = 'test';
+s.len = 4;
+var t = s.len;
+console.log(t);    // 结果是？
+```
+
+#### 2.7 不可变的原始值和可变的对象引用
+
+原始值是不可变的：任何方法都无法更改（或 “突变”）一个原始值。要请注意的原始值是字符串，字符串的很多操作看上去像是修改了原始值，其实都只是返回了一个新的字符串：
+
+```javascript
+var s = 'hello';			// 原始字符串小写
+s.toUpperCase();			// 返回一个新的大写的字符串
+s;										// 仍然是 hello，没有发生任何变化
+```
+
+**原始类型的比较是值的比较：只有值相等，两个原始类型的变量才相等**
+
+**对象的比较是引用的比较：当且仅当它们引用同一基对象时，它们才相等**
+
+#### 2.8 类型转换
+
+当 `JavaScript` 期望使用某个类型的值时，程序可以提供任意类型的值，`JavaScript` 将根据需要自行转换类型。
+
+转换的规则如下：
+
+[![6WoffS.md.png](https://s4.ax1x.com/2021/03/19/6WoffS.md.png)](https://imgtu.com/i/6WoffS)
+
+注意：
+
+* 转换为数字的情况比较微秒，那些以数字表示的字符串可以直接表示为数字，也允许在开始和结尾处带有空格，但在开始和结尾处的任意非空字符都不会被当成数字直接量的一部分，进而造成字符串转换为数字的结果为 `NaN`
+* 转换为数字时：`true` 转换为 1， `false` 转换为 0
+
+##### 2.8.1 转换和相等性
+
+由于 `JavaScript` 可以做灵活的类型转换，因此其 `==` 运算符也随相等的含义灵活多变。例如：下面的比较结果均为 `true`：
+
+```javascript
+null == undefined		// 这两个值被认为相等
+"0" == 0				// 在比较之前字符串转换为数字
+0 == false				// 在比较之前布尔值转换为数字
+"0" == false			// 在比较之前字符串和布尔值都转换为数字
+```
+
+> 注意：一个值转换为另一个值并不意味着这两个值相等
+
+##### 2.8.2 显式类型转换
+
+做显式类型转换最简单的方法就是使用：`Boolean()、Number()、String()、Object()` 函数。当不通过 `new` 运算符调用这些函数时，它们会作为类型转换函数并按照 `2.8` 节一开始所描述的规则做类型转换：
+
+```javascript
+Number("3")				// 3
+String(false)			// "false"
+Boolean([])				// true
+Object(3)				// new Number(3)
+```
+
+> 除了 `null` 和 `undefined` 以外的任何值都具有 `toString()` 方法，这个方法的执行结果通常和 `String()` 方法的返回结果一致
+
+> 如果试图把 `null` 和 `undefined` 转换为对象，会抛出一个类型错误。`Object` 在这种情况下不会抛出异常，它仅简单的返回一个新创建的空对象
+
+**运算符的隐式类型转换：**
+
+* 二元 `+` 运算符的一个操作数是字符串，它会把另一个操作数转换为字符串；如果一个操作数是对象，则 `JavaScript` 使用特殊的方法将对象转换为原始值，而不是使用其它运算符的方法执行对象到数字的转换
+* 一元 `+` 运算符将其操作数转换为数字
+* 一元 `!` 运算符将其操作数转换为布尔值并取反
+
+```javascript
+x + ''		// 等价于 String(x)
++x			// 等人于 Number(x)，也可以是 x - 0
+!!x			// 等人于 Boolean(x)。注意是双叹号
+```
+
+**数字与字符串之间的相互转换**
+
+* **整数→字符串：** `Number` 类定义的 `toString()` 方法可以接收表示转换基数的可选参数
+
+  ```javascript
+  var n = 17;
+  var binary_str = n.toString(2);		// 转换为 '10001'
+  var octal_str = n.toString(8);		// 转换为 '021'
+  var hex_str = n.toString(16);		// 转换为 '0x11'
+  var decimal_str = n.toString();		// 转换为 '17'
+  ```
+
+* **小数→字符串：**
+
+  * 控制输出中小数点的位置：`toFixed()`
+  * 控制输出中小数的有效位数：`toPrecision()`
+  * 控制输出是否需要指数计数法：`toExponential()`
+
+  ```javascript
+  var n = 123456.789;
+  n.toFixed(0);			// '123457'
+  n.toFixed(2);			// '123456.79'
+  n.toFixed(5);			// '123456.78900'
+  n.toExponential(1);		// '1.2e+5'
+  n.toExponential(3);		// '1.235e+5'
+  n.toPrecision(4);		// '1.235e+5'
+  n.toPrecision(7);		// '123456.8'
+  n.toPrecision(10);		// '123456.7890'
+  ```
+
+* **字符串→数字：**
+
+  * `parseInt()`：将一个字符串转换为整数直接量
+  * `parseFloat()`：将一个字符串转换为小数直接量
+  * 这两个方法都是全局函数，不属性任何类的方法
+  * 这两个方法都会跳过任意数量的前导空格，尽可能解析更多的数字字符
+  * 如果第一个非空格字符是一个非法的数字直接量，将最终返回 `NaN`
+
+  ```javascript
+  parseInt('3 sdf sdf');				// 3
+  parseFloat('  3.14 sdf ladkf');		// 3.14
+  parseInt('-12.34');					// -12
+  parseInt('0xFF');					// 255
+  parseInt('-0xFF');					// -255
+  parseFloat('.1');					// 0.1
+  parseInt('0.1');					// 0
+  parseInt('.1');						// NaN，整数不能以 . 开始
+  parseFloat('$72.47');			// NaN，数字不能以 $ 开始
+  ```
+
+  > `parseInt()` 可以接收第二个可选参数，这个参数指定数字转换的基数，合法的取值范围是 2 ~ 36
+
+##### 2.8.3 对象转换为原始值
+
+* **对象→布尔值：**
+  * 所有的对象（包括数组和函数）都转换为 `true`
+* **对象→字符串：**
+  * 如果对象具有 `toString()` 方法，则调用这个方法。如果它返回一个原始值，`JavaScript` 将这个原始值转换为字符串（如果本身不是字符串的话），并返回这个字符串的结果
+  * 如果对象没有 `toString()` 方法，或者这个方法并不返回一个原始值，那么 `JavaScript` 会调用 `valueOf()` 方法。如果存在这个方法，则 `JavaScript` 调用它。如果返回的是原始值，`JavaScript` 将这个值转换为字符串（如果本身不是字符串的话），并返回这个字符串结果
+  * 否则，`JavaScript` 无法从 `toString()` 或者 `valueOf()` 获得一个原始值，因此这时它将抛出一个类型错误异常
+* **对象→数字：**
+  * 如果对象具有 `valueOf()` 方法，后者返回一个原始值，则 `Javascript` 将这个原始值转换为数字（如果有需要的话）并返回这个数字
+  * 否则，如果对象具有 `toString()` 方法，后者返回一个原始值，则 `JavaScript` 将其转换并返回
+  * 否则，`JavaScript` 抛出一个类型错误异常
+
+#### 2.9 变量声明
+
+使用一个变量之前应当先声明，变量是使用关键字 `var` 来声明的：
+
+```javascript
+var i;				// i -> undefined
+var num;			// num -> undefined
+var i, sum;         // i,num -> undefined
+var msg = 'hello';	// msg -> 'hello'
+```
+
+> `JavaScript` 变量可以是任意数据类型
+
+* 在严格模式下，给一个没有声明的变量赋值会报错
+* 非严格模式下，给一个没有声明的变量赋值，`Javascript` 会给全局对象创建一个同名属性
+  * **使用未声明的变量是一个非常不好的习惯，应该始终使用 var 来声明变量**
+
+#### 2.10 变量作用域
+
+一个变量的作用域（`scope`）是程序源代码中定义这个变量的区域。
+
+* 全局变量拥有全局作用域，在 `JavaScript` 代码中的任何地方都是有定义的
+* 在函数内声明的变量只在函数体内有定义，它们是局部变量，作用域是局部的
+* 函数参数也是局部变量，它们只在函数体内有定义
+
+```javascript
+var scope = 'global scope';			// 全局变量
+function checkScope() {
+    var scope = 'local scope';		// 局部变量
+    function nested() {
+        var scope = 'nested scope';	// 嵌套作用域内的局部变量
+        return scope;				// 返回当前作用域内的值
+    }
+    return nested();					
+}
+
+checkScope();						// 嵌套作用域
+```
+
+##### 2.10.1 函数作用域和声明提前
+
+函数作用域：变量在声明它们的函数体以及这个函数体嵌套的任意函数体内都是有定义的。
+
+上句话也就意味着：变量在声明前基本已经可以用了——声明提前
+
+```javascript
+var scope = 'global';
+function f() {
+    console.log(scope);		// 输出 'undefined'，而不是 'global'
+    var scope = 'local';	// 变量在这里赋初值，但变量本身在函数体内任何地方均是有定义的
+    console.log(scope);		// 'local'
+}
+```
+
+> 良好的编程习惯：将变量声明放在函数体顶部，这样会非常清晰的反应真实的变量作用域
+
+##### 2.10.2 作为属性的变量
+
+* 当使用 `var` 声明一个变量时，创建的这个属性是不可配置的，即，无法使用 `delete` 运算符删除
+* 当没有使用严格模式并给一个未定义的变量赋值的话，`JavaScript` 会自动创建一个全局变量，以这种方式创建的变量是全局对象的正常的可配置的属性，可以被删除
+
+```javascript
+var temp = 1;						// 声明一个不可删除的全局变量
+tmp = 2;								// 创建全局对象的一个可删除属性
+this.tmp2 = 2;					// 同上
+delete temp;						// false：变量并没有被删除
+delete tmp;							// true：变量被删除
+delete this.tmp2;				// true：变量被删除
+```
+
+##### 2.10.3 作用域链（重要）
+
+* 每一段 `JavaScript` 代码（全局代码或函数）都有一个与之相关联的作用域链（`scope chain`）
+* 这个作用域链是一个对象列表或链表，这组对象定义了这段代码 “作用域中” 的变量
+* 当 `JavaScript` 需要查找变量 `x` 的值时（这个过程叫做变量解析（`variable resolution`）），它会从链中的第一个对象开始查找，如果这个对象有一个名为 `x` 的属性，则会直接使用这个属性的值，如果第一个对象中不存在名为 `x` 的属性，则会继续查找下一个对象，以此类推。如果作用域上没有任何一个对象含有属性 `x`，那么就认为这段代码的作用域链上不存在 `x`，并最终抛出一个引用错误（`RefferenceError`）异常
+
+### 3. 表达式和运算符
+
+**表达式（expression）：**`JavaScript` 中的一个短语，`JavaScript` 解释器会将其计算（`evaluate`）出一个结果。
+
+表达式举例：变量名，数组访问表达式，函数调用表达式等等
+
+#### 3.1 原始表达式
+
+原始表达式是表达式的最小单位——它们不再包含其它表达式。`JavaScript` 中的原始表达式包含常量或直接量、关键字和变量
+
+```javascript
+// 直接量表达式
+1.23
+'hello'
+/pattern/
+  
+// 保留字表达式
+true
+false
+null
+this
+
+// 变量表达式
+i
+sum
+undefined
+```
+
+#### 3.2 对象和数组的初始化表达式
+
+对象和数组初始化表达式实际上是一个新创建的对象和数组，也可以叫做：对象直接量、数组直接量。
+
+数组初始化表达式：通过一对方括号和其内由逗号隔开的列表构成的。初始化的结果是一个新创建的数组，数组的元素是逗号分隔的表达式的值：
+
+```javascript
+[]								// 一个空数组：[]内留空即表示该数组没有任何元素
+[1+2, 3+4]				// 拥有两个元素的数组，第一个是 3，第二个是 7
+```
+
+数组直接量中的列表逗号之间的元素可以省略，这时省略的空位会填充值 `undefined`：
+
+```javascript
+var arr = [1,,,,5];
+```
+
+> 数组直接量的元素列表结尾处可以留下单个逗号，这时并不会创建一个新的值为 undefined 的元素
+
+对象初始化表达式和数组初始化表达式非常类似，只是方括号被花括号代替，并且每个子表达式都包含一个属性名和一个冒号作为前缀：
+
+```javascript
+var p = {x: 2.3, y:-1.2}				// 一个拥有两个属性成员的对象
+var q = {};											// 一个空对象
+q.x = 2.3; q.y = -1.2;					// q 的属性成员和 p 的一样
+```
+
+> 对象和数组都可以进行嵌套
+
+#### 3.3 函数定义表达式
+
+**函数定义表达式定义一个 JavaScript 函数，表达式的值是这个新定义的函数**
+
+一个典型的函数定义表达式包含关键字 `function`，跟随其后的是一对圆括号，括号内是一个以逗号分割的列表，列表含有 0 个或多个标识符（参数名），然后再跟随一个由花括号包裹的 `JavaScript` 代码段（函数体）：
+
+```javascript
+// 这个函数返回传入参数值的平方
+var square = function(x) {return x * x;}
+```
+
+#### 3.4 属性访问表达式
+
+`JavaScript` 为属性访问定义了两种语法：
+
+```javascript
+expression.indetifier						// 表达式后跟随一个句点和标识符
+expression[ expression ]				// 使用方括号，方括号内是另外一个表达式（这种方法适用于对象和数组）
+```
+
+```javascript
+var o = {x:1, y:{z:3}};					// 一个对象
+var a = [o, 4, [5, 6]];					// 一个包含这个对象的数组
+o.x															// 1：表达式 o 的 x 属性
+o.y.z														// 3：表达式 o.y 的 z 属性
+o['x']													// 1：对象 o 的 x 属性
+a[1]														// 4：表达式 a 中索引为 1 的元素
+a[2]['1']												// 6：表达式 a[2] 中索引为 1 的元素
+a[0].x													// 1：表达式 a[0] 的 x 属性
+```
+
+> * 如果属性名称是一个保留字或者包含空格或标点符号，或是一个数字（对于数组来说），则必须使用方括号的写法
+> * 当属性名是通过运算得出的值而不是固定的值的时候，必须使用方括号写法
+
+#### 3.5 调用表达式
+
+`JavaScript` 中的调用表达式（`invocation expression`）是一种调用（或执行）函数或方法的语法表示：它以一个函数表达式开始，这个函数表达式指代了要调用的函数。函数表达式后跟随一对圆括号，括号内是一个以逗号隔开的参数列表，参数可以有 0 个，也可以有多个：
+
+```javascript
+f(0)					// f 是一个函数表达式，0 是一个参数表达式
+Math.max(x,y,z)			// Math.max 是一个函数，x，y，z 是参数
+a.sort()				// a.sort 是一个函数，它没有参数
+```
+
+#### 3.6 对象创建表达式
+
+对象创建表达式创建一个对象并调用一个函数（这个函数称作构造函数）初始化新对象的属性：
+
+```javascript
+new Object()
+new Point(2, 3)
+
+// 如果一个对象创建表达式不需要传入任何参数给构造函数的话，那么这对空圆括号可以省略
+
+new Object
+new Date
+```
+
+#### 3.7 运算符
+
+[![6oXtsI.png](https://z3.ax1x.com/2021/03/22/6oXtsI.png)](https://imgtu.com/i/6oXtsI)
+
+##### 3.7.1 操作数的个数
+
+* 大多数操作符是 二元运算符
+* 小部分是 一元运算符（例如：`-、!`）
+* 只有一个三元运算符：`? :`
+
+##### 3.7.2 操作数类型和结果类型
+
+`JavaScript` 运算符通常会根据需要对操作数进行类型转换（转换规则参照 `2.8` 节内容）
+
+##### 3.7.3 左值
+
+左值：表达式只能出现在赋值运算符的左侧
+
+##### 3.7.4 运算符的副作用
+
+有副作用的运算符：
+
+`=、++、--、delete`
+
+##### 3.7.5 运算符优先级
+
+运算符优先级在上面的表格中，从上到下依次递减。
+
+> 小技巧：
+>
+> * 如果你真的不确定你所使用的运算符的优先级，最简单的方法就是使用圆括号来强行指定运算次序。
+> * 有些重要规则需要熟记：乘除法的优先级高于加减法，赋值运算的优先级非常低，通常总是最后执行
+
+##### 3.7.6 运算符的结合性
+
+上面的表中标题为 `A` 的列说明了运算符的结合性。`L` 指从左至右结合，`R` 指从右至左结合
+
+* 一元操作符、赋值、三元条件运算符都具有从右至左的结全性
+
+##### 3.7.7 运算顺序
+
+`JavaScript` 总是严格按照从左至右的顺序来计算表达式，只有在任何一个表达式具有副作用而影响到其他表达式的时候，其求值顺序才会和看上去有所不同
+
+#### 3.8 算术表达式
+
+在算术表达式中，所有无法转换为数字的操作数都转换为 `NaN` 值，如果操作数（或者转换结果）是 `NaN` 值，算术运算的结果也是 `NaN`
+
+## 第二十八章 Ajax
+
+### 1. JSON 概述
+
+#### 1.1 什么是 json
+
+`JSON(JavaScript Object Notation)`——JS对象标记，是一种轻量级的数据交换格式。它基于 `ECMAScript`（`w3c` 制定的 `js` 规范）的一个子集，采用完全独立于编程语言的文本格式来存储和表示数据。简洁和清晰的层次结构使得 `JSON` 成为理想的数据交换语言，易于人阅读和编写，同时也易于机器解析和生成，并有效地提升网络传输效率
+
+#### 1.2 json 语法
+
+* `[]`：表示数据
+* `{}`：表示对象
+* `""/''`：表示是属性或字符串类型的值
+* `:`：表示属性和值之间的间隔符
+* `,`：表示多个属性的间隔符或者多个元素的间隔符
+
+### 2. JSON 解析
+
+将 `JSON` 字符串解析为 `java` 对象
+
+```javascript
+// 对象嵌套数组
+String json1 = {'id':1, 'name': 'JAVAEE-1703', 'stus': [{'id': 101, 'name': '张三', 'age': 16}]};
+// 数组
+String json2 = "['北京', '天津', '杭州']";
+```
+
+初始的类：
+
+* `Student.java`
+* `Grade.java`
+
+```java
+public class Student {
+  private int id;
+  private String name;
+  private int age;
+  // 此处省略 getter 和 setter 方法
+}
+
+public class Grade {
+  private int id;
+  private String name;
+  private ArrayList<Student> stus;
+  // 此处省略 getter 和 setter 方法
+}
+```
+
+#### 2.1 FASTJSON 解析
+
+* `Fastjson` 是一个 `Java` 库，可以将 `Java` 对象转换为 `JSON` 格式，当次也可以将 `JSON` 字符串转换为 `Java` 对象
+* 提供了 `toJSONString()` 和 `parseObject()` 方法来将 `Java` 对象与 `JSON` 相互转换：
+  * 调用 `toJSONString` 方法即可将对象转换成 `JSON` 字符串
+  * `parseeObject` 方法则反过来将 `JSON` 字符串转换成对象
+
+对象转 `JSON` 字符串：
+
+```java
+@Data
+public class User {
+    private int id;
+    private String name;
+    private boolean gender;
+    private Date birthday;
+}
+
+public static void main(String[] args) throws ParseException {
+    User user = new User();
+    user.setId(1);
+    user.setName("张三");
+    user.setGender(true);
+    user.setBirthday(DateTimeUtil.strToUtilDate("1994-04-04"));
+
+    String userStr = JSON.toJSONString(user);
+    System.out.println(userStr);
+  	// 最后输出：{"birthday":765388800000,"gender":true,"id":1,"name":"张三"}
+}
+```
+
+`JSON` 字符串转对象：
+
+```java
+@Test
+public void test() {
+    String json = "{\"birthday\":765388800000,\"gender\":true,\"id\":1,\"name\":\"张三\"}";
+    User user = JSON.parseObject(json, User.class);
+    System.out.println(user);
+}
+```
+
+#### 2.2 Jackson 解析【推荐】
+
+* `Jackson` 是一个能够将 `java` 对象序列化为 `JSON` 字符串，也能够将 `JSON` 字符串反序列化为 `java` 对象的框架
+* 主要通过 `readValue` 和 `writeValue` 方法实现
+
+对象转 `JSON` 字符串：
+
+```java
+@Test
+public void testJacksonToString() throws JsonProcessingException {
+    User user = new User();
+    user.setName("李四");
+    user.setId(2);
+    user.setGender(false);
+    user.setBirthday(new Date());
+
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(user);
+    System.out.println(json);
+}
+```
+
+`JSON` 字符串转对象：
+
+```java
+@Test
+public void testJacksonToObject() throws JsonProcessingException {
+    String json = "{\"id\":2,\"name\":\"李四\",\"gender\":false,\"birthday\":1618883809238}";
+    ObjectMapper mapper = new ObjectMapper();
+    User user = mapper.readValue(json, User.class);
+    System.out.println(user);
+}
+```
+
+#### 2.3 浏览器处理 JSON 字符串
+
+`JSON.stringify()`
+
+```javascript
+var json = {name: '20', age: 34}
+var str = JSON.stringify(json);
+alert(str);
+```
+
+#### 2.4 浏览器转换为 JSON 对象
+
+`JSON.parse()`
+
+### 3. Ajax 概述
+
+#### 3.1 什么是 Ajax
+
+* `Ajax` 是一种在无需重新加载整个网页的情况下，能够更新部分网页的技术
+* `Ajax = Asynchronous JavaScript and XML`
+* `Ajax` 是一种用于创建快速动态网页的技术
+* 通过在后台与服务器进行少量数据交换，`Ajax` 可以使网页实现异步更新。这意味着可以在不重新加载整个网页的情况下，对网页的某部分进行更新
+* 传统的网页（不使用 `Ajax`）如果需要更新内容，必须重载整个网页
+
+#### 3.2 工作原理
+
+[![c7kKtP.md.png](https://z3.ax1x.com/2021/04/20/c7kKtP.md.png)](https://imgtu.com/i/c7kKtP)
+
+* `Ajax` 基于现有的 `Internet` 标准，并且联合使用它们
+* `XMLHttpRequest` 对象：异步的与服务器交换数据
+* `JavaScript/DOM` ：信息显示/交互
+* `css`：给数据定义样式
+* `xml`：作为转换数据的格式
+
+#### 3.3 Ajax 实例
+
+* `html` 代码部分： `Ajax` 应用程序包含一个 `div` 和一个按钮
+* `div` 部分用于显示来自服务器的信息。当按钮被点击时，它负责调用名为 `loadXMLDoc()` 的函数
+
+```html
+<div id="myDiv"><h2>使用 Ajax 修改该文本内容</h2></div>
+<button type="btton" onclick="loadXMLDoc()">修改内容</button>
+```
+
+接下来，在页面的 `head` 部分添加一个 `<script` 标签，该标签中包含了这个 `loadXMLDoc()` 函数
+
+```html
+<head>
+  <script>
+    function loadXMLDoc() {
+      ... Ajax 脚本执行
+    }
+  </script>
+</head>
+```
+
+#### 3.4 创建 XMLHttpRequest 对象
+
+* `XMLHttpRequest` 对象是 `Ajax` 的基础
+* 所有现代浏览器均支持 `XMLHttpRequest` 对象（`IE5` 和 `IE6` 使用 `ActiveXObject`）
+* `XMLHttpRequest` 用于在后台与服务器交换数据。这意味着可以在不重新加载整个网页的情况下，对网页的某部分进行更新
+* 所有现代浏览器（`IE7+、Firefox、chrome、Safari、Opera`）均内建 `XMLHttpRequest` 对象，创建 `XMLHttpRequest` 对象的语法
+
+```javascript
+var xmlHttp = new XMLHttpRequest();
+```
+
+老版本的 `IE5、IE6` 使用 `ActiveX` 对象：
+
+```javascript
+var xmlHttp = new ActiveXObject('Microsoft.XMLHTTP');
+```
+
+为了应对所有的现代浏览器和 `IE5、IE6` ，需要检查浏览器是否支持 `XMLHttpRequest` 对象。如果支持，则创建 `XMLHttpRequest` 对象。如果不支持，则创建 `ActiveXObject` 对象：
+
+```javascript
+var xmlHttp;
+if (window.XMLHttpRequest) {
+  xmlHttp = new XMLHttpRequest();
+} else {
+  xmlHttp = new ActiveXObject('Microsoft.XMLHTTP');
+}
+```
+
+##### 3.5 XMLHttpRequest 请求
+
+如需将请求发送到服务器，我们使用 `XMLHttpRequest` 对象的 `open()` 和 `send()` 方法：
+
+```javascript
+xmlHttp.open('GET', 'ajax_info.txt', true);
+xmlHttp.send();
+```
+
+| 方法                     | 描述                                                         |
+| ------------------------ | ------------------------------------------------------------ |
+| `open(method,url,async)` | 规定请求的类型、`URL` 以及是否异步处理请求。`method`：请求的类型，`GET` 或 `POST`；`url`：文件在服务器上的位置，即请求路径；`async`：`true`（异步）或 `false`（同步），并且 `XMLHttpRequest` 对象如果要用于 `Ajax` 的话，其 `open()` 方法的 `async` 参数必须设置为 `true` |
+| `send(String)`           | 将请求发送到服务器。`String`：仅用于 `POST` 请求             |
+
+> 使用 GET 还是 POST？
+>
+> * 与 POST 相比，GET 更简单也更快，并且在大部分情况下都能用
+> * 但是，在下列情况下，请使用 POST 请求：
+>   * 无法使用缓存文件（更新服务器上的文件或数据库）
+>   * 向服务器发送大量数据（POST 没有数据量限制）
+>   * 发送包含未知字符的用户输入时，POST 比 GET 更稳定也更可靠
+
+`GET` 请求：
+
+```javascript
+// 情形一：简单请求
+xmlHttp.open('GET', '/demoGet', true);
+xmlHttp.send();
+// 情形二：上面的情形可能得到缓存的结果，为了避免这种情况，请向 URL 添加一个唯一的 ID
+xmlHttp.open('GET', '/demoGet?t=' + Math.random(), true);
+xmlHttp.send();
+// 情形三：可以向 URL 添加信息来向服务端发送
+xmlHttp.open('GET', '/demoGet?fname=Henry&lname=Ford', true);
+xmlHttp.send();
+```
+
+`POST` 请求：
+
+```javascript
+// 情形一：简单请求
+xmlHttp.open('POST', '/demoPost', true);
+xmlHttp.send();
+// 情形二：如果需要像 HTML 表单那样 POST 数据，需使用 setRequestHeader() 来添加 HTTP 头，然后在 send() 方法中规定希望发送的数据
+xmlHttp.open('POST', '/demoPost', true);
+xmlHttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+xmlHttp.send('fname=Henry&lname=Ford');
+```
+
+| 方法                              | 描述                                                         |
+| --------------------------------- | ------------------------------------------------------------ |
+| `setRequestHeader(header, value)` | 向请求添加 `HTTP` 头。`header`：规定头的名称；`value`：规定头的值 |
+
+* 对于 `web` 开发人员来说，发送异步请求是一个巨大的进步。很多在服务器执行的任务都相当费时。`Ajax` 出现之前，这可能会引起应用程序挂起或停止
+* 通过 `Ajax、JavaScript` 无需等待服务器的响应，而是：
+  * 在等待服务器响应时执行其它脚本
+  * 当响应就绪后对响应进行处理
+
+当使用 `Async=true` 时，需要规定在响应处于 `onreadystatechange` 事件中的就绪状态时执行的函数：
+
+```javascript
+// 绑定执行函数
+xmlHttp.onreadystatechange = function() {
+  if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+    document.getElementById('myDiv').innerHtml = xmlHttp.responseText;
+  }
+}
+```
+
+* 如果需要，可以使用 `async=false`，这种方式不推荐，但是对于一些小型的请求，也是可以的
+* `JavaScript` 会等到服务器响应就绪才继续执行。如果服务器繁忙或缓慢，应用程序会挂起或停止
+* 注意：当使用 `async=false` 时，请不要编写 `onreadystatechange` 函数 —— 把代码放到 `send()` 语句后面即可
 
 
 
@@ -10803,7 +11725,14 @@ if(!nameList.contains(extName)) {
 
 
 
- 
+
+
+
+
+
+
+
+
 
 
 
