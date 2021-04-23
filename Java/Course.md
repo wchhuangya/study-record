@@ -11646,7 +11646,7 @@ if (window.XMLHttpRequest) {
 }
 ```
 
-##### 3.5 XMLHttpRequest 请求
+#### 3.5 XMLHttpRequest 请求
 
 如需将请求发送到服务器，我们使用 `XMLHttpRequest` 对象的 `open()` 和 `send()` 方法：
 
@@ -11718,6 +11718,276 @@ xmlHttp.onreadystatechange = function() {
 * `JavaScript` 会等到服务器响应就绪才继续执行。如果服务器繁忙或缓慢，应用程序会挂起或停止
 * 注意：当使用 `async=false` 时，请不要编写 `onreadystatechange` 函数 —— 把代码放到 `send()` 语句后面即可
 
+#### 3.6 readyState
+
+* 每当 `readyState` 改变时，就会触发 `onreadystatechange` 事件
+* 在 `onreadystatechange` 事件中，我们规定当服务器响应已做好被处理的准备时所执行的任务
+* `readyState` 属性存有 `XMLHttpRequest` 的状态信息
+* 当 `readyState` 等于 4 且 `status` 为 200 时，表示响应已就绪
+
+`XMLHttpRequest` 对象的三个重要的属性：
+
+| 属性                 | 描述                                                         |
+| -------------------- | ------------------------------------------------------------ |
+| `onreadystatechange` | 存储函数（或函数名），每当 `readyState` 属性改变时，就会调用该函数 |
+| `readyState`         | 存有 `XMLHttpRequest` 的状态，从 0 到 4 发生变化。0：请求未初始化；1：服务器连接已建立；2：请求已接收；3：请求处理中；4：请求已完成，且响应已就绪 |
+| `status`             | 例：200：`OK`；404：未找到页面                               |
+
+| 响应码 | 描述                                                         |
+| ------ | ------------------------------------------------------------ |
+| 100    | 客户必须继续发出请求                                         |
+| 101    | 客户要求服务器根据请求转换 HTTP 协议版本                     |
+| 200    | 交易成功                                                     |
+| 201    | 提示知道新文件的 URL                                         |
+| 202    | 接收和处理、但处理未完成                                     |
+| 203    | 返回信息不确定或不完整                                       |
+| 204    | 请求收到，但返回信息为空                                     |
+| 205    | 服务器完成了请求，用户代理必须复位当前已经浏览过的文件       |
+| 206    | 服务器已经完成了部分用户的 GET 请求                          |
+| 300    | 请求的资源可在多处得到                                       |
+| 301    | 删除请求数据                                                 |
+| 302    | 在其他地址发现了请求数据                                     |
+| 303    | 建议客户访问其它 URL 或访问方式                              |
+| 304    | 客户端已经执行了 GET，但文件未变化                           |
+| 305    | 请求的资源必须从服务器指定的地址得到                         |
+| 306    | 前一版本 HTTP 中使用的代码，现行版本中不再使用               |
+| 307    | 申明请求的资源临时性删除                                     |
+| 400    | 错误请求，如语法错误                                         |
+| 401    | 请求授权失败                                                 |
+| 402    | 保留有效 ChargeTo 头响应                                     |
+| 403    | 请求不允许                                                   |
+| 404    | 没有发现文件、查询或 URI                                     |
+| 405    | 用户在 Request-Line 字段定义的方法不允许                     |
+| 406    | 根据用户发送的 Accept 拖，请求资源不可访问                   |
+| 407    | 类似 401，用户必首先在代理服务器上得到授权                   |
+| 408    | 客户端没有在用户指定的时间内完成请求                         |
+| 409    | 对当前资源状态，请求不能完成                                 |
+| 410    | 服务器上不再有此资源且无进一步的参考地址                     |
+| 411    | 服务器拒绝用户定义的 Content-Length 属性请求                 |
+| 412    | 一个或多个请求头字段在当前请求中错误                         |
+| 413    | 请求的资源大于服务器允许的大小                               |
+| 414    | 请求的资源 URL 长于服务器允许的长度                          |
+| 415    | 请求资源不支持请求项目格式                                   |
+| 416    | 请求中包含 Range 请求头字段，在当前请求资源范围内没有 range 指示值，请求也不包含 If-Range 请求头字段 |
+| 417    | 服务器不满足请求 Except 头字段指定的期望值，如果是代理服务器，可能是下一级服务器不能满足请求 |
+| 500    | 服务器产生内部错误                                           |
+| 501    | 服务器不支持请求的函数                                       |
+| 502    | 服务器暂时不可用，有时是为了防止发生系统过载                 |
+| 503    | 服务器过载或暂停维修                                         |
+| 504    | 关口过载，服务器使用另一个关口或服务来响应用户，等待时间设定值较长 |
+| 505    | 服务器不支持或拒绝请求头中指定的 HTTP 版本                   |
+
+#### 3.7 XMLHttpRequest 响应
+
+如需获得来自服务器的响应，请使用 `XMLHttpRequest` 对象的 `responseText` 或 `responseXML` 属性
+
+| 属性           | 描述                      |
+| -------------- | ------------------------- |
+| `responseText` | 获得字符串形式的响应数据  |
+| `responseXML`  | 获得 `XML` 形式的响应数据 |
+
+* `responseText` 属性
+  * 如果来自服务器的响应并非 `XML`，请使用 `responseText` 属性
+  * `responseText` 属性返回字符串形式的响应
+* `responseXML` 属性
+  * 如果来自服务器的响应是 `XML`，而且需要作为 `XML` 对象进行解析，请使用 `responseXML` 属性
+
+```javascript
+xmlDoc = xmlHttp.responseXML;
+txt = '';
+x = xmlDoc.getElementsByTagName('ARTIST');
+if (i = 0; i < x.length; i++) {
+  txt = txt + x[i].childNodes[0].nodeValue + '<br>';
+}
+document.getElementById('myDiv').innerHTML = txt;
+```
+
+#### 3.8 使用回调函数
+
+* 回调函数是一种以参数形式传递给另一个函数的函数
+* 如果网站上存在多个 `Ajax` 任务，那么应该为创建 `XMLHttpRequest` 对象编写一个标准的函数，并为每个 `Ajax` 任务调用该函数
+* 该函数调用应该包含 `URL` 以及发生 `onreadystatechange` 事件时执行的任务（每次调用可能不尽相同）
+
+### 4. Ajax 的使用
+
+登录案例：`html + css + ajax + Servlet + commons-dbutils`
+
+```sql
+create table login_user
+(
+  id       int auto_increment primary key,
+  name     varchar(32) not null,
+  password varchar(32) not null
+);
+```
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+    <style>
+        div {text-align: center;}
+        #loginForm {width: 250px; margin: 0 auto;}
+        label {width: 100px; display: inline-block;}
+        input {width: 142px;}
+        #loginBtn {width: 150px;}
+        p:last-child {text-align: right;}
+        p#tips {font-size: 10px; color: red;}
+    </style>
+</head>
+<body>
+    <div>
+        <h2>登录</h2>
+        <form id="loginForm">
+            <label for="username">用户名：</label><input type="text" id="username"><br><br>
+            <label for="password">密码：</label><input type="password" id="password">
+            <p id="tips"></p>
+            <p><button id="loginBtn">登录</button></p>
+        </form>
+    </div>
+    <script>
+        var loginBtn = document.getElementById('loginBtn');
+        var tips = document.getElementById('tips');
+        loginBtn.addEventListener('click', function (ev) {
+            tips.innerHTML = '登录验证中，请稍候……';
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
+            if (username === '') {
+                ev.preventDefault();
+                alert('用户名不能为空！');
+                return;
+            }
+            if (password === '') {
+                ev.preventDefault();
+                alert('密码不能为空！');
+                return;
+            }
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('post', '/loginAjax');
+            xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            xhr.send('username=' + username + '&password=' + password);
+            xhr.onreadystatechange = function (ev1) {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    tips.innerHTML = xhr.responseText;
+                }
+            };
+
+            ev.preventDefault();
+        })
+    </script>
+</body>
+</html>
+```
+
+```java
+@WebServlet(name = "LoginServlet", value = "/loginAjax")
+public class LoginServlet extends HttpServlet {
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("utf-8");
+        response.setContentType("text/html; charset=utf-8");
+
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        QueryRunner queryRunner = new QueryRunner(DBUtil.getDataSource());
+        LoginUser loginUser = null;
+        try {
+            loginUser = queryRunner.query("select * from login_user where name=? and password=?", new BeanHandler<>(LoginUser.class), username, password);
+            Thread.sleep(1000);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        String res = loginUser == null ? "登录失败！" : "登录成功！<br>用户名：" + username + ", 密码：" + password;
+        response.getWriter().print(res);
+    }
+}
+```
+
+## 第二十九章 jQuery
+
+### 1. 概述
+
+#### 1.1 简介
+
+* `jQuery` 是一个快速、简洁的 `JavaScript` 框架，是继 `Prototype` 之后又一个优秀的 `JavaScript` 代码库（框架）。`jQuery` 设计的宗旨是 `write less, do more`，即倡导写更少的代码，做更多的事情。它封装 `JavaScript` 常用的功能代码，提供一种简便的 `JavaScript` 常用的功能代码，提供一种简便的 `JavaScript` 设计模式，优化 `HTML` 文档操作、事件处理、动画设计和 `Ajax` 交互
+* `jQuery` 的核心特性可以总结为：具有独特的链式语法和短小的多功能接口；具有高效灵活的 `css` 选择器，并且可对 `css` 选择器进行扩展；拥有便捷的插件扩展机制和丰富的插件。`jQuery` 兼容各种主流浏览器，如 `IE 6.0+、FF 1.5+、Opera 9.0+` 等
+
+#### 1.2 功能
+
+`jQuery` 库包含以下功能：
+
+* `HTML` 元素选取
+* `HTML` 元素操作
+* `CSS` 操作
+* `HTML` 事件函数
+* `JavaScript` 特效和动画
+* `HTML DOM` 遍历和修改
+* `Ajax`
+* `Utilities`
+
+#### 1.3 为什么要使用
+
+目前网上有大师开源的 `JS` 框架，但是 `jQuery` 是目前最流行的 `JS` 框架，而且提供了大师的扩展。很多大公司都在使用 `jQuery`，如：
+
+* `Google`
+* `Microsoft`
+* `IBM`
+
+### 2. 安装
+
+可以通过多种方法在网页中添加 `jQuery`：
+
+* 从 [官网](https://jquery.com) 下载 `jQuery` 库
+* 从 `CDN` 中载入 `jQuery`，如从 `Google` 中加载 `jQuery` 
+
+有两个版本的 `jQuery` 可供下载：
+
+* `Production version` - 用于实际的网站中，已被精简和压缩
+* `Development version` - 用于测试和开发（未压缩，是可读的代码）
+
+#### 2.1 网页中安装
+
+```html
+<head>
+  <script src='jquery-1.10.2.min.js'></script>
+</head>
+```
+
+#### 2.2 CDN 安装
+
+```html
+<head>
+  <script src='https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js'></script><!--百度CDN-->
+  <script src='https://lib.sinaapp.com/js/jquery/2.0.2/jquery-2.0.2.min.js'></script><!--新浪CDN-->
+  <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js'></script><!--谷歌CDN-->
+  <script src='https://ajax.htmlnetcdn.com/ajax/jQuery/jquery-1.10.2.min.js'></script><!--微软CDN-->
+</head> 
+```
+
+### 3. 语法
+
+基础语法：`$(selector).action()`
+
+* `jQuery` 语法是通过选取 `HTML` 元素，并对选取的元素执行某些操作
+* 可以使用美元符号 `$` 来代替 `jQuery`
+* 选择符（`selector`）用于 “查询” 和 “查找” `HTML` 元素
+* `jQuery` 的 `action()` 执行对元素的操作，例如：
+  * `$(this).hide()`：隐藏当前元素
+  * `$('p').hide()`：隐藏所有 `<p>` 元素
+  * ``
+  * ``
+
+
+
+
+
+<img src="/Users/wchya/own/markdown/imgs/image-20210423172741752.png" alt="image-20210423172741752" style="zoom:33%;" />
 
 
 
@@ -11727,6 +11997,7 @@ xmlHttp.onreadystatechange = function() {
 
 
 
+ 
 
 
 
