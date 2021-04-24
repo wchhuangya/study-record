@@ -1,4 +1,4 @@
-# Java
+Java
 
 [toc]
 
@@ -11980,14 +11980,172 @@ public class LoginServlet extends HttpServlet {
 * `jQuery` 的 `action()` 执行对元素的操作，例如：
   * `$(this).hide()`：隐藏当前元素
   * `$('p').hide()`：隐藏所有 `<p>` 元素
-  * ``
-  * ``
+  * `$('p.test').hide()`：隐藏所有 `class="test"` 的 `<p>` 元素
+  * `$('#test').hide()`：隐藏所有 `id="test"` 的元素
+
+#### 3.1 jQuery 选择器
+
+##### 元素选择器
+
+基于元素名选取元素
+
+```javascript
+$('p')
+```
+
+##### id 选择器
+
+通过 `HTML` 元素的 `id`  属性选取指定的元素
+
+> 页面中元素的 id 应该是唯一的，所以要在页面中选取唯一的元素需要通过 #id 选择器
+
+```javascript
+$('#test')
+```
+
+##### class 选择器
+
+通过指定的 `class` 查找元素
+
+#### 3.2 常用事件方法
+
+* 事件：页面对不同访问者的响应叫做事件
+
+* 事件处理程序指的是当 `HTML` 中发生某些事件时所调用的方法，例如：在元素上移动鼠标，选取单选按钮
+
+* 点击元素：在事件中经常使用术语 “触发” （或“激发”），例如：当按下键时触发 `keypress` 事件
+
+常见 `DOM` 事件：
+
+| 鼠标事件     | 键盘事件   | 表单事件 | 文档/窗口事件 |
+| ------------ | ---------- | -------- | ------------- |
+| `click`      | `keypress` | `submit` | `load`        |
+| `dblclick`   | `keydown`  | `change` | `resize`      |
+| `mouseenter` | `keyup`    | `focus`  | `scroll`      |
+| `mouseleave` |            | `blur`   | `unload`      |
+
+在 `jQuery` 中，大多数 `DOM` 事件都有一个等效的 `jQuery` 方法，例如点击事件：
+
+```javascript
+$('p').click();
+
+$('p').click(function() {
+    // 动作触发后执行的代码
+});
+```
+
+总结：不传参数是点击，传参数是设置事件
+
+```javascript
+$(function() {});
+
+$(document).ready(function() {});
+```
+
+上面的方法是在文档完全加载完成后执行函数
+
+### 4. 效果
+
+#### 4.1 隐藏显示
+
+* `hide()`：隐藏元素
+* `show()`：显示元素
+* `toggle()`：切换 `hide()` 方法和 `show()` 方法
+
+上面这三个方法都有两个参数：`speed, callback`
+
+* `speed`：规定显示/隐藏的速度，取值：`slow`、`fast`，或者毫秒值
+* `callback`：隐藏或显示完成后所执行的函数名称
+
+#### 4.2 淡入淡出
+
+* `fadeIn()`：淡入
+* `fadeOut()`：淡出
+* `fadeToggle()`：切换淡入、淡出
+* `fadeTo()`：可以添加透明度的属性
+
+
+
+#### 4.6 Callback
+
+* 许多 `jQuery` 函数涉及动画。这些函数也许会将 `speed` 或 `duration` 作为可选参数
+* 例子：`$('p').hide('slow');`
+* `speed` 或 `duration` 参数可以设置许多不同的值，比如：`slow`、`fast`、`normal`，或者毫秒值
+
+```javascript
+$('button').click(function() {
+    $('p').hide('slow', function() {
+        alert('段落现在被隐藏了');
+    });
+});
+```
+
+…… 未完待续
+
+## 第三十章 Spring
+
+### 1. 原生 Web 开发中存在的问题
+
+* 传统 `web` 开发存在硬编码所造成的过度程序耦合（例如：`Service` 中作为属性 `Dao` 对象）
+* 部分 `Java EE API` 较为复杂，使用效率低（例如：`JDBC` 开发步骤
+* 侵入性强，移植性差（例如：`DAO` 实现的更换）
+
+### 2. Spring 框架
+
+#### 2.1 概念
+
+* `spring` 是一个项目管理框架，同时也是一套 `Java EE` 解决方案
+* `Spring` 是众多优秀设计模式的组合（工厂、单例、适配器、包装器、观察者、模板、策略）
+* `Spring` 并未替代现有框架产品，而是将众多框架进行有机整合，简化企业级开发，俗称 “胶水框架”
+
+#### 2.2 访问与下载
+
+[官方网站](https://spring.io/)
+
+[下载地址](http://repo.spring.io/release/org/springframework/spring)
+
+### 3. Spring 架构组成
+
+`Spring` 架构由诸多模块组成，可分类为：
+
+* 核心技术：依赖注入，事件，资源，`i18n`，验证，数据绑定，类型转换，`SpEL`，`AOP`
+* 测试：模拟对象，`TestContext` 框架，`Spring MVC` 测试，`WebTestClient`
+* 数据访问：事务，`DAO` 支持，`JDBC`，`ORM`，封装 `XML`
+* `Spring MVC` 和 `Spring WebFlux Web` 框架
+* 集成：远程处理，`JMS`，`JCA`，`JMX`，电子邮件，任务，调度，缓存
+* 语言：`Kotlin`，`Groovy`，动态语言
+
+[![cjBQoV.md.png](https://z3.ax1x.com/2021/04/24/cjBQoV.md.png)](https://imgtu.com/i/cjBQoV)
+
+
+
+| GroupId               | ArtifactId                   | 说明                                                |
+| --------------------- | ---------------------------- | --------------------------------------------------- |
+| `org.springframework` | [`spring-beans`]()           | [`Beans` 支持，包含 `Groovy`]()                     |
+| `org.springframework` | [`spring-aop`]()             | [基于代理的 `AOP` 支持]()                           |
+| `org.springframework` | [`spring-aspects`]()         | [基于 `AspectJ` 的切面]()                           |
+| `org.springframework` | [`spring-context`]()         | [应用上下文运行时，包括调试和远程抽象]()            |
+| `org.springframework` | [`spring-context-support`]() | [支持将觉的第三方类库集成到 `Spring` 应用上下文]()  |
+| `org.springframework` | [`spring-core`]()            | [其它模块所依赖的核心模块]()                        |
+| `org.springframework` | [`spring-expression`]()      | [`Spring` 表达式语言，`SpEL`]()                     |
+| `org.springframework` | `spring-instrument`          | `JVM` 引导仪表（监测器）代理                        |
+| `org.springframework` | `spring-instrument-tomcat`   | `Tomcat` 的仪表（监测器）代理                       |
+| `org.springframework` | `spring-jdbc`                | 支持包括数据源设置和 `JDBC` 访问支持                |
+| `org.springframework` | `spring-jms`                 | 支持包括发送/接收 `JMS` 消息的助手类                |
+| `org.springframework` | `spring-messaging`           | 对消息架构和协议的支持                              |
+| `org.springframework` | `spring-orm`                 | 对象/关系映射，包括对 `JPA` 和 `Hibernate` 的支持   |
+| `org.springframework` | `spring-oxm`                 | 对象 / `XML` 映射（`Object/XML Mapping，OXM`）      |
+| `org.springframework` | [`spring-test`]()            | [单元测试和集成测试支持组件]()                      |
+| `org.springframework` | [`spring-tx`]()              | [事务基础组件，包括对 DAO 的支持及 JCA 的集成]()    |
+| `org.springframework` | [`spring-web`]()             | [web 支持包，包括客户端及 web 远程调用]()           |
+| `org.springframework` | [`spring-webmvc`]()          | [REST web 服务器及 web 应用的 MVC 实现]()           |
+| `org.springframework` | `spring-webmvc-portlet`      | 用于 `Portlet` 环境的 `MVC` 实现                    |
+| `org.springframework` | `spring-websocket`           | `WebSocket` 和 `SockJS` 实现，包括对 `STOMP` 的支持 |
+| `org.springframework` | [spring-jcl]()               | [Jakarta Commons Logging` 日志系统]()               |
 
 
 
 
-
-<img src="/Users/wchya/own/markdown/imgs/image-20210423172741752.png" alt="image-20210423172741752" style="zoom:33%;" />
 
 
 
