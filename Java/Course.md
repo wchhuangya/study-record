@@ -12392,9 +12392,52 @@ mvn -v
 
 
 
+未完待续……
+
+## 第三十一章 MyBatis
+
+### 1. 引言
+
+#### 1.1 什么是框架
+
+软件的半成品，解决了软件过程当中的普适性问题，从而简化了开发步骤，提供了开发的效率
+
+#### 1.2 什么是 ORM 框架
+
+* `ORM(Object Relation Mapping)` 对象关系映射，将程序中的一个对象与表中的一行数据一一对应
+* `ORM` 框架提供了持久化类与表的映射关系，在运行时参照映射文件的信息，把对象持久化到数据库中
+
+#### 1.3 使用 JDBC 完成 ORM 操作的缺点
+
+* 存在大师冗余的代码
+* 手工创建 `Connection、Statement` 等
+* 手工将结果集封装成实体对象
+* 查询效率低，没有数据访问进行过优化（`Not Cache`）
+
+### 2. MyBatis 框架
+
+#### 2.1 概念
+
+* `MyBatis` 本是 `Apache` 软件基金会的一个开源项目 `iBatis`，2010 年这个项目由 `apache software foundation` 迁移到了 `Google Code`，并且改名为 `MyBatis`。2013 年 11 月迁移到 `GitHub`
+* `MyBatis` 是一个优秀的基于 `Java` 的持久层框架，支持自定义 `SQL`，存储过程和高级映射
+* `MyBatis` 对原有 `JDBC` 操作进行了封装，几乎消除了所有 `JDBC` 代码，使开发者只需关注 `SQL` 本身
+* `MyBatis` 可以使用简单的 `XML` 或 `Annotation` 来配置执行 `SQL`，并自动完成 `ORM` 操作，将执行结果返回
+
+#### 2.2 访问与下载
+
+[官方网站](http://www.mybatis.org/mybatis-3)
+
+[下载地址](https://github.com/mybatis/mybatis-3/release/tag/mybatis-3.5.1)
 
 
-## 第三十一章 Spring
+
+
+
+
+
+
+
+## 第三十二章 Spring
 
 ### 1. 原生 Web 开发中存在的问题
 
