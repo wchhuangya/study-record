@@ -12082,7 +12082,319 @@ $('button').click(function() {
 
 …… 未完待续
 
-## 第三十章 Spring
+## 第三十章 Maven
+
+### 1. 引言
+
+项目中 `jar` 包资源越来越多，`jar` 包的管理越来越繁琐
+
+* 要为每个项目手动导入所需的 `jar`，需要搜集全部 `jar` —— 繁琐
+* 项目中的 `jar` 如果需要版本升级，就需要再重新搜集 `jar` —— 复杂
+* 相同的 `jar` 在不同的项目中保存了多份 —— 存储冗余，散乱
+
+`java` 项目需要一个统一的便捷的管理方案
+
+### 2. 介绍
+
+`maven` 这个单词来自于意第绪语（犹太语），意为知识的积累。这是一个基于项目对象模型（`POM`）概念的纯 `java` 开发的开源项目管理工具。主要用来管理 `Java` 项目，进行依赖管理（`jar` 包依赖管理）和项目构建（项目编译、打包、测试、部署）。此外，还能分块开发，提高开发效率
+
+### 3. 安装
+
+#### 3.1 下载
+
+[maven](http://us.mirros.quenda.co/apache/maven/maven-3/3.5.4/binaries)
+
+#### 3.2 Maven 安装
+
+##### 解压
+
+注意：解压文件尽量不要放在含有中文或者特殊字符的目录下
+
+##### 目录
+
+* `bin`：含有 `mvn` 运行的脚本
+* `boot`：含有 `plexus-classworlds` 类加载器框架，`maven` 使用该框架加载自己的类库
+* `conf`：含有 `settings.xml` 配置文件
+* `lib`：含有 `maven` 运行时所需要的 `java` 类库
+
+##### 环境变量
+
+`maven` 依赖 `java` 环境，所以要确保 `java` 环境已经配置好（`maven-3.3+` 需要 `jdk7+`）
+
+`maven` 本身有 2 个环境变量需要配置：
+
+* `MAVEN_HOME=maven的安装目录`
+* `PATH=maven安装目录下的bin目录`
+
+##### 测试
+
+```shell
+# 查看maven的版本信息
+mvn -v
+```
+
+### 4. 配置
+
+#### 4.1 本地仓库
+
+`maven` 的 `conf` 目录中有 `settings.xml`，是 `maven` 的配置文件，把 `<localRepository>` 节点放出来，该节点用来配置本地存储 `jar` 包的位置：
+
+```xml
+<localRepository>/Users/xxxx/xxxx/maven_repository</localRepository>
+```
+
+#### 4.2 JDK 配置
+
+```xml
+<profiles>
+  <!--在已有的profiles标签中添加profile标签-->
+  <profile>
+    <id>myjdk</id>
+    <activation>
+      <activeByDefault>true</activeByDefault>
+      <jdk>1.8</jdk>
+    </activation>
+    <properties>
+      <maven.compiler.source>1.8</maven.compiler.source>
+      <maven.compiler.target>1.8</maven.compiler.target>
+      <maven.compiler.compilerVersioni>1.8</maven.compiler.compilerVersion>
+    </properties>
+  <profile>
+</profiles>
+<!--让增加的 profile 生效-->
+<activeProfiles>
+  <activeProfile>myjdk</activeProfile>
+</activeProfiles>
+```
+
+### 5. 仓库
+
+存储依赖的地方。仓库中不仅存放依赖，而且每个依赖都有唯一标识（坐标），供 `java` 项目索取
+
+#### 5.1 分类
+
+[![cvUXLt.md.png](https://z3.ax1x.com/2021/04/24/cvUXLt.md.png)](https://imgtu.com/i/cvUXLt)
+
+当需要检索依赖时，会从仓库中去查找，查找顺序为：
+
+`本地仓库 > 私服（如果配置了的话） > 公共仓库（如果配置了的话） > 中央仓库`
+
+#### 5.2 本地仓库
+
+即在 `settings.xml` 中配置的目录，使用过的依赖都会自动存储在本地仓库中，后续可以复用
+
+#### 5.3 远程仓库
+
+##### 中央仓库
+
+`maven` 中央仓库是由 `maven` 社区提供的仓库，不用任何配置，`maven` 中内置了中央仓库的地址。其中包含了绝大多数流行的开源 `java` 构件
+
+[https://mvnrepository.com/]() 可以搜索需要的依赖的相关信息（仓库搜索服务）【重点】
+
+[http://repo.maven.apache.org/maven2]() 中央仓库地址
+
+##### 公共仓库（重点）
+
+除中央仓库之外，还有其它远程仓库。比如 `aliyun` 仓库（[http://maven.aliyun.com/nexus/content/groups/public/]()）。中央仓库在国外，下载依赖的速度过慢，所以都会配置一个国内的公共仓库替代中央仓库
+
+```xml
+<!--setting.xml中添加如下配置-->
+<mirrors>
+  <mirror>
+    <id>aliyun</id>
+    <!--中心仓库的mirror（镜像）-->
+    <mirrorOf>central</mirrorOf>
+    <name>Nexus aliyun</name>
+    <!--aliyun仓库地址，以后所有要指向中心仓库的请求，都会指向aliyun仓库-->
+    <url>http://maven.aliyun.com/nexus/content/groups/public</url>
+  </mirror>
+</mirrors>
+```
+
+#### 6. 私服（了解）
+
+公司范围内共享的仓库，不对外开放。可以通过 `nexus` 来创建、管理一个私服
+
+### 6.idea-maven
+
+#### 6.1 idea 关联 maven
+
+在 `idea` 中关联本地安装的 `maven` ，后续就可以通过 `idea` 使用 `maven`，管理项目
+
+[![cvwaMd.md.png](https://z3.ax1x.com/2021/04/24/cvwaMd.md.png)](https://imgtu.com/i/cvwaMd)
+
+#### 6.2 新建 maven 项目
+
+##### 新建项目
+
+选择：`file -> new -> project` 菜单，选择 `maven`：
+
+[![cv05Xd.md.png](https://z3.ax1x.com/2021/04/24/cv05Xd.md.png)](https://imgtu.com/i/cv05Xd)
+
+[![cv0xXj.md.png](https://z3.ax1x.com/2021/04/24/cv0xXj.md.png)](https://imgtu.com/i/cv0xXj)
+
+[![cvB97q.md.png](https://z3.ax1x.com/2021/04/24/cvB97q.md.png)](https://imgtu.com/i/cvB97q)
+
+##### 项目结构
+
+* `src/main/java`：存放源代码，建包，存放项目中代码
+* `src/main/resources`：放置配置文件，静态资源等
+* `src/test/java`：存放测试代码
+* `src/test/resources`：放置测试相关的配置文件
+* `项目根目录/pom.xml`：`maven` 项目核心文件，其中定义项目构建方式，声明依赖等
+
+> maven 项目中创建包、类，执行等操作，都和普通项目无差异
+
+[![cvBqbR.md.png](https://z3.ax1x.com/2021/04/24/cvBqbR.md.png)](https://imgtu.com/i/cvBqbR)
+
+#### 6.3 导入依赖
+
+建好项目后，需要导入需要的 `jar`，要通过【坐标】完成
+
+* 每个构件都有自己的坐标（标识）：`groupId + artifactId + version`（项目标识+项目名+版本号）
+* 在 `maven` 项目中只需要配置坐标，`maven` 便会自动加载对应依赖，删除坐标则会移除依赖
+
+##### 查找依赖
+
+依赖查找服务：[https://mvnrepository.com]()，获得依赖的坐标，在 `maven` 项目中导入：
+
+##### 导入依赖
+
+在上面的网站中选择好自己需要的 `jar` 包，拷贝坐标，粘贴到项目 `pom.xml` 文件的 `<dependencies>` 节点中
+
+##### 同步依赖
+
+`idea` 的右下角会弹出选择框，可以选择每次手动导入或者自动导入来对依赖进行同步
+
+#### 6.4 创建 web 项目
+
+##### 打包方式
+
+`pom.xml` 设置：`<packaging>war</packaging>`
+
+[![cvrj1O.md.png](https://z3.ax1x.com/2021/04/24/cvrj1O.md.png)](https://imgtu.com/i/cvrj1O)
+
+##### web 依赖
+
+导入 `jsp`、`servlet` 和 `JSTL` 依赖，使项目具有 `web` 编译环境
+
+```xml
+<packaging>war</packaging>
+
+<dependencies>
+  <dependency><!--jstl支持-->
+    <groupId>javax.servlet</groupId>
+    <artifactId>jstl</artifactId>
+    <version>1.2</version>
+  </dependency>
+  <dependency><!--servlet编译环境-->
+    <groupId>javax.servlet</groupId>
+    <artifactId>javax.servlet-api</artifactId>
+    <version>3.1.0</version>
+    <scope>provided</scope>
+  </dependency>
+  <dependency><!--jsp编译环境-->
+    <groupId>javax.servlet.jsp</groupId>
+    <artifactId>javax.servlet.jsp-api</artifactId>
+    <version>2.3.1</version>
+    <scope>provided</scope>
+  </dependency>
+
+</dependencies>
+```
+
+##### webapp 目录
+
+按照 `maven` 规范，新建 `web` 项目特有目录：
+
+[![cvy7Jx.md.png](https://z3.ax1x.com/2021/04/24/cvy7Jx.md.png)](https://imgtu.com/i/cvy7Jx)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                      http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0"
+         metadata-complete="true">
+  
+  <!--这是一个空的web.xml文件模板-->
+
+</web-app>
+```
+
+##### 定义 Servlet 和 JSP
+
+[![cvRwUH.md.png](https://z3.ax1x.com/2021/04/24/cvRwUH.md.png)](https://imgtu.com/i/cvRwUH)
+
+#### 6.5 部署 web 项目
+
+##### 新增 Tomcat
+
+##### 部署 web 项目
+
+##### 启动 Tomcat，访问项目
+
+#### 6.6 依赖生命周期
+
+项目中导入的依赖可以对生命周期进行管理——指的是依赖在哪个生命周期过程中有效：
+
+* `compile`：缺省值，适用于所有阶段（测试，编译，运行，打包），会随着项目一起发布（被打包）
+* `provided`：类似 `compile`，期望 `JDK`、容器或使用者会提供这个依赖。如  `servlet-api.jar`，参与测试，编译，不会被打钆
+* `runtime`：只在运行时使用，如 `jdbc6.jar`，适用运行和测试阶段，会被一起发布
+* `test`：只在测试时使用，用于编译和运行测试代码，如 `junit.jar`，不会随项目发布，在非 `test` 包下也不能使用
+* `system`：类似 `provided`，但 `maven` 不会在 `Reposistory` 中查找它，要在本地磁盘目录中查找，参与编译、测试、打包、运行【基本不使用】
+
+### 7. 命令
+
+#### 7.1 常用指令
+
+* `clean`：清除上一次编译的结果（删除 `target` 目录）
+* `compile`：对项目进行编译，创建 `target` 目录，并将编译结果放入
+* `package`：对项目进行打包（根据 `pom.xml` 中的 `packagin` 节点配置的属性）
+* `install`：把项目打成一个 `jar` 包，并且安装到本地仓库中
+
+#### 7.2 面板
+
+`idea` 中有 `maven` 面板，其中可以快速执行 `maven` 命令
+
+#### 7.3 命令行
+
+`idea` 的 `terminal` 中可以输入 `maven` 指令
+
+### 8. 私服【了解】
+
+私服是架设在局域网的一种特殊的远程仓库，目的是代理远程仓库及部署第三方构件。
+
+有了私服之后，当 `maven` 需要下载构件时，直接请求私服，私服上存在则下载到本地仓库；否则，私服请求外部的远程仓库，将构件下载到私服，再提供给本地仓库下载
+
+私服可以解决在企业做开发时每次需要的 `jar` 包都要在中心仓库下载，且每次下载完只能被自己使用，不能被其他开发人员使用
+
+所谓私服就是一个服务器，但是不是本地层面的，是公司层面的，公司中所有开发人员都在使用同一个私服
+
+[![cz0o7R.md.png](https://z3.ax1x.com/2021/04/25/cz0o7R.md.png)](https://imgtu.com/i/cz0o7R)
+
+我们可以使用专门的 `maven` 仓库管理软件来搭建私服，比如：`Apache Archiva，Artifactory，Sonatype Nexus` 。
+
+#### 8.1 Nexus 安装【了解】
+
+* [官网](https://blog.sonatype.com)
+* 下载 [nnexus-2.x-bundle.zip](https://help.sonatype.com/repomanager2/download/download-archives---repository-manager-oss) 解压即可
+* 解压后在 `bin` 目录中执行命令：
+  * `nexus install` 在系统中安装 `nexus` 服务
+  * `nexus uninstall` 卸载 `nexus` 服务
+  * `nexus start` 启动服务
+  * `nexus stop` 停止服务
+* 访问私服：[http://localhost:8081/nexus/](http://localhost:8081/nexus/)
+* 登录私服：[admin/admin123]()
+
+[![czB48f.md.png](https://z3.ax1x.com/2021/04/25/czB48f.md.png)](https://imgtu.com/i/czB48f)
+
+
+
+
+
+## 第三十一章 Spring
 
 ### 1. 原生 Web 开发中存在的问题
 
