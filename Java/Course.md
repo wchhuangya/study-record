@@ -12429,6 +12429,118 @@ mvn -v
 
 [下载地址](https://github.com/mybatis/mybatis-3/release/tag/mybatis-3.5.1)
 
+### 3. 开发步骤
+
+#### 3.1 创建数据库
+
+```sql
+create table login_user
+(
+  id            int auto_increment
+    primary key,
+  name          varchar(32) not null,
+  password      varchar(32) not null,
+  register_date date        not null
+);
+
+```
+
+#### 3.2 创建实体对象
+
+```java
+@Data
+public class LoginUser {
+    private long id;
+    private String name;
+    private String password;
+    private Date registerDate;
+}
+```
+
+#### 3.3 创建 MyBatis 配置文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!--核心配置信息-->
+    <environments default="main_config">
+        <!--数据库相关信息-->
+        <environment id="main_config">
+            <!--事务控制类型-->
+            <transactionManager type="jdbc"></transactionManager>
+            <!--数据库连接参数-->
+            <dataSource type="org.apache.ibatis.datasource.pooled.PooledDataSourceFactory">
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <!--注意：<>内不能写&，需要使用转义字符 &amp;-->
+                <property name="url" value="jdbc:mysql://localhost:3306/emp?useUnicode=true&amp;characterEncoding=utf-8"/>
+                <property name="username" value="xxx"/>
+                <property name="password" value="xxx"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!--注册mapper文件-->
+    <mappers>
+        <mapper resource="LoginUserDaoMapper.xml"/>
+    </mappers>
+</configuration>
+```
+
+#### 3.4 创建 mapper 映射文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ch.wchya.servlet.dao.LoginUserDao">
+    <!--描述方法-->
+    <!--注意：mybatis 中数据库字段和实体对象的映射规则默认是同名映射，如果不一样，需要在sql语句中使用as关键字定义别名-->
+    <select id="getUserById" resultType="com.ch.wchya.entity.servlet.LoginUser">
+        select id,name,password,register_date as registerDate
+        from login_user
+        where id=#{arg0}
+    </select>
+</mapper>
+```
+
+#### 3.5 测试
+
+```java
+@Test
+public void testLoginUser() throws IOException {
+    // 1. 加载配置文件
+    InputStream is = Resources.getResourceAsStream("mybatis-config.xml");
+    // 2. 构建 SqlSessionFactory
+    SqlSessionFactory sessionFactory = new SqlSessionFactoryBuilder().build(is);
+    // 3. 通过 sessionFactory 创建 SqlSession
+    SqlSession sqlSession = sessionFactory.openSession();
+    // 4. 通过 sqlSession 获取 DAO 的实现类对象
+    LoginUserDao mapper = sqlSession.getMapper(LoginUserDao.class);
+    // 5. 测试查询方法
+    LoginUser user1 = mapper.getUserById(1);
+    LoginUser user2 = mapper.getUserById(2);
+    System.out.println(user1);
+    System.out.println(user2);
+}
+```
+
+#### 3.6 输出
+
+```java
+LoginUser(id=1, name=张三, password=12345, registerDate=Sun Apr 11 00:00:00 CST 2021)
+LoginUser(id=2, name=zhangsan, password=23456, registerDate=Thu Apr 22 00:00:00 CST 2021)
+```
+
+### 4. 细节补充
+
+#### 4.1 解决 mapper.xml 存放在 resources 以外路径中的读取问题
+
+在 `pom.xml` 文件最后追加 `<build>` 标签，以便可以将 `xml` 文件复制到 `classes` 目录中，并在程序运行时正确获取
+
 
 
 
