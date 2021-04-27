@@ -12539,7 +12539,26 @@ LoginUser(id=2, name=zhangsan, password=23456, registerDate=Thu Apr 22 00:00:00 
 
 #### 4.1 解决 mapper.xml 存放在 resources 以外路径中的读取问题
 
-在 `pom.xml` 文件最后追加 `<build>` 标签，以便可以将 `xml` 文件复制到 `classes` 目录中，并在程序运行时正确获取
+在 `pom.xml` 文件最后追加 `<build>` 标签，以便可以将 `xml` 文件复制到 `classes` 目录中，并在程序运行时正确获取：
+
+```xml
+<build>
+    <resources>
+        <!--更改 Maven 编译规则-->
+        <resource>
+            <!--资源目录-->
+            <directory>src/main/java</directory>
+            <includes>
+                <include>*.xml</include><!--默认值，如果新添加规则则该条规则失效-->
+                <include>**/*.xml</include><!--新添加的规则：*/代表1级目录，**/代表多级目录-->
+            </includes>
+            <filtering>true</filtering>
+        </resource>
+    </resources>
+</build>
+```
+
+
 
 
 
