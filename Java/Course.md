@@ -12558,6 +12558,122 @@ LoginUser(id=2, name=zhangsan, password=23456, registerDate=Thu Apr 22 00:00:00 
 </build>
 ```
 
+#### 4.2 properties 配置文件
+
+在 `mybatis-config.xml` 这个核心配置中，如果存在需要频繁改动的数据内容，可以提取到 `properties` 中
+
+##### 添加 jdbc.properties 文件
+
+```properties
+driver=com.mysql.cj.jdbc.Driver
+url=jdbc:mysql://localhost:3306/emp?useUnicode=true&characterEncoding=utf-8
+username=xxxx
+password=xxxx
+```
+
+##### 修改 mybatis-config.xml 文件内容 
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!--导入配置-->
+    <properties resource="jdbc.properties"/>
+    <!--核心配置信息-->
+    <environments default="main_config">
+        <!--数据库相关信息-->
+        <environment id="main_config">
+            <!--事务控制类型-->
+            <transactionManager type="jdbc"></transactionManager>
+            <!--数据库连接参数-->
+            <dataSource type="org.apache.ibatis.datasource.pooled.PooledDataSourceFactory">
+                <property name="driver" value="${driver}"/>
+                <property name="url" value="${url}"/>
+                <property name="username" value="${username}"/>
+                <property name="password" value="${password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!--注册mapper文件-->
+    <mappers>
+        <!--<mapper resource="LoginUserDaoMapper.xml"/>-->
+        <mapper resource="com/ch/wchya/servlet/dao/LoginUserDaoMapper.xml"/>
+    </mappers>
+</configuration>
+```
+
+#### 4.3 类型别名
+
+为实体类定义别名，提高书写效率
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!--导入配置-->
+    <properties resource="jdbc.properties"/>
+    <!--实体类别名-->
+    <typeAliases>
+        <!--自定义类的别名-->
+        <!--<typeAlias type="com.ch.wchya.entity.servlet.LoginUser" alias="loginUser"/>-->
+        <package name="com.ch.wchya.entity.servlet"/>
+    </typeAliases>
+    <!--核心配置信息-->
+    <environments default="main_config">
+        <!--数据库相关信息-->
+        <environment id="main_config">
+            <!--事务控制类型-->
+            <transactionManager type="jdbc"></transactionManager>
+            <!--数据库连接参数-->
+            <dataSource type="org.apache.ibatis.datasource.pooled.PooledDataSourceFactory">
+                <property name="driver" value="${driver}"/>
+                <property name="url" value="${url}"/>
+                <property name="username" value="${username}"/>
+                <property name="password" value="${password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!--注册mapper文件-->
+    <mappers>
+        <!--<mapper resource="LoginUserDaoMapper.xml"/>-->
+        <mapper resource="com/ch/wchya/servlet/dao/LoginUserDaoMapper.xml"/>
+    </mappers>
+</configuration>
+```
+
+#### 4.4 创建 log4j 配置文件
+
+`pom.xml` 添加 `log4j` 依赖
+
+```xml
+<dependency>
+    <groupId>log4j</groupId>
+    <artifactId>log4j</artifactId>
+    <version>1.2.17</version>
+</dependency>
+```
+
+创建并配置 `log4j.properties`（名称是固定的）
+
+```properties
+# 全局日志配置
+log4j.rootLogger=DEBUG, stdout
+# MyBatis 日志配置
+log4j.logger.org.mybatis.example.BlogMapper=TRACE
+# 控制台输出
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%5p [%t] - %m%n
+```
+
+未完待续……
+
 
 
 
