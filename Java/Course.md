@@ -12672,15 +12672,492 @@ log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
 log4j.appender.stdout.layout.ConversionPattern=%5p [%t] - %m%n
 ```
 
-未完待续……
+### 5. CRUD 操作
 
+#### 5.1 查询
 
+标签：`<select id="" resultType="">`，下面的示例包括（按顺序）：**序号参数绑定、注解参数绑定【推荐】、Map 参数绑定、对象参数绑定、模糊查询**
 
+```java
+public interface LoginUserDao {
+  // 参数序号绑定
+  LoginUser getUserById(long id);
+  LoginUser getUserByIdAndPassword(long id, String pwd);
+  // 注解参数绑定
+  LoginUser getUserByIdAndName(@Param("id") long id, @Param("name") String name);
+  // Map 参数绑定
+  LoginUser getUserByMap(Map map);
+  // 对象参数绑定
+  LoginUser getUserByUser(LoginUser user);
+  // 模糊查询
+  LoginUser getUserByKeyWord(@Param("keyword") String keyword);
+}
+```
 
+```xml
+<select id="getUserById" resultType="LoginUser">
+    select id,name,password,register_date as registerDate
+    from login_user
+    where id=#{arg0}
+</select>
+<!--argX：X从0开始；paramX：X从1开始；-->
+<select id="getUserByIdAndPassword" resultType="LoginUser">
+    select id,name,password,register_date as registerDate
+    from login_user
+    where id=#{arg0} and password=#{param2}
+</select>
+<select id="getUserByIdAndName" resultType="LoginUser">
+    select id,name,password,register_date as registerDate
+    from login_user
+    where id=#{id} and name=#{name}
+</select>
+<select id="getUserByMap" resultType="LoginUser">
+    select id,name,password,register_date as registerDate
+    from login_user
+    where id=#{id} and password=#{password}
+</select>
+<select id="getUserByUser" resultType="LoginUser">
+    select id,name,password,register_date as registerDate
+    from login_user
+    where id=#{id} and password=#{password}
+</select>
+<select id="getUserByKeyWord" resultType="LoginUser">
+    select id,name,password,register_date as registerDate
+    from login_user
+    where name like concat('%', #{keyword}, '%')
+</select>
+```
 
+#### 5.2 删除
 
+标签：`<delete id="" paramterType="">`
 
+```xml
+<delete id="deleteUser" parameterType="long">
+    delete from login_user
+    where id=#{id}
+</delete>
+```
 
+```java
+public interface LoginUserDao {
+    // 根据 id 删除用户
+    void deleteUser(@Param("id") long id);
+}
+```
+
+#### 5.3 更新
+
+```java
+public interface LoginUserDao {
+    // 更新用户
+    void updateUser(LoginUser user);
+}
+```
+
+```xml
+<update id="updateUser" parameterType="LoginUser">
+    update login_user
+    set name=#{name},password=#{password},register_date=#{registerDate}
+    where id=#{id}
+</update>
+```
+
+#### 5.4 新增
+
+```java
+public interface LoginUserDao {
+    // 新增用户
+    void addUser(LoginUser user);
+}
+```
+
+```xml
+<!--自动增加主键-->
+<insert id="addUser" parameterType="LoginUser">
+    insert into login_user(name, password, register_date) values (#{name},#{password},#{registerDate})
+</insert>
+<insert id="addUser" parameterType="LoginUser">
+    insert into login_user values (NULL,#{name},#{password},#{registerDate})
+</insert>
+<!--手动增加主键-->
+<insert id="addUser" parameterType="LoginUser">
+    insert into login_user values (#{id},#{name},#{password},#{registerDate})
+</insert>
+```
+
+> 注意：上面的增、删、改方法，可以在接口方法申明时，把返回值类型声明为 Integer，这样，MyBatis 在执行完成后，会将受影响的行数返回
+
+#### 5.5 主键回填
+
+```xml
+<insert id="addUser" parameterType="LoginUser">
+    <!--主键回填：将新增数据的主键值，存入java对象和主键对应的属性中-->
+    <selectKey order="AFTER" resultType="int" keyProperty="id"><!--该策略适用于主键是自增整形的主键-->
+        select last_insert_id()
+    </selectKey>
+    insert into login_user(name, password, register_date) values (#{name},#{password},#{registerDate})
+</insert>
+
+<insert id="addUser" parameterType="LoginUser">
+    <!--主键回填：将新增数据的主键值，存入java对象和主键对应的属性中-->
+    <selectKey order="BEFORE" resultType="string" keyProperty="id"><!--该策略适用于主键是字符串类型的主键-->
+        select replace(uuid(),'-','')
+    </selectKey>
+    insert into login_user(name, password, register_date) values (#{name},#{password},#{registerDate})
+</insert>
+```
+
+### 6. 工具类
+
+#### 6.1 封装工具类
+
+* `Resource`：用于获得读取配置文件的 `IO` 对象，耗费资源，建议通过 `IO` 一次性读取所有所需要的数据
+* `SqlSessionFactory`：`SqlSession` 工厂类，内存战胜多，耗费资源，建议每个应用只创建一个对象
+* `SqlSession`：相当于 `Connection`，可控制事务，应为线程私有，不被多线程共享
+* 将获得连接、关闭连接、提交事务、回滚事务、获得接口实现类等方法进行封装
+
+```java
+public class MyBatisUtil {
+    private MyBatisUtil() {}
+
+    private static SqlSessionFactory factory;
+    private static final ThreadLocal<SqlSession> THREAD_LOCAL = new ThreadLocal<>();
+
+    static { // 加载配置并构建 session 工厂
+        try {
+            InputStream is = Resources.getResourceAsStream("mybatis-config.xml");
+            factory = new SqlSessionFactoryBuilder().build(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 获取 SqlSession
+     * @return - SqlSession
+     */
+    public static SqlSession openSession() {
+        SqlSession sqlSession = THREAD_LOCAL.get();
+        if (sqlSession == null) {
+            sqlSession = factory.openSession();
+            THREAD_LOCAL.set(sqlSession);
+        }
+        return sqlSession;
+    }
+
+    /**
+     * 提交事务
+     */
+    public static void commit() {
+        SqlSession sqlSession = openSession();
+        sqlSession.commit();
+        close();
+    }
+
+    /**
+     * 回滚事务
+     */
+    public static void rollback() {
+        SqlSession sqlSession = openSession();
+        sqlSession.rollback();
+        close();
+    }
+
+    /**
+     * 关闭 SqlSession
+     */
+    public static void close() {
+        SqlSession sqlSession = THREAD_LOCAL.get();
+        sqlSession.close();
+    }
+
+    /**
+     * 获取接口相对应的 Mapper
+     */
+    public static <T> T getMapper(Class<T> mapper) {
+        SqlSession sqlSession = openSession();
+        return sqlSession.getMapper(mapper);
+    }
+}
+```
+
+### 7. ORM 映射【重点】
+
+#### 7.1 MyBatis 自动 ORM 失效
+
+`MyBatis` 只能自动维护库表“列名”与“属性名”相同时的一一对应关系，二者不同时，无法自动 `ORM`
+
+[![gPIhjO.md.png](https://z3.ax1x.com/2021/04/28/gPIhjO.md.png)](https://imgtu.com/i/gPIhjO)
+
+#### 7.2 方案一：列的别名
+
+在 `SQL` 中使用 `as` 为查询字段添加列别名，以匹配属性名
+
+#### 7.3 方案二：结果映射（ResultMap - 查询结果的封装规则）
+
+通过 `<resultMap id="" type="">` 映射，匹配列名与属性名
+
+```xml
+<resultMap id="user_map" type="LoginUser">
+  	<!--关联主键与列名-->
+    <id property="id" column="id"></id>
+  	<!--关联属性与列名-->
+    <result property="name" column="name"/>
+    <result property="password" column="password"/>
+    <result property="registerDate" column="register_date"/>
+</resultMap>
+<!--使用 resultMap 作为 ORM 映射的依据-->
+<select id="getUserById" resultMap="user_map">
+    select id,name,password,register_date as registerDate
+    from login_user
+    where id=#{arg0}
+</select>
+```
+
+### 8. 处理关联关系——多表连接【重点】
+
+实体间的关系：关联关系（拥有 `has`、属于 `belong`）
+
+* `OneToOne`：一对一关系（`Passenger-Passport`）
+* `OneToMany`：一对多关系（`Employee-Department`）
+* `ManyToMany`：多对多关系（`Student-Subject`）
+
+[![gPx7V0.md.png](https://z3.ax1x.com/2021/04/28/gPx7V0.md.png)](https://imgtu.com/i/gPx7V0)
+
+#### 8.1 一对一关系
+
+```sql
+# 创建数据库表
+# 乘客表
+create table t_passengers (
+  id int primary key auto_increment, name varchar (50), sex varchar (1), birthday date
+) default charset =utf8;
+# 护照表
+create table t_passports (
+  id int primary key auto_increment, nationality varchar (50), expire date,
+  passenger_id int unique,
+  foreign key (passenger_id) references t_passengers(id)
+) default charset =utf8;
+
+# 插入数据
+insert into t_passengers values(null,'shine 01','f','2018-11-11');
+insert into t_passengers values(null,'shine 02','m','2019-12-12');
+insert into t_passports values(null,'China','2030-12-12',1);
+insert into t_passports values(null,'America','2035-12-12',2);
+```
+
+```java
+// 创建实体
+@Data
+public class Passenger {
+
+  private long id;
+  private String name;
+  private String sex;
+  private java.sql.Date birthday;
+
+  private Passport passport;
+
+  @Override
+  public String toString() {
+    return "Passenger{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", sex='" + sex + '\'' +
+            ", birthday=" + birthday +
+            '}';
+  }
+}
+
+@Data
+public class Passport {
+
+  private long id;
+  private String nationality;
+  private java.sql.Date expire;
+  private long passengerId;
+
+  private Passenger passenger;
+
+  @Override
+  public String toString() {
+    return "Passport{" +
+            "id=" + id +
+            ", nationality='" + nationality + '\'' +
+            ", expire=" + expire +
+            ", passengerId=" + passengerId +
+            '}';
+  }
+}
+```
+
+```java
+// 创建接口
+public interface PassengerDao {
+
+    // 通过旅客的 ID，查询旅客信息及护照信息，关联查询/级联查询
+    Passenger queryPassagerById(@Param("id") long id);
+}
+```
+
+```xml
+<!--创建mapper文件-->
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ch.wchya.servlet.dao.PassengerDao">
+		<!--无法使用mybatis的同名规则进行匹配的字段，需要使用 resultMap 进行自定义规则-->
+    <resultMap id="passenger_passport" type="Passenger">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="sex" property="sex"/>
+        <result column="birthday" property="birthday"/>
+
+        <association property="passport" javaType="Passport">
+            <id column="passId" property="id"/>
+            <result column="nationality" property="nationality"/>
+            <result column="expire" property="expire"/>
+        </association>
+    </resultMap>
+
+    <select id="queryPassagerById" resultMap="passenger_passport">
+        select t_passengers.id, t_passengers.name, t_passengers.sex, t_passengers.birthday,
+               tp.id as passId, tp.nationality, tp.expire
+        from t_passengers join t_passports tp
+        on t_passengers.id = tp.passenger_id
+        where t_passengers.id = #{id};
+    </select>
+
+</mapper>
+```
+
+```java
+// 单元测试
+@Test
+public void testPassenger() {
+    PassengerDao passengerDao = MyBatisUtil.getMapper(PassengerDao.class);
+    Passenger passenger = passengerDao.queryPassagerById(1);
+    System.out.println(passenger);
+    System.out.println(passenger.getPassport());
+}
+
+// 下面是输出
+// Passenger{id=1, name='shine 01', sex='f', birthday=2018-11-11}
+// Passport{id=1, nationality='China', expire=2030-12-12, passengerId=0}
+```
+
+#### 8.2 一对多关系
+
+```sql
+# 创建表
+create table t_departments (
+  id int primary key auto_increment, name varchar (50), location varchar (100)
+) default charset =utf8;
+create table t_employees (
+  id int primary key auto_increment, name varchar (50), salary double, dept_id int,
+  foreign key (dept_id) references t_departments(id)
+) default charset =utf8;
+# 插入数据
+insert into t_departments values(1,"教学部","北京"),(2,"研发部","上海");
+insert into t_employees values(1,"shine01",10000.5,1),(2,"shine02",20000.5,1),
+                              (3,"张三", 9000.5,2),(4,"李四",8000.5,2);
+```
+
+```java
+// 创建实体
+@Data
+public class Department {
+
+  private long id;
+  private String name;
+  private String location;
+
+  private List<Employee> employees;
+
+  @Override
+  public String toString() {
+    return "Department{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", location='" + location + '\'' +
+            '}';
+  }
+}
+
+@Data
+public class Employee {
+
+  private long id;
+  private String name;
+  private double salary;
+  private long deptId;
+
+  private Department department;
+
+  @Override
+  public String toString() {
+    return "Employee{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", salary=" + salary +
+            ", deptId=" + deptId +
+            '}';
+  }
+}
+```
+
+```java
+// 创建接口
+public interface DepartmentDao {
+    // 查询部门，及其所有员工信息
+    Department queryDepartmentById(@Param("id") long id);
+}
+```
+
+```xml
+<!--创建mapper文件-->
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ch.wchya.servlet.dao.DepartmentDao">
+
+    <resultMap id="depart_employee" type="Department">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="location" column="location"/>
+
+        <collection property="employees" ofType="Employee">
+            <id column="empid" property="id"/>
+            <result property="name" column="empname"/>
+            <result property="salary" column="salary"/>
+        </collection>
+    </resultMap>
+    <select id="queryDepartmentById" resultMap="depart_employee">
+        select t_departments.id,t_departments.name,t_departments.location,
+               employee.id empid,employee.name empname,employee.salary
+        from t_departments left join t_employees employee on t_departments.id = employee.dept_id
+        where t_departments.id=#{id}
+    </select>
+</mapper>
+```
+
+```java
+@Test
+public void testDepartment() {
+    DepartmentDao departmentDao = MyBatisUtil.getMapper(DepartmentDao.class);
+    Department department = departmentDao.queryDepartmentById(1);
+    System.out.println(department);
+    department.getEmployees().forEach(System.out::println);
+}
+
+// 下面是输出
+// Department{id=1, name='教学部', location='北京'}
+// Employee{id=1, name='shine01', salary=10000.5, deptId=0}
+// Employee{id=2, name='shine02', salary=20000.5, deptId=0}
+```
 
 
 
