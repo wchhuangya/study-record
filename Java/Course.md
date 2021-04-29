@@ -12923,9 +12923,9 @@ public class MyBatisUtil {
 * `OneToMany`：一对多关系（`Employee-Department`）
 * `ManyToMany`：多对多关系（`Student-Subject`）
 
-[![gPx7V0.md.png](https://z3.ax1x.com/2021/04/28/gPx7V0.md.png)](https://imgtu.com/i/gPx7V0)
-
 #### 8.1 一对一关系
+
+[![gPx7V0.md.png](https://z3.ax1x.com/2021/04/28/gPx7V0.md.png)](https://imgtu.com/i/gPx7V0)
 
 ```sql
 # 创建数据库表
@@ -13158,6 +13158,302 @@ public void testDepartment() {
 // Employee{id=1, name='shine01', salary=10000.5, deptId=0}
 // Employee{id=2, name='shine02', salary=20000.5, deptId=0}
 ```
+
+#### 8.3 多对多关系
+
+[![gk4674.md.png](https://z3.ax1x.com/2021/04/29/gk4674.md.png)](https://imgtu.com/i/gk4674)
+
+```sql
+# 创建学生表、班级表、中间表
+create table t_students (
+    id int primary key auto_increment, name varchar (50), sex varchar (1)
+) default charset =utf8;
+create table t_subjects (
+    id int primary key auto_increment, name varchar (50), grade int
+) default charset =utf8;
+create table t_stu_sub (
+    student_id int, subject_id int,
+    foreign key (student_id) references t_students (id),
+    foreign key (subject_id) references t_subjects (id),
+    primary key (student_id, subject_id)
+) default charset =utf8;
+
+# 插入数据
+insert into t_students values(1,'shine','m'),(2,'张三','f');
+insert into t_subjects values(1001,'JavaSE',1),(1002,'Javaweb',2); 
+insert into t_stu_sub values(1,1001),(1,1002),(2,1001),(2,1002);
+```
+
+```java
+// 创建实体
+@Data
+public class Student {
+
+  private long id;
+  private String name;
+  private String sex;
+
+  private List<Subject> subjects;
+
+  @Override
+  public String toString() {
+    return "Student{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", sex='" + sex + '\'' +
+            '}';
+  }
+}
+@Data
+public class Subject {
+
+  private long id;
+  private String name;
+  private long grade;
+
+  private List<Student> students;
+
+  @Override
+  public String toString() {
+    return "TSubjects{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", grade=" + grade +
+            '}';
+  }
+}
+@Data
+public class StuSub {
+
+  private long studentId;
+  private long subjectId;
+
+  @Override
+  public String toString() {
+    return "TStuSub{" +
+            "studentId=" + studentId +
+            ", subjectId=" + subjectId +
+            '}';
+  }
+}
+```
+
+```java
+// 创建接口
+public interface SubjectDao {
+    // 查询课程及课程对应的学生信息
+    Subject querySubjectById(@Param("id") long id);
+}
+```
+
+```xml
+<!--创建mapper文件-->
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ch.wchya.servlet.dao.SubjectDao">
+
+    <resultMap id="sub_stu" type="Subject">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="grade" column="grade"/>
+
+        <collection property="students" ofType="Student">
+            <id property="id" column="sid"/>
+            <result property="name" column="sname"/>
+            <result property="sex" column="sex"/>
+        </collection>
+    </resultMap>
+
+    <select id="querySubjectById" resultMap="sub_stu">
+        select ts.id, ts.name, ts.grade, t.id sid, t.name sname, t.sex
+        from t_subjects ts
+        join t_stu_sub tss on ts.id = tss.subject_id
+        join t_students t on t.id = tss.student_id
+        where ts.id=#{id}
+    </select>
+</mapper>
+```
+
+```java
+// 测试
+@Test
+public void testSubject() {
+    SubjectDao subjectDao = MyBatisUtil.getMapper(SubjectDao.class);
+    Subject subject = subjectDao.querySubjectById(1001);
+    System.out.println(subject);
+    subject.getStudents().forEach(System.out::println);
+}
+
+// 以下是输出
+// TSubjects{id=1001, name='JavaSE', grade=1}
+// Student{id=1, name='shine', sex='m'}
+// Student{id=2, name='张三', sex='f'}
+```
+
+#### 8.4 关系总结
+
+* 一方，添加集合；多方，添加对象
+* 双方均可建立关系属性，建立关系属性后，对应的 `Mapper` 文件中需要使用 `<ResultMap>` 完成多表映射
+* 持有对象关系属性，使用 `<association property="xx" javaType="xx">`
+* 持有集合关系属性，使用 `<collection property="xx" ofType="xx">`
+
+### 9. 动态 SQL【重点】
+
+`MyBatisi` 的映射文件中支持在基础 `SQL` 上添加一些逻辑操作，并动态拼接成完整的 `SQL` 之后再执行，以达到 `SQL` 复用、简化编程的效果
+
+#### 9.1 sql
+
+```xml
+<mapper namespace="com.ch.wchya.sevlet.dao.BookDao">
+	<sql id="books_field"><!-- 定义sql片断 -->
+    	select id,name,author,publish,sort
+    </sql>
+    
+    <select id="selectBookByCondition" resultType="Book">
+    	<include refid="books_field" /><!--通过ID引用sql片断-->
+        from t_tooks
+    </select>
+</mapper>
+```
+
+#### 9.2 where
+
+```xml
+<mapper namespace="com.ch.wchya.sevlet.dao.BookDao">
+	<sql id="books_field"><!-- 定义sql片断 -->
+    	select id,name,author,publish,sort
+    </sql>
+    
+    <select id="selectBookByCondition" resultType="Book">
+    	<include refid="books_field" /><!--通过ID引用sql片断-->
+        from t_tooks
+        <!--
+			where 标签作用：1. 添加 where 子句；2. 如果以 or、and 开头，会把开头的 or、and 去掉；
+		-->
+        <where>
+        	<if test="name!=null">
+            username=#{username}
+            </if>
+            <if test="price!=null">
+            and price=#{price}
+            </if>
+        </where>
+    </select>
+</mapper>
+```
+
+#### 9.3 set
+
+```xml
+<update id="updateBookByCondition">
+	update t_books
+    <set><!--去除set标签最后的逗号，-->
+    	<if test="name!=null"><!-- where子句中满足条件的if，会自动忽略后缀（如：,）-->
+			name=#{name},       
+        </if>
+        <if test="author!=null">
+			author=#{author},       
+        </if>
+        <if test="publish!=null">
+			publish=#{publish},       
+        </if>
+        <if test="sort!=null">
+			sort=#{sort},       
+        </if>
+    </set>
+    where id=#{id}
+</update>
+```
+
+#### 9.4 trim
+
+`<trim prefix="" suffix="" prefixOverrides="" suffixOverrides="">代替<where> <set>`
+
+```xml
+<select id="selectBookByCondition" resultType="com.ch.wchya.entity.servlet.Book">
+	select id,name,author,publish,sort
+    from t_books
+    <!--补充where关键字，如果where子句以and或or开头，会被覆盖-->
+    <trim prefix="where" prefixOverrides="and|or">
+    	<if test="id!=null">
+        	and id=#{id}
+        </if>
+    	<if test="author!=null">
+			author=#{author},       
+        </if>
+        <if test="publish!=null">
+			publish=#{publish},       
+        </if>
+        <if test="sort!=null">
+			sort=#{sort},       
+        </if>
+    </trim>
+</select>
+
+<update id="updateBookByCondition">
+	update t_books
+    <trim prefix="set" suffixOverrides=","><!--去除set标签最后的逗号，-->
+    	<if test="name!=null">
+			name=#{name},       
+        </if>
+        <if test="author!=null">
+			author=#{author},       
+        </if>
+        <if test="publish!=null">
+			publish=#{publish},       
+        </if>
+        <if test="sort!=null">
+			sort=#{sort},       
+        </if>
+    </trim>
+    where id=#{id}
+</update>
+```
+
+#### 9.5 foreach
+
+```xml
+<delete id="deleteBookByIds">
+	delete from t_books
+    where id in
+    <foreach collection="list" open="(" separator="," close=")" item="id" index="i">
+    	#{id}
+    </foreach>
+</delete>
+```
+
+| 参数         | 描述     | 取值                                        |
+| ------------ | -------- | ------------------------------------------- |
+| `collection` | 容器类型 | `list、array、map`                          |
+| `open`       | 起始符   | `(`                                         |
+| `close`      | 结束符   | `)`                                         |
+| `separator`  | 分隔符   | `,`                                         |
+| `index`      | 下标号   | 从0开始，依次递增                           |
+| `item`       | 当前项   | 任意名称（循环中通过#{任意名称}表达式访问） |
+
+
+
+
+
+
+
+<img src="C:\Users\lenovo\AppData\Roaming\Typora\typora-user-images\image-20210429222032751.png" alt="image-20210429222032751" style="zoom:67%;" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
