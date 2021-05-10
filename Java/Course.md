@@ -12465,6 +12465,10 @@ public class LoginUser {
         PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
+  	<!--标签出现的先后顺序：configuration (properties?, settings?, typeAliases?,
+                                        typeHandlers?, objectFactory?, objectWrapperFactory?,
+                                        reflectorFactory?, plugins?, environments?,
+                                        databaseIdProvider?, mappers?)-->
     <!--核心配置信息-->
     <environments default="main_config">
         <!--数据库相关信息-->
@@ -12579,6 +12583,10 @@ password=xxxx
         PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
+  	<!--标签出现的先后顺序：configuration (properties?, settings?, typeAliases?,
+                                        typeHandlers?, objectFactory?, objectWrapperFactory?,
+                                        reflectorFactory?, plugins?, environments?,
+                                        databaseIdProvider?, mappers?)-->
     <!--导入配置-->
     <properties resource="jdbc.properties"/>
     <!--核心配置信息-->
@@ -12813,7 +12821,7 @@ public interface LoginUserDao {
 #### 6.1 封装工具类
 
 * `Resource`：用于获得读取配置文件的 `IO` 对象，耗费资源，建议通过 `IO` 一次性读取所有所需要的数据
-* `SqlSessionFactory`：`SqlSession` 工厂类，内存战胜多，耗费资源，建议每个应用只创建一个对象
+* `SqlSessionFactory`：`SqlSession` 工厂类，内存占用多，耗费资源，建议每个应用只创建一个对象
 * `SqlSession`：相当于 `Connection`，可控制事务，应为线程私有，不被多线程共享
 * 将获得连接、关闭连接、提交事务、回滚事务、获得接口实现类等方法进行封装
 
@@ -13433,29 +13441,408 @@ public void testSubject() {
 | `index`      | 下标号   | 从0开始，依次递增                           |
 | `item`       | 当前项   | 任意名称（循环中通过#{任意名称}表达式访问） |
 
+### 10. 缓存（Cache）【重点】
+
+内存中的一块存储空间，服务于某个应用程序，旨在将频繁读取的数据临时保存在内存中，便于二次快速访问
+
+[![gAecl9.md.png](https://z3.ax1x.com/2021/04/30/gAecl9.md.png)](https://imgtu.com/i/gAecl9)
 
 
 
+#### 10.1 一级缓存
 
+`SqlSession` 级别的缓存，同一个 `SqlSession` 发起的多次同构查询，会将数据保存在一级缓存中
 
+#### 10.2 二级缓存
 
-<img src="C:\Users\lenovo\AppData\Roaming\Typora\typora-user-images\image-20210429222032751.png" alt="image-20210429222032751" style="zoom:67%;" />
+`SqlSessionFactory` 级别的缓存，同一个 `SqlSessionFactory` 构建的 `SqlSession` 发起的多次同构查询，会将数据保存在二级缓存中
 
+> 注意：在 sqlSession.commit() 或者 sqlSessin.close() 之后生效
 
+##### 开启全局缓存
 
+在 `mybatis-config.xml` 文件中，全局缓存是默认开启的
 
+##### 指定 Mapper 缓存
 
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
+<mapper namespace="com.ch.wchya.servlet.dao.DepartmentDao">
+    <!--二级缓存默认开启，但是并不是所有的查询结果，都会进入二级缓存-->
+  	<!--在Mapper中写了<cache/>标签的文件里所有的查询方法都会进行缓存-->
+    <cache/>
+    <resultMap id="depart_employee" type="Department">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="location" column="location"/>
 
+        <collection property="employees" ofType="Employee">
+            <id column="empid" property="id"/>
+            <result property="name" column="empname"/>
+            <result property="salary" column="salary"/>
+        </collection>
+    </resultMap>
+    <select id="queryDepartmentById" resultMap="depart_employee">
+        select t_departments.id,t_departments.name,t_departments.location,
+               employee.id empid,employee.name empname,employee.salary
+        from t_departments left join t_employees employee on t_departments.id = employee.dept_id
+        where t_departments.id=#{id}
+    </select>
+</mapper>
+```
 
+##### 缓存清空并重新缓存
 
+```java
+@Test
+public void testLoginUserCache() {
+    SqlSession sqlSession = MyBatisUtil.getSession();
+    LoginUserDao userDao = sqlSession.getMapper(LoginUserDao.class);
+    LoginUser user1 = userDao.getUserById(1);
+    // 必须关闭 SqlSession 才可缓存数据
+    sqlSession.close();
 
+    SqlSession session = MyBatisUtil.getSession();
+    LoginUserDao userDao1 = session.getMapper(LoginUserDao.class);
+    LoginUser loginUser = new LoginUser();
+    loginUser.setName("缓存");
+    loginUser.setPassword("huancun");
+    loginUser.setRegisterDate(new Date());
+    Integer count = userDao1.addUser(loginUser);
+    session.commit(); // DML 成功，数据发生变化，缓存清空
+    session.close();
 
+    SqlSession session1 = MyBatisUtil.getSession();
+    LoginUserDao mapper = session1.getMapper(LoginUserDao.class);
+    LoginUser user = mapper.getUserById(1);
+    session1.close(); // 缓存未击中，重新查询数据库，重新缓存
 
+    SqlSession session2 = MyBatisUtil.getSession();
+    LoginUserDao mapper1 = session2.getMapper(LoginUserDao.class);
+    LoginUser user2 = mapper1.getUserById(1);
+    session2.close(); // 缓存击中，使用缓存
+}
+```
 
+### 11. Druid 连接池
 
+#### 11.1 概念
 
+`Druid` 是阿里巴巴开源平台上的一个项目，整个项目由数据库连接池、插件框架和 `SQL` 解析器组成。该项目主要是为了扩展 `JDBC` 的一些限制，可以让程序员实现一些特殊的需求，比如向密钥服务请求凭证、统计 `SQL` 信息、`SQL` 性能收集、`SQL` 注入检查、`SQL` 翻译等，程序员可以通过定制来实现自己需要的功能
 
+#### 11.2 不同连接池对比
+
+测试执行申请归还连接 1,000,000（一百万）次总耗时性能对比
+
+##### 测试环境
+
+| 环境  | 版本                    |
+| ----- | ----------------------- |
+| `OS`  | `OS X 10.8.2`           |
+| `CPU` | `Intel I7 2GHz 4 Core`  |
+| `JVM` | `Java Version 1.7.0_05` |
+
+##### 基准测试结果对比
+
+[![gAUzqK.md.png](https://z3.ax1x.com/2021/04/30/gAUzqK.md.png)](https://imgtu.com/i/gAUzqK)
+
+##### 测试结论
+
+* `Druid` 是性能最好的数据库连接池，`tomcat-jdbc` 和 `druid` 性能接近
+* `C3P0` 相当慢，影响 `sql` 执行效率
+* `BoneCP` 性能并不优越，采用 `LinkedTransferQueue` 并没有能够获得性能提升
+* 除了 `boneCP`，其它的在 `JDK 7` 上跑得比 `JDK 6` 上快
+* `jboss-datasource` 虽然稳定，但性能很糟糕
+
+#### 11.3 配置 pom.xml
+
+引入依赖：
+
+```xml
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>druid</artifactId>
+    <version>1.2.5</version>
+</dependency>
+```
+
+#### 11.4 创建 DruidDataSourceFactory
+
+`MyDruidDataSourceFactory` 继承自 `PooledDataSourceFactory`，并替换数据源：
+
+```java
+import com.alibaba.druid.pool.DruidDataSource;
+import org.apache.ibatis.datasource.pooled.PooledDataSourceFactory;
+
+public class MyDruidDataSourceFactory extends PooledDataSourceFactory {
+    public MyDruidDataSourceFactory() {
+        this.dataSource = new DruidDataSource(); // 替换数据源
+    }
+}
+```
+
+#### 11.5 替换配置文件中的工厂类
+
+```xml
+<!--核心配置信息-->
+<environments default="main_config">
+    <!--数据库相关信息-->
+    <environment id="main_config">
+        <!--事务控制类型-->
+        <transactionManager type="jdbc"></transactionManager>
+        <!--数据库连接参数-->
+        <dataSource type="com.ch.wchya.servlet.utils.MyDruidDataSourceFactory"><!--这里替换为上面的类-->
+            <property name="driverClass" value="${driver}"/><!--这里更换为 driverClass-->
+            <property name="jdbcUrl" value="${url}"/><!--这里更换为 jdbcUrl-->
+            <property name="username" value="${username}"/>
+            <property name="password" value="${password}"/>
+        </dataSource>
+    </environment>
+</environments>
+```
+
+### 12. PageHelper
+
+`PageHelper` 是适用于 `MyBatis` 框架的一个分布插件，使用方式极为便捷，支持任何复杂的单表、多表分布查询操作
+
+#### 12.1 访问与下载
+
+[官方网站](https://pagehelper.github.io)
+
+[下载地址](https://github.com/pagehelper/Mybatis-PageHelper)
+
+#### 12.2 开发步骤
+
+`PageHelper` 中提供了多个分布操作的静态方法入口
+
+#### 12.3 引入依赖
+
+`pom.xml` 中引入 `PageHelper` 依赖
+
+```xml
+<dependency>
+    <groupId>com.github.pagehelper</groupId>
+    <artifactId>pagehelper</artifactId>
+    <version>5.1.10</version>
+</dependency>
+```
+
+#### 12.4 在 MyBatis 中安装插件
+
+在 `mybatis-config.xml` 中添加如下配置：
+
+```xml
+<plugins>
+    <plugin interceptor="com.github.pagehelper.PageInterceptor"></plugin>
+</plugins>
+```
+
+#### 12.5 分页
+
+```java
+@Test
+public void testPageHelper() {
+    LoginUserDao userDao = MyBatisUtil.getMapper(LoginUserDao.class);
+  	// 在查询前，设置分布，查询第一页，每页3条数据
+    // PageHelper 对其之后的第一个查询，进行分页功能追加
+    PageHelper.startPage(1, 3);
+    List<LoginUser> loginUsers = userDao.queryForAll();
+    loginUsers.forEach(System.out::println);
+}
+```
+
+##### PageInfo 应用
+
+```java
+@Test
+public void testPageHelper() {
+    LoginUserDao userDao = MyBatisUtil.getMapper(LoginUserDao.class);
+    // 在查询前，设置分布，查询第一页，每页3条数据
+    // PageHelper 对其之后的第一个查询，进行分页功能追加
+    PageHelper.startPage(1, 3);
+    List<LoginUser> loginUsers = userDao.queryForAll();
+    loginUsers.forEach(System.out::println);
+    // 包装后的 pageInfo，会有分页相关的一切信息
+    PageInfo<LoginUser> pageInfo = new PageInfo<>(loginUsers);
+    System.out.println("-----");
+}
+```
+
+##### 注意事项
+
+* 只有在 `PageHelper.startPage()` 方法之后的第一个查询会有执行分页
+* 分布插件不支持带有 `for udpate` 的查询语句
+* 分页插件不支持 **嵌套查询**，会导致结果集折叠
+
+##### 分页练习
+
+使用 `Servlet+JSP+MyBatis+分页插件`，完成分页查询功能 
+
+### 13. 补充【了解】
+
+#### 13.1 MyBatis 注解操作
+
+通过在接口中直接添加 `MyBatis` 注解，完成 `CRUD`
+
+* 接口注解定义完毕后，需将接口全限定名注册到 `mybatis-config.xml` 的 `<mappers>` 节点中
+* 经验：注解模式属于硬编码到 `.java` 文件中，失去了使用配置文件外部修改的优势，可结合需求选用
+
+```xml
+<mappers>
+  <mapper class="com.ch.wchya.servlet.dao.LoginUserDao"/><!--class="接口全限定名"-->
+</mapper>
+```
+
+##### 查询
+
+```java
+public interface LoginUserDao {
+  @Select("select * from login_user where id=#{id}")
+  public LoginUser selectUserById(Integer id);
+  
+  @Select("select * from login_user where id=#{id} and password=#{pwd}")
+  public LoginUser selectUserByIdAndPwd(@Param("id") Integer id, @Param("pwd") String password);
+}
+```
+
+##### 删除
+
+```java
+@Delete(value="delete from login_user where id=#{id}")
+public int deleteUser(Integer id);
+```
+
+##### 修改
+
+```java
+@Update("update login_user set name=#{name},password=#{password},salary=#{salary},birthday=#{birthday} where id=#{id}")
+public int updateUser(LoginUser user);
+```
+
+##### 插入
+
+```java
+@Insert("insert into login_user values(#{id},#{name},#{password},#{salary},#{birthday},null)")
+public int insertUser(LoginUser user);
+
+@Options(useGeneratedKeys=true, keyProperty="id") // 自增 key，主键为 id
+@Insert("insert into login_user values(#{id},#{name},#{password},#{salary},#{birthday},null)")
+public int insertUserGeneratedKeys(LoginUser user);
+```
+
+#### 13.2 $ 符的应用场景
+
+`${attribute}` 属于字符串拼接 `SQL`，而非预编译占位符，会有注入攻击问题，不建议在常规 `SQL` 中使用，常用于可解决动态升降序问题
+
+##### 符号参数绑定
+
+```java
+public List<LoginUser> selectAllUsers2(LoginUser user);// ${name} ${id} 可获取 user 中的属性值
+public Liist<LoginUser> selectAllUsers2(@Param("rule") String rule);// 必须使用 @Param，否则会作为属性解析
+```
+
+```xml
+<select id="selectAllUsers" resultType="user">
+  select * from login_user
+  where name='${name}' or id=${id} <!--拼接name和id，如果是字符类型需要用单引号-->
+</select>
+<select id="selectAllUsers2" resultType="user">
+  select * from login_user
+  order by id ${rule} <!--拼接 asc|desc-->
+</select>
+```
+
+```java
+LoginUser user = new LoginUser(...);
+List<LoginUser> users1 = userDao.selectAllUsers1(user); // 调用时传入 user 对象
+List<LoginUser> users2 = userDao.selectAllUsers2("desc"); // 调用时传入 asc | desc
+```
+
+##### sql 注入
+
+使用 `$` 作为参数的值进行拼接时，会有 `SQL` 注入的风险，不建议使用
+
+#### 13.3 MyBatis 处理关联关系-嵌套查询【了解】
+
+思路：查询部门信息时，关联查询所属的员工信息
+
+* `DepartmentDao` 接口中定义 `selectDepartmentById`，并实现 `Mapper`
+* `EmployeeDao` 接口中定义 `selectEmployeesByDeptId`，并实现 `Mapper`
+* 当 `selectDepartmentById` 被执行时，通过 `<collection>` 调用 `selectEmployeesByDeptId` 方法，并传入条件参数
+
+##### 主表查询
+
+定义 `selectEmployeesByDeptId`，并书写 `Mapper`，实现根据部门 `ID` 查询员工信息
+
+```java
+public interface EmployeeDao {
+  /**
+   * 根据部门编号查询员工信息
+   * @param did 部门编号
+   * @return 该部门中的所有员工
+   */
+  public List<Employee> selectEmployeeByDeptId(@param("did") String did);
+}
+```
+
+```xml
+<mapper namespace="com.ch.wchya.servlet.dao.EmployeeDao">
+  <!--根据部门编号查询所有员工-->
+  <select id="selectEmployeeById" resultType="employee">
+    select id,name,salary,dept_id
+    from t_employees
+    where dept_id=#{did}
+  </select>
+</mapper>
+```
+
+##### 级联调用
+
+定义 `selectDepartmentById`，并书写 `Mapper`，实现根据部门 `ID` 查询部门信息，并级联查询该部门员工信息
+
+```java
+public interface DepartmentDao {
+  /**
+   * 查询部门信息
+   * @param id
+   * @return
+   */
+  public Department selectDepartmentById(@Param("id") String id);
+}
+```
+
+```xml
+<mapper namespace="com.ch.wchya.servlet.dao.DepartmentDao">
+  <resultMap id="departmentResultMap" type="department">
+    <id property="id" column="name"/>
+    <result property="name" column="name"/>
+    <result property="location" column="location" />
+    <!--column="传入目标方法的条件参数" select="级联调用的查询目标"-->
+    <collection property="emps" ofType="Employee" column="id"
+                select="com.ch.wchya.servlet.dao.EmployeeDao.selectEmployeeByDeptId" />
+  </resultMap>
+  <select id="selectAllDepartments" resultMap="departmentResultMap">
+    select id,name,location
+    from t_departments
+    where id=#{id}
+  </select>
+</mapper>
+```
+
+##### 延迟加载
+
+`mybatis-config.xml` 中开启延迟加载
+
+```xml
+<settings>
+  <setting name="lazyLoadingEnabled" value="true"/><!--开启延迟加载（默认false）-->
+</settings>
+```
+
+> 注意：开启延迟加载后，如果不使用级联数据，则不会触发级联查询操作，有利于加快查询速度，节省内存资源
 
 ## 第三十二章 Spring
 
@@ -13518,6 +13905,2252 @@ public void testSubject() {
 | `org.springframework` | `spring-websocket`           | `WebSocket` 和 `SockJS` 实现，包括对 `STOMP` 的支持 |
 | `org.springframework` | [spring-jcl]()               | [Jakarta Commons Logging` 日志系统]()               |
 
+### 4. 自定义工厂
+
+#### 4.1 配置文件
+
+```properties
+userDao=com.ch.wchya.springprimary.dao.UserDaoImpl
+userService=com.ch.wchya.springprimary.service.UserServiceImpl
+```
+
+#### 4.2 工厂类
+
+```java
+public class FactoryDIY {
+    private static final Properties PROPERTIES = new Properties();
+
+    public FactoryDIY(String config) throws IOException {
+        PROPERTIES.load(FactoryDIY.class.getResourceAsStream(config));
+    }
+
+    public Object getBean(String beanName) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+        String classPath = PROPERTIES.getProperty(beanName);
+        if (classPath != null) {
+            // 通过反射加载类
+            Class aClass = Class.forName(classPath);
+            // 通过反射获取类对象
+            return aClass.newInstance();
+        }
+        return null;
+    }
+}
+```
+
+### 5. Spring 环境搭建
+
+#### 5.1 POM 文件中引入常用依赖
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-context</artifactId>
+        <version>5.2.9.RELEASE</version>
+    </dependency>
+</dependencies>
+```
+
+#### 5.2 创建 Spring 配置文件
+
+命名无限制，约定俗成命名有：`spring-context.xml、applicationContext.xml、beans.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+  
+</beans>
+```
+
+#### 5.3 添加配置
+
+在上面创建的 `xml` 中添加配置：
+
+```xml
+<!--需要工厂生产的对象-->
+<bean id="userDao" class="com.ch.wchya.springprimary.dao.UserDaoImpl"></bean>
+<bean id="userService" class="com.ch.wchya.springprimary.service.UserServiceImpl"></bean>
+```
+
+#### 5.4 创建测试类
+
+```java
+@Test
+public void testSpringFactory() {
+    // 启动工厂
+    ApplicationContext context = new ClassPathXmlApplicationContext("/beans.xml");
+    // 获得对象
+    UserDao userDao = (UserDao) context.getBean("userDao");
+    UserService userService = (UserService) context.getBean("userService");
+
+    userDao.printInfo();
+    userService.printInfo();
+}
+```
+
+### 6. 依赖与配置文件详解
+
+`Spring` 框架包含多个模块，每个模块各司其职，可结合需求引入相关依赖 `jar` 包实现功能
+
+#### 6.1 Spring 依赖关系
+
+[![gVEZQA.md.png](https://z3.ax1x.com/2021/05/01/gVEZQA.md.png)](https://imgtu.com/i/gVEZQA)
+
+> 注意：jar 包彼此存在依赖，只需引入最外层 jar 即可由 maven 自动将相关依赖 jar 引入到项目中
+
+#### 6.2 schema
+
+配置文件中的顶级标签中包含了语义化标签的相关信息：
+
+* `xmlns`：语义化标签所在的命名空间
+* `xmlns:xsi`：`XMLSchema-instance` 标签遵循 `schema` 标签标准
+* `xsi:schemaLocation`：`xsd` 文件位置，用以描述标签语义、属性、取值范围等
+
+### 7. IoC（Inversion of ）控制反转【重点】
+
+* 反转了依赖关系的满足方式，由之前的自己创建依赖对象，变为由工厂推送（变主动为被动，即反转）
+
+* 解决了具有依赖关系的组件之间的强耦合，使得项目形态更加稳健
+
+#### 7.1 项目中强耦合问题
+
+```java
+public class UserDaoImpl implements UserDao {...}
+```
+
+```java
+public class UserServiceImpl implements UserService {
+  // 强耦合了 UserDaoImpl，使得 UserServiceImpl 变得不稳健
+  private UserDao userDao = new UserDaoImpl();
+  @Override
+  public User queryUser() {
+    return userDao.queryUser();
+  }
+  ...
+}
+```
+
+#### 7.2 解决方案
+
+```java
+// 不引用任何一个具有的组件（实现类），在需要其他组件的位置预留存取值入口（set/get）
+public class UserServiceImpl implements UserService {
+  // 不再耦合任何 dao 实现，消除不稳健因素
+  private UserDao userDao;
+  // 为 userDao 定义 get/set，允许 userDao 属性接收 spring 赋值
+  // getters and setters
+  ...
+}
+```
+
+```xml
+<bean id="userDao" class="com.ch.wchya.servlet.dao.UserDaoImpl"></bean>
+<!--UserServiceImpl组件-->
+<bean id="userService" class="com.ch.wchya.servlet.service.UserServiceImpl">
+  <!--由spring为userDao属性赋值，值为id="userDao"的bean-->
+  <property name="userDao" ref="userDao"/>
+</bean>
+```
+
+此时，如果需要更换其它 `UserDao` 实现类，则 `UserServiceImpl` 不用任何改动！现在的 `UserServiceImpl` 组件变得更加稳健
+
+### 8. DI（Dependency Injection）依赖注入【重点】
+
+#### 8.1 概念
+
+在 `Spring` 创建对象的同时，为其属性赋值，称之为依赖注入
+
+#### 8.2 Set 注入
+
+创建对象时，`Spring` 工厂会通过 `set` 方法为对象的属性赋值
+
+##### 定义目标 Bean 类型
+
+```java
+@Data
+public class Address {
+    private Integer id;
+    private String city;
+}
+@Data
+public class User {
+    private Integer id;
+    private String password;
+    private String sex;
+    private Integer age;
+    private Date bornDate;
+    private String[] hobbys;
+    private Set<String> phones;
+    private List<String> names;
+    private Map<String, String> countries;
+    private Properties files;
+    // 自定义属性
+    private Address address;
+}
+```
+
+##### 在 beans.xml 中注入值
+
+```xml
+<bean id="addr" class="com.ch.wchya.entity.springprimary.Address">
+    <property name="id" value="1"/>
+    <property name="city" value="beijing"/>
+</bean>
+
+<bean id="user" class="com.ch.wchya.entity.springprimary.User">
+    <!--基本数据类型，String，Date-->
+    <property name="id" value="1234"/>
+    <property name="password" value="4321"/>
+    <property name="sex" value="男"/>
+    <property name="age" value="12"/>
+    <property name="bornDate" value="2013/03/03 03:03:03"/><!--注意：这里的字符日期中只能使用/分隔，不能使用-分隔-->
+
+    <!--集合，Properties-->
+    <property name="hobbys">
+        <array>
+            <value>游泳</value>
+            <value>跑步</value>
+        </array>
+    </property>
+    <property name="phones">
+        <set>
+            <value>18919999999</value>
+            <value>18818888888</value>
+        </set>
+    </property>
+    <property name="names">
+        <list>
+            <value>张三</value>
+            <value>李四</value>
+        </list>
+    </property>
+    <property name="countries">
+        <map>
+            <entry key="cn" value="Chinesse"/>
+            <entry key="en" value="English"/>
+        </map>
+    </property>
+    <property name="files">
+        <props>
+            <prop key="url">jdbc:mysql://localhost:3306/emp?useUnicode=true&amp;characterEncoding=utf-8</prop>
+            <prop key="username">username</prop>
+        </props>
+    </property>
+
+    <!--自定义属性-->
+    <property name="address" ref="addr"/>
+</bean>
+```
+
+##### 测试
+
+```java
+@Test
+public void testSetDI() {
+    ApplicationContext context = new ClassPathXmlApplicationContext("/beans.xml");
+    User user = (User) context.getBean("user");
+    System.out.println(user);
+}
+
+// 以下是输出
+// User(id=1234, password=4321, sex=男, age=12, bornDate=Sun Mar 03 03:03:03 CST 2013, hobbys=[游泳, 跑步], phones=[18919999999, 18818888888], names=[张三, 李四], countries={cn=Chinesse, en=English}, files={url=jdbc:mysql://localhost:3306/emp?useUnicode=true&characterEncoding=utf-8, username=username}, address=Address(id=1, city=beijing))
+```
+
+#### 8.3 构造注入【了解】
+
+创建对象时，`spring` 工厂会通过构造方法为对象的属性赋值
+
+##### 定义目标 bean 类型
+
+```java
+@Data
+public class Student {
+    private Integer id;
+    private String name;
+    private String sex;
+    private Integer age;
+
+    public Student(Integer id, String name, String sex, Integer age) {
+        this.id = id;
+        this.name = name;
+        this.sex = sex;
+        this.age = age;
+    }
+}
+```
+
+##### 在 beans.xml 中注入值
+
+```xml
+<!--构造注入-->
+<bean id="student" class="com.ch.wchya.entity.springprimary.Student">
+    <constructor-arg name="id" value="1"/>
+    <constructor-arg name="name" value="shine"/>
+    <constructor-arg name="sex" value="male"/>
+    <constructor-arg name="age" value="1"/>
+</bean>
+```
+
+##### 测试
+
+```java
+@Test
+public void testConstructDI() {
+    ApplicationContext context = new ClassPathXmlApplicationContext("/beans.xml");
+    Student student = (Student) context.getBean("student");
+    System.out.println(student);
+}
+
+// 以下是输出
+// Student(id=1, name=shine, sex=male, age=1)
+```
+
+#### 8.4 自动注入
+
+不用在配置中，指定为哪个属性赋值，及赋什么值。由 `spring` 自动根据某个”原则“，在工厂中查找一个 `bean`，为属性注入属性值
+
+```java
+public class UserServiceImpl implements UserService {
+  private UserDao userDao;
+  // getters and setters
+  ...
+}
+```
+
+```xml
+<bean id="userDao" class="com.ch.wchya.springprimary.service.UserDaoImpl"/>
+<!--为UserServiceImpl中的属性基于类型自动注入值-->
+<bean id="userService" class="com.ch.wchya.springprimary.service.UserServiceImpl" autowire="byType"/>
+```
+
+```xml
+<bean id="userDao" class="com.ch.wchya.springprimary.service.UserDaoImpl"/>
+<!--为UserServiceImpl中的属性基于名称自动注入值-->
+<bean id="userService" class="com.ch.wchya.springprimary.service.UserServiceImpl" autowire="byName"/>
+```
+
+### 9. bean 细节
+
+#### 9.1 控制简单对象的单例、多例模式
+
+配置：`<bean scope="singleton|prototype"/>`
+
+```xml
+<!--
+		singleton（默认）：每次调用工作，得到的都是同一个对象
+		prototype：每次调用工厂，都会创建新的对象
+-->
+<bean id="mc" class="com.ch.wchya.entity.springprimary.MyClass" scope="singleton"/>
+```
+
+* 需要根据场景决定对象的单例、多例模式
+* 可以共用：`Service、Dao、SqlSessionFactory` 或者是所有的工厂
+* 不可共用：`Connection、SqlSession、ShoppingCart`
+
+#### 9.2 FactoryBean 创建复杂对象【了解】
+
+作用：让 `Spring` 可以创建复杂对象、或者无法直接通过反射创建的对象
+
+##### 实现 FactoryBean
+
+```java
+public class MyFactoryBean implements FactoryBean<Connection> {
+    @Override
+    public Connection getObject() throws Exception {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        return DriverManager.getConnection("jdbc:mysql://localhost:3306/emp?useUnicode=true&characterEncoding=utf-8", "xxxx", "xxxx");
+    }
+
+    @Override
+    public Class<?> getObjectType() {
+        return Connection.class;
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return false;
+    }
+}
+```
+
+##### beans.xml 添加配置
+
+```xml
+<bean id="conn" class="com.ch.wchya.springprimary.factory.MyFactoryBean"/>
+```
+
+##### 测试
+
+```java
+@Test
+public void testMyFactoryBean() throws SQLException {
+    ApplicationContext context = new ClassPathXmlApplicationContext("/beans.xml");
+    Connection conn = (Connection) context.getBean("conn");
+    Connection conn1 = (Connection) context.getBean("conn");
+    Connection conn2 = (Connection) context.getBean("conn");
+    System.out.println(conn);
+    System.out.println(conn1);
+    System.out.println(conn2);
+    PreparedStatement pstm = conn.prepareStatement("select * from login_user");
+    ResultSet rs = pstm.executeQuery();
+    rs.next();
+    System.out.println(rs.getString(2));
+}
+
+// 下面是输出
+com.mysql.cj.jdbc.ConnectionImpl@3a4e343
+com.mysql.cj.jdbc.ConnectionImpl@6a1d204a
+com.mysql.cj.jdbc.ConnectionImpl@62dae245
+张三
+```
+
+### 10. spring 工厂特性
+
+#### 10.1 饿汉式创建优势
+
+工厂创建之后，会将 `spring` 配置文件中的所有对象都创建完成（饿汉式）
+
+好处：提高程序运行效率，避免多次 `IO`，减少对象创建时间（这个概念接近连接池，一次性创建好，使用时直接获取）
+
+#### 10.2 生命周期方法
+
+* 自定义初始化方法：添加 `init-method` 属性，`spring` 则会在创建对象之后，调用此方法
+* 自定义销毁方法：添加 `destory-method` 属性，`spring` 则会在销毁对象之前，调用此方法
+* 销毁：工厂的 `close()` 方法被调用之后，`spring` 会毁掉所有已创建的单例对象
+* 分类：`Singleton` 对象由 `spring` 容器销毁，`Prototype` 对象由 `JVM` 销毁
+
+在原有的 `Address` 类中添加一些打印语句和两个用于初始化和销毁的方法：
+
+```java
+@Data
+public class Address {
+    private Integer id;
+    private String city;
+
+    public Address() {
+        System.out.println("Address 空构造方法");
+    }
+
+    public void setId(Integer id) {
+        System.out.println("Address setId");
+        this.id = id;
+    }
+
+    public void setCity(String city) {
+        System.out.println("Address setCity");
+        this.city = city;
+    }
+
+    public void init_addr() {
+        System.out.println("Address 初始化方法");
+    }
+
+    public void destory_addr() {
+        System.out.println("Address 销毁方法");
+    }
+}
+```
+
+修改 `beans.xml` 中 `Address` 的相关配置：
+
+```xml
+<bean id="addr" class="com.ch.wchya.entity.springprimary.Address" init-method="init_addr" destroy-method="destory_addr">
+    <property name="id" value="1"/>
+    <property name="city" value="beijing"/>
+</bean>
+```
+
+测试：
+
+```java
+@Test
+public void testBeanLifeCycle() {
+    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("/beans2.xml");
+
+    System.out.println("=========");
+    context.close();
+}
+
+// 下面是输出
+// Address 空构造方法
+// Address setId
+// Address setCity
+// Address 初始化方法
+// =========
+// Address 销毁方法
+```
+
+#### 10.3 生命周期注解
+
+```java
+@PostConstruct // 初始化
+public void init() {
+  System.out.println("init method execute");
+}
+@PreDestory // 销毁
+public void destory() {
+  System.out.println("destory method execute");
+}
+```
+
+#### 10.4 生命周期阶段
+
+* 单例 `bean（singleton）`：
+  * 随工厂启动 创建 =》构造方法 =》set方法（注入值）=》init（初始化）=》构建完成 =》随工厂关闭 销毁
+* 多例 `bean（prototype）`：
+  * 被使用时 创建 =》 构造方法 =》set方法（注入值）=》init（初始化）=》构建完成 =》JVM 垃圾回收 销毁
+
+### 11. 代理设计模式
+
+#### 11.1 概念
+
+将核心功能与辅助功能（事务、日志、性能监控代码）分享，达到核心业务功能更纯粹、辅助业务功能可复用
+
+[![gV5dte.md.png](https://z3.ax1x.com/2021/05/01/gV5dte.md.png)](https://imgtu.com/i/gV5dte)
+
+#### 11.2 静态代理设计模式
+
+通过代理类的对象，为原始类的对象（目标类的对象）添加辅助功能，更容易更换代理实现类、利于维护
+
+[![gKTOv8.md.png](https://z3.ax1x.com/2021/05/05/gKTOv8.md.png)](https://imgtu.com/i/gKTOv8)
+
+```java
+/**
+ * 描述: 房东Service
+ **/
+public interface HouseOwnerService {
+    void rentHousetoOthers();
+}
+
+/**
+ * 描述: 房东
+ **/
+public class HouseOwner implements HouseOwnerService {
+    @Override
+    public void rentHousetoOthers() {
+        System.out.println("签合同");
+        System.out.println("收房租");
+    }
+}
+
+/**
+ * 描述: 房东代理——中介
+ **/
+public class HouseOwnerProxy implements HouseOwnerService {
+
+    private HouseOwner houseOwner = new HouseOwner();
+    @Override
+    public void rentHousetoOthers() {
+        System.out.println("发布租房信息");
+        System.out.println("带租客看房");
+
+        houseOwner.rentHousetoOthers();
+    }
+}
+
+/**
+ * 描述: 测试代理模式
+ **/
+public class TestProxyDesignModel {
+
+    @Test
+    public void testStaticsProxy() {
+        HouseOwnerProxy proxy = new HouseOwnerProxy();
+        proxy.rentHousetoOthers();
+    }
+}
+
+// 以下是输出
+// 发布租房信息
+// 带租客看房
+// 签合同
+// 收房租
+```
+
+#### 11.3 动态代理设计模式
+
+动态创建代理的对象，为原始类的对象添加辅助功能
+
+##### JDK 动态代理实现（基于接口）
+
+```java
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+@Test
+public void testJDKDynamicProxy() {
+    // 目标
+    HouseOwnerService houseOwnerService = new HouseOwner();
+
+    // 额外功能
+    InvocationHandler handler = new InvocationHandler() {
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            // 增加额外功能
+            System.out.println("发布租房信息");
+            System.out.println("带租客看房");
+            // 调用核心功能
+            houseOwnerService.rentHousetoOthers();
+            return null;
+        }
+    };
+
+    // 动态生成代理类
+    HouseOwnerService service = (HouseOwnerService) Proxy.newProxyInstance(TestProxyDesignModel.class.getClassLoader(), houseOwnerService.getClass().getInterfaces(), handler);
+
+    service.rentHousetoOthers();
+}
+```
+
+##### CGLib 动态代理实现（基于继承）
+
+```java
+import org.springframework.cglib.proxy.Enhancer;
+
+@Test
+public void testCGLib() {
+    // 目标
+    HouseOwnerService houseOwnerService = new HouseOwner();
+
+    Enhancer enhancer = new Enhancer();
+    enhancer.setSuperclass(HouseOwner.class);
+    enhancer.setCallback(new org.springframework.cglib.proxy.InvocationHandler() {
+        @Override
+        public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
+            // 增加额外功能
+            System.out.println("发布租房信息");
+            System.out.println("带租客看房");
+            // 调用核心功能
+            houseOwnerService.rentHousetoOthers();
+            return null;
+        }
+    });
+
+    // 动态生成代理类
+    HouseOwner proxy = (HouseOwner) enhancer.create();
+
+    proxy.rentHousetoOthers();
+}
+```
+
+### 12. 面向切面编程【重点】
+
+#### 12.1 概念
+
+`AOP（Aspect Oriented Programming）`，即面向切面编程，利用一种称为“横切”的技术，剖开封装的对象内部，并将那些影响了多个类的公共行为封装到一个可重用模块，并将其命名为 `Aspect`，即切面。所谓切面，简单说就是那些与业务无关，却将业务模块所共同调用的逻辑或责任封装起来，便于减少系统的重复代码，降低模块之间的耦合度，并有利于未来的可操作性和可维护性。
+
+#### 12.2 AOP 开发术语
+
+* 连接点（`Joinpoint`）：连接点是程序类中客观存在的方法，可被 `Spring` 拦截并切入内容
+* 切入点（`Pointcut`）：被 `Spring` 切入连接点
+* 通知、增强（`Active`）：可以为切入点添加额外功能，分为：前置通知、后置通知、异常通知、环绕通知等
+* 目标对象（`Target`）：代理的目标对象
+* 引介（`Introduction`）：一种特殊的增强，可以在运行期为类动态添加 `Field` 和 `Method`
+* 织入（`Weaving`）：被 `AOP` 织入通知后，产生的结果类
+* 切面（`Aspect`）：由切点和通知组成，将横切逻辑织入切面所指定的连接点中
+
+#### 12.3 作用
+
+`Spring` 的 `AOP` 编程即是通过动态代理类为原始类的方法添加辅助功能
+
+#### 12.4 环境搭建
+
+引入 `AOP` 相关依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-aspects</artifactId>
+    <version>5.2.9.RELEASE</version>
+</dependency>
+```
+
+`spring-context.xml` 引入 `AOP` 命名空间：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/aop
+                           http://www.springframework.org/schema/aop/spring-aop.xsd">
+  
+</beans>
+```
+
+#### 12.5 开发流程
+
+##### 定义原始类
+
+```java
+public class UserServiceImpl implements UserService {
+    @Override
+    public void printInfo() {
+        System.out.println("UserServiceImpl printInfo method");
+    }
+
+    @Override
+    public List<User> queryUsers() {
+//        System.out.println("事务控制");
+//        System.out.println("日志打印");
+        System.out.println("queryUsers");
+        return new ArrayList<>();
+    }
+
+    @Override
+    public Integer updateUser() {
+//        System.out.println("事务控制");
+//        System.out.println("日志打印");
+        System.out.println("updateUser");
+        return 1;
+    }
+
+    @Override
+    public Integer saveUser() {
+//        System.out.println("事务控制");
+//        System.out.println("日志打印");
+        System.out.println("saveUser");
+        return 1;
+    }
+
+    @Override
+    public Integer deleteUser() {
+//        System.out.println("事务控制");
+//        System.out.println("日志打印");
+        System.out.println("deleteUser");
+        return 1;
+    }
+}
+```
+
+##### 定义通知类（添加额外功能）
+
+```java
+public class MyAdvice implements MethodBeforeAdvice { // 实现前置通知接口
+    @Override
+    public void before(Method method, Object[] objects, Object o) throws Throwable {
+        System.out.println("事务控制");
+        System.out.println("日志打印");
+    }
+}
+```
+
+##### 定义 bean 标签
+
+```xml
+<bean id="userService" class="com.ch.wchya.springprimary.service.UserServiceImpl"></bean>
+<bean id="before" class="com.ch.wchya.springprimary.aop.MyAdvice"/>
+```
+
+##### 定义切入点（PointCut）
+
+```xml
+<!--定义切入点-->
+<aop:config>
+    <!--切入点 修饰符 返回值 包，类 方法名 参数表-->
+    <aop:pointcut id="pc_before" expression="execution(* queryUsers())"/>
+</aop:config>
+```
+
+##### 形成切面（Aspect）
+
+```xml
+<!--定义切入点-->
+<aop:config>
+    <!--组装-->
+    <aop:advisor advice-ref="before" pointcut-ref="pc_before"/>
+</aop:config>
+```
+
+#### 12.6 AOP 小结
+
+* 通过 `AOP` 提供的编码流程，更便利的定制切面，更方便的定制了动态代理
+* 进而彻底解决了辅助功能冗余的问题
+* 业务类中职责单一性得到更好保障
+* 辅助功能也有很好的复用性
+
+#### 12.7 通知类【可选】
+
+定义通知类，达到通知效果
+
+* 前置通知：`MethodBeforeAdvice`
+* 后置通知：`AfterAdvice`
+* 后置通知：`AfterReturningAdvice`（有异常不执行，方法会因异常而结束，无返回值）
+* 异常通知：`ThrowsAdvice`
+* 环绕通知：`MethodInterceptor`
+
+```java
+// 前置通知
+public class MyBeforeAdvice implements MethodBeforeAdvice { // 实现前置通知接口
+    @Override
+    public void before(Method method, Object[] objects, Object o) throws Throwable {
+        System.out.println("事务控制");
+        System.out.println("日志打印");
+    }
+}
+// 后置通知
+public class MyAfterAdvice implements AfterReturningAdvice {
+    @Override
+    public void afterReturning(Object o, Method method, Object[] objects, Object o1) throws Throwable {
+        System.out.println("AfterReturningAdvice");
+    }
+}
+// 异常通知（后置）
+public class MyThrowsAdvice implements ThrowsAdvice { // 在核心中抛出异常时执行
+    public void afterThrowing(Exception ex) {
+        System.out.println("After Throwing");
+    }
+}
+// 环绕通知
+public class MyInterceptorAdvice implements MethodInterceptor {
+    @Override
+    public Object invoke(MethodInvocation methodInvocation) throws Throwable {
+        System.out.println("环绕 开始");
+        Object ret = methodInvocation.proceed(); // 触发，执行核心功能
+        System.out.println("环绕 结束");
+        return ret;
+    }
+}
+```
+
+```xml
+<!--通知，额外功能-->
+<bean id="before" class="com.ch.wchya.springprimary.aop.MyBeforeAdvice"/>
+<bean id="after" class="com.ch.wchya.springprimary.aop.MyAfterAdvice"/>
+<bean id="throws" class="com.ch.wchya.springprimary.aop.MyThrowsAdvice"/>
+<bean id="interceptor" class="com.ch.wchya.springprimary.aop.MyInterceptorAdvice"/>
+
+<!--定义切入点-->
+<aop:config>
+    <!--切入点 修饰符 返回值 包，类 方法名 参数表-->
+    <aop:pointcut id="pc_before" expression="execution(* queryUsers())"/>
+    <aop:pointcut id="pc_after" expression="execution(* deleteUser())"/>
+    <aop:pointcut id="pc_throws" expression="execution(* updateUser())"/>
+    <aop:pointcut id="pc_interceptor" expression="execution(* saveUser())"/>
+    <!--组装-->
+    <aop:advisor advice-ref="before" pointcut-ref="pc_before"/>
+    <aop:advisor advice-ref="after" pointcut-ref="pc_after"/>
+    <aop:advisor advice-ref="throws" pointcut-ref="pc_throws"/>
+    <aop:advisor advice-ref="interceptor" pointcut-ref="pc_interceptor"/>
+</aop:config>
+```
+
+#### 12.8 通配切入点
+
+根据表达式通配切入点：
+
+```xml
+<!--匹配参数-->
+<aop:pointcut id="myPointCut" expression="execution(* *(com.ch.wchya.springprimary.aop.User))" />
+<!--匹配方法名（无参）-->
+<aop:pointcut id="myPointCut" expression="execution(* save())" />
+<!--匹配方法名（任意参数）-->
+<aop:pointcut id="myPointCut" expression="execution(* save(..))" />
+<!--匹配返回值类型-->
+<aop:pointcut id="myPointCut" expression="execution(com.ch.wchya.springprimary.aop.User *(..))" />
+<!--匹配类名-->
+<aop:pointcut id="myPointCut" expression="execution(* com.ch.wchya.springprimary.aop.UserServiceImpl.*(..))" />
+<!--匹配包名-->
+<aop:pointcut id="myPointCut" expression="execution(* com.ch.wchya.springprimary.*.*(..))" />
+<!--匹配包名，以及子包名-->
+<aop:pointcut id="myPointCut" expression="execution(* com.ch.wchya.springprimary.aop..*.*(..))" />
+```
+
+#### 12.9 JDK 和 CGLib 选择
+
+`Spring` 底层，包含 了 `jdk` 代理和 `cglib` 代理两种动态代理机制，选择的基本规则是：目标业务类如果有接口则用 `JDK` 代理，没有接口则用 `CGLib` 代理
+
+```java
+class DefaultAopProxyFactory {
+  // 该方法中明确定义了 JDK 代理和 CGLib 代理的选取规则
+  // 基本规则是：目标业务类如果有接口则用 JDK 代理，没有接口则用 CGLib 代理
+  public AopProxy createAopProxy() {...}
+}
+```
+
+#### 12.10 后处理器
+
+`spring` 中定义了很多后处理器。后处理器：每个 `bean` 在创建完成之前，都会有一个后处理过程，即再加工，对 `bean` 做出相关改变和调整。
+
+`spring-AOP` 中，就有一个专门的后处理器，负责通过原始业务组件（`Service`），再加工得到一个代理组件
+
+[![glAqDU.md.png](https://z3.ax1x.com/2021/05/06/glAqDU.md.png)](https://imgtu.com/i/glAqDU)
+
+##### bean 生命周期
+
+`构造 》注入属性 满足依赖 》后处理器前置过程 》初始化 》后处理器后置过程 》返回 》销毁`
+
+### 13. Spring+MyBatis【重点】
+
+#### 13.1 配置数据库
+
+将数据源配置到项目中
+
+##### 引入 jdbc.properties 配置文件
+
+```properties
+driverClassName=com.mysql.cj.jdbc.Driver
+url=jdbc:mysql://localhost:3306/employees?useUnicode=true&characterEncoding=utf-8
+username=xxxx
+password=xxxx
+```
+
+##### 整合 spring 配置文件和 properties 配置文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd"
+>
+
+    <!--配置文件参数化（参数点位符）-->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!--与PooledDataSource集成（二选一）-->
+    <bean id="dataSource2" class="org.apache.ibatis.datasource.pooled.PooledDataSourceFactory">
+        <property name="driver" value="${driverClassName}"/>
+        <property name="url" value="${url}"/>
+        <property name="username" value="${username}"/>
+        <property name="password" value="${password}"/>
+    </bean>
+
+    <!--与DruidDataSource集成（二选一）-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSourceFactory" init-method="init" destroy-method="close">
+        <!--基本配置-->
+        <property name="driverClassName" value="${driverClassName}"/>
+        <property name="url" value="${url}"/>
+        <property name="username" value="${username}"/>
+        <property name="password" value="${password}"/>
+    </bean>
+
+</beans>
+```
+
+##### Druid 连接池可选参数
+
+```xml
+<!--与DruidDataSource集成（二选一）-->
+<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSourceFactory" init-method="init" destroy-method="close">
+    <!--基本配置-->
+    <property name="driverClassName" value="${driverClassName}"/>
+    <property name="url" value="${url}"/>
+    <property name="username" value="${username}"/>
+    <property name="password" value="${password}"/>
+
+    <!--配置初始化大小、最小、最大-->
+    <property name="initalSize" value="${initialSize}"/>
+    <property name="minIdle" value="${minIdle}"/>
+    <property name="maxActive" value="${maxActive}"/>
+    <property name="maxWait" value="${maxWait}"/>
+
+    <!--配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒-->
+    <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+
+    <!--配置一个连接在池中最小生存的时间，单位是毫秒-->
+    <property name="minEvictableIdleTimeMillis" value="300000"/>
+</bean>
+```
+
+##### Druid 监控中心
+
+
+
+##### 测试监控中心
+
+配置 `tomcat`，并访问：`protocol://ip:port/project/druid/index.html`
+
+#### 13.2 整合 MyBatis
+
+将 `SqlSessionFactory、Dao、Service` 配置到项目中
+
+##### 导入依赖
+
+```xml
+<!--spring-jdbc-->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-jdbc</artifactId>
+    <version>5.2.9.RELEASE</version>
+</dependency>
+<!--spring+mybatis集成依赖-->
+<dependency>
+    <groupId>org.mybatis</groupId>
+    <artifactId>mybatis-spring</artifactId>
+    <version>1.3.1</version>
+</dependency>
+```
+
+##### 配置 SqlSessionFactory
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd"
+>
+
+    <!--配置文件参数化（参数点位符）-->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!--与PooledDataSource集成（二选一）-->
+    <bean id="dataSource2" class="org.apache.ibatis.datasource.pooled.PooledDataSource">
+        <property name="driver" value="${driverClassName}"/>
+        <property name="url" value="${url}"/>
+        <property name="username" value="${username}"/>
+        <property name="password" value="${password}"/>
+    </bean>
+
+    <!--与DruidDataSource集成（二选一）-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <!--基本配置-->
+        <property name="driverClassName" value="${driverClassName}"/>
+        <property name="url" value="${url}"/>
+        <property name="username" value="${username}"/>
+        <property name="password" value="${password}"/>
+
+        <!--配置初始化大小、最小、最大-->
+        <property name="initialSize" value="${initialSize}"/>
+        <property name="minIdle" value="${minIdle}"/>
+        <property name="maxActive" value="${maxActive}"/>
+        <property name="maxWait" value="${maxWait}"/>
+
+        <!--配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒-->
+        <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+
+        <!--配置一个连接在池中最小生存的时间，单位是毫秒-->
+        <property name="minEvictableIdleTimeMillis" value="300000"/>
+    </bean>
+
+    <!--工厂bean：生成SqlSessionFactory-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--注入连接池-->
+        <property name="dataSource" ref="dataSource"/>
+        <!--注入dao-mapper文件信息，如果映射文件和dao接口 同包且同名，则此配置可省略-->
+        <property name="mapperLocations">
+            <list>
+                <value>classpath:com/ch/wchya/springprimary/dao/*.xml</value>
+            </list>
+        </property>
+        <!--为 dao-mapper文件中的实体 定义缺少包路径。如：<select id="queryAll" resultType="User"> 中 User类可以不定义包-->
+        <property name="typeAliasesPackage" value="com.ch.wchya.entity.springprimary"/>
+        <!--配置mybatis使用log4j打印-->
+        <property name="configuration">
+            <bean class="org.apache.ibatis.session.Configuration">
+                <property name="logImpl" value="org.apache.ibatis.logging.stdout.StdOutImpl"/>
+            </bean>
+        </property>
+    </bean>
+
+</beans>
+```
+
+##### 配置 MapperScannerConfigurer
+
+管理 `Dao` 实现类的创建，并创建 `Dao` 对象，存入工厂管理：
+
+* 扫描所有 `Dao` 接口，去构建 `Dao` 实现
+* 将 `Dao` 实现存入工厂管理
+* `Dao` 实现对象在工厂中的 `id` 是：**首字母小宝的接口的类名**，例如：`UserDao=>userDao, OrderDao=>orderDao`
+
+```xml
+<bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+    <!-- 到接口所在的包，如果有多个包，可以用逗号或分号分隔
+    <property name="basePackage" value="com.ch.wchya.springprimary.dao,com.ch.wchya.springprimary.entity"/>
+    -->
+    <property name="basePackage" value="com.ch.wchya.springprimary.dao"/>
+
+    <!--如果工厂中只有一个SqlSessionFactory的bean，此配置可省略-->
+    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+</bean>
+```
+
+##### 配置 Service
+
+```xml
+<bean id="userService" class="com.ch.wchya.springprimary.service.UserServiceImpl">
+    <!--注意：这里引用的userDao已经通过上面的mapperScannerConfigurer自动生成了，按照生成的规则，所以这里引用的名字是：userDao-->
+    <property name="userDao" ref="userDao"/>
+</bean>
+```
+
+### 14. 事务【重点】
+
+#### 14.1 配置 DataSourceTransactionManager
+
+事务管理器，其中持有 `DataSource`，可以控制事务功能（`commit,rollback` 等）
+
+```xml
+<!--引入一个事务管理器，其中依赖 DataSource，借以获得连接，进而控制事务逻辑-->
+<bean id="tx" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <property name="dataSource" ref="dataSource"/>
+</bean>
+```
+
+> 注意：DataSourceTransactionManager 和 SqlSessionFactoryBean 要注入同一个 DataSource 的 Bean，否则事务控制失败
+
+#### 14.2 配置事务通知
+
+基于事务管理器，进一步定制，生成一个额外功能：`Advice`
+
+此 `Advice` 可以切入任何需要事务的方法，通过事务管理器为方法控制事务
+
+#### 14.3 事务属性
+
+##### 隔离级别
+
+`isolation`：隔离级别
+
+* `default`：默认值，采用数据库的默认设置【建议】
+* `read-uncommited`：读未提交
+* `read-commited`：读提交（`Oracle` 数据库默认的隔离级别）
+* `repeatable-read`：可重复读（`MySQL` 数据库默认的隔离级别）
+* `serialized-read`：序列化读
+
+隔离级别由低到高为：
+
+`read-uncommited < read-commited < repeatable-read < serialized-read`
+
+**安全性：**级别越高，多事务并发时，越安全，因为共享的数据越来越少，事务间彼此干扰减少
+
+**并发性：**级别越高，多事务并发时，迸发越差，因为共享的数据越来越少，事务间阻塞情况增多
+
+事务并发时的安全问题：
+
+* 脏读：一个事务读取到另一个事务还未提交的数据
+  * 大于等于 `read-commited` 可防止
+* 不可重复读：一个事务内多次读取一行数据的相同内容，其结果不一致
+  * 大于等于 `repeatable-read` 可防止
+* 幻影读：一个事务内多次读取一张表中的相同内容，其结果不一致
+  * `serialized-read` 可防止
+
+##### 传播行为
+
+`propagation`：传播行为
+
+当涉及到事务嵌套（`Service` 调用 `Service`）中，可能会存在问题
+
+* `SUPPORTS`：不存在外部事务，则不开启新事务；存在外部事务，则合并到外部事务中（适合查询）
+* `REQUIRED`：不存在外部事务，则开启新事务；存在外部事务，则合并到外部事务中（默认值，适合增删改）
+
+##### 读写性
+
+`readonly`：读写性
+
+* `true`：只读，可提高查询效率（适合查询）
+* `false`：可读可写（默认值，适合增删改）
+
+##### 事务超时
+
+`timeout`：事务超时时间
+
+当前事务所需操作的数据被其它事务占用，则等待：
+
+* 100：自定义等待时间 100 （秒）
+* -1：由数据库指定等待时间，默认值（建议）
+
+##### 事务回滚
+
+`rollback-for`：回滚属性
+
+* 如果事务中抛出 `RuntimeException`，则自动回滚
+* 如果事务中抛出 `CheckException` 运行时异常，不会自动回滚，而是默认提交事务
+* 处理方案：将 `CheckException` 转换成 `RuntimeException` 上抛，或设置 `rollback-for="Exception"`
+
+```xml
+<tx:advice id="txManager" transaction-manager="tx">
+    <!--事务属性-->
+    <tx:attributes>
+        <tx:method name="queryUsers" propagation="SUPPORTS"/>
+        <!--以User结尾的方法，切入此方法时，采用对应事务实行-->
+        <tx:method name="*User"/>
+        <!--剩余所有方法-->
+        <tx:method name="*"/>
+    </tx:attributes>
+</tx:advice>
+```
+
+#### 14.4 编织
+
+将事务管理的 `Advice` 切入需要事务的业务方法中
+
+```xml
+<aop:config>
+  <aop:pointcut expression="execution(* com.ch.wchya.springprimary.service.UserServiceImpl.*(..))" id="pc"/>
+  <!--组织切面-->
+  <aop:advisor advice-ref="txManager" pointcut-ref="pc"/>
+</aop:config>
+```
+
+### 15. 注解开发
+
+#### 15.1 声明 bean
+
+用于替换自建类型组件的 `<bean...>` 标签，可以更快速的声明 `bean`：
+
+* `@Service`：业务类专用
+* `@Repository`：`dao` 实现类专用
+* `@Controller`：`web` 层专用
+* `@Component`：通用
+* `@Scope`：用户控制 `bean` 的创建模式
+
+```java
+// @Service 说明此类是一个业务类，需要将此类纳入工厂，等价替换掉 <bean class="xxx.UserServiceImpl"/>
+// @Service 默认 beanId=首字母小写的类名，即 userServiceImpl
+// @Service("userService") 自定义 beanId 为 userService
+@Service	// 声明 bean，且 id="userServiceImpl"
+@Scope("singleton")	// 声明创建模式，默认为单例模式；@Scope("prototype") 即可设置为多例模式
+public class UserServiceImpl implements UserService {
+  ...
+}
+```
+
+#### 15.2 注入（DI）
+
+用于完成 `bean` 中属性值的注入
+
+* `@Autowired`：基于类型自动注入
+* `@Resource`：基于名称自动注入
+* `@Qualifier("userDao")`：限定要自动注入的 `bean` 的 `id`，一般和 `@Autowired` 联用
+* `@value`：注入简单类型数据（`jdk 8种基本数据类型 + String`）
+
+```java
+@Service
+public class UserServiceImpl implements UserService {
+    @Autowired	// 注入类型为 UserDao 的 bean
+    @Qualifier("userDao")	// 如果有多个类型为 userDao 的 bean，可以用此注解从中挑选一个
+    private UserDao userDao;
+}
+
+public class XX {
+  	@Value("100")	//注入数字
+  	private Integer id;
+  	@Value("shine")	//注入String
+	  private String name;
+}
+```
+
+#### 15.3 事务控制
+
+用于控制事务切入：`@Transactional`，工厂配置中的 `<tx:advice...` 和 `<aop:config...` 可以省略
+
+```java
+// 类中的每个方法都切入事务（有自己的事务控制的方法除外）
+@Transaction(isolation=Isolation.READ_COMMITTED,propagation=Propagation.REQUIRED,readOnly=false,rollbackFor=Exception.class,timeout=-1)
+public class UserServiceImpl implements UserService {
+  	...
+    // 该方法自己的事务控制，仅对此方法有效
+    @Transactional(propagation=Propagation.SUPPORTS)
+    public List<User> queryAll() {
+    	return userDao.queryAll();
+  	}
+  	public void save(User user) {
+      userDao.save(user);
+    }
+}
+```
+
+#### 15.4 注解所需配置
+
+```xml
+<!--告知spring，哪些包中，有被注解的类、方法、属性-->
+<context:component-scan base-package="com.ch.wchya"></context:component-scan>
+
+<!--告知spring，@Transactional在定制事务时，基于txManager=DataSourceTransactionManager-->
+<tx:annotation-driven transaction-manager="tx"/>
+```
+
+#### 15.5 AOP 开发
+
+##### 注解使用
+
+```java
+@Aspect // 声明此类是一个切面类：会包含切入点（pointcut）和通知（advice）
+@Component  // 声明组件，进入工厂
+public class MyAspect {
+    // 定义切入点
+    @Pointcut("execution(* com.ch.wchya.springprimary.service.UserServiceImpl.*(..))")
+    public void pc() {}
+
+    @Before("pc()")
+    public void mybefore(JoinPoint a) {
+        System.out.println("target:" + a.getTarget());
+        System.out.println("args:"+ a.getArgs());
+        System.out.println("method's name:" + a.getSignature().getName());
+        System.out.println("before...");
+    }
+
+    @AfterReturning(value = "pc()", returning = "ret") // 后置通知
+    public void myAfterReturing(JoinPoint a, Object ret) {
+        System.out.println("after~~~~:" + ret);
+    }
+
+    @Around("pc()") // 环绕通知
+    public Object myInterceptor(ProceedingJoinPoint p) throws Throwable {
+        System.out.println("Interceptor1~~~~");
+        Object ret = p.proceed();
+        System.out.println("Interceptor2~~~~");
+        return ret;
+    }
+
+    @AfterThrowing(value = "pc()", throwing = "ex") // 异常通知
+    public void myThrow(JoinPoint jp, Exception ex) {
+        System.out.println("throws");
+        System.out.println("===" + ex.getMessage());
+    }
+}
+```
+
+##### 配置
+
+```xml
+<!--添加如下配置，启用aop注解-->
+<aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+```
+
+### 16. 集成 JUnit
+
+#### 16.1 导入依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-test</artifactId>
+    <version>5.2.9.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>junit</groupId>
+    <artifactId>junit</artifactId>
+    <version>4.12</version>
+</dependency>
+```
+
+#### 16.2 编码
+
+* 可以免去工厂的创建过程
+* 可以直接将要测试的组件注入到测试类
+
+```java
+// 测试启动，会启动spring工厂，并且当前测试类也会被工厂生产
+@RunWith(SpringJUnit4ClassRunner.class) // 由SpringJUnit4ClassRunner启动测试
+@ContextConfiguration("classpath:applicationContext.xml")   // spring的配置文件位置
+public class TestSpringTest {
+
+    @Autowired  // 注入要测试的组件
+    private UserService userService;
+
+    @Test
+    public void testUserService() {
+        List<SimpleUser> simpleUsers = userService.queryUsers();
+        simpleUsers.forEach(System.out::println);
+    }
+}
+```
+
+## 第三十三章 SpringMVC
+
+### 1. 概述
+
+#### 1.1 引言
+
+* 它是一个 `java` 开源的框架，是 `Spring Framework` 的一个独立模块
+* 这是一个 `MVC` 框架，在项目中开辟了 `MVC` 层次架构
+* 它对控制器中的功能进行了包装、简化、扩展，践行了工厂模式，它所有的功能都架构在工厂之上
+
+#### 1.2 MVC 架构
+
+`MVC：Model View Controller`，即：模型、视图、控制器：
+
+* 模型：即业务模型，负责完成业务中的数据通信处理，对应项目中的 `service` 和 `dao`
+* 视图：渲染数据，生成页面，对应项目中的 `JSP`
+* 控制器：直接对接请求，控制 `MVC` 流程，高度模型，选择视图，对应项目中的 `Servlet`
+
+`MVC` 是现下软件开发中的最流行的代码结构形态。人们根据负责的不同逻辑，将项目中的代码分成 `MVC` 3个层次。层次的内部职责单一，层次之间耦合度低。符合低耦合、高内聚的设计理念，也实际有际于项目的长期维护
+
+### 2. 开发流程
+
+#### 2.1 导入依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-webmvc</artifactId>
+    <version>5.2.9.RELEASE</version>
+</dependency>
+```
+
+#### 2.2 配置核心（前端）控制器
+
+作为一个 `MVC` 框架，首先要解决的是：如何能够收到请求！
+
+**所以 MVC 框架大都会设计一款前端控制器，选型是 Servlet 或 Filter ，在框架最前沿率先工作，接收所有请求**
+
+此控制器在接收到请求后，还会负责 `springMVC` 的核心的高度管理，所以既是前端又是核心
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+    <!--springmvc 前端控制器-->
+    <servlet>
+        <servlet-name>mvc</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+
+        <!--懒汉/饿汉 加载-->
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>mvc</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+</web-app>
+```
+
+#### 2.3 后端控制器
+
+等价于之前定义的 `Servlet`
+
+```java
+@Controller
+@RequestMapping("/hello")
+public class HelloWorldController {
+
+    @RequestMapping("/test1")
+    public String hello() {
+        System.out.println("/hello/test1");
+        return null;
+    }
+}
+```
+
+#### 2.4 配置文件
+
+默认名称：`核心控制器-servlet.xml`，默认位置：`WEB-INF/`
+
+该名称可以随意起，比如：`mvc.xml`，存放位置也可以随意，如：`resources/`，但需要配置在核心控制器中
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           https://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           https://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/mvc
+                           https://www.springframework.org/schema/mvc/spring-mvc.xsd"
+>
+
+    <!--注解扫描-->
+    <context:component-scan base-package="com.ch.wchya.springwebmvc.controller"/>
+
+    <!--注解驱动-->
+    <mvc:annotation-driven/>
+
+    <!--视图解析器
+            作用：1. 捕获后端控制器的返回值，=>    hello
+                 2. 解析：在返回值的前后进行拼接 =>   /hello.jsp
+    -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <!--前缀-->
+        <property name="prefix" value="/"/>
+        <!--后缀-->
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+</beans>
+```
+
+#### 2.5 访问
+
+```
+http://localhost:8081/hello/test1
+```
+
+### 3. 接收请求参数
+
+通过控制器中方法的形参，接收请求参数
+
+#### 3.1 基本类型参数
+
+**要求：请求参数和方法的形参同名即可**
+
+`springMVC` 默认可以识别的日期字符串格式为：`YYYY/MM/dd HH:mm:ss`，通过 `@DateTimeformat` 可以修改默认日期格式
+
+```java
+// 访问地址：http://localhost:8081/.../test1?id=1&name=zzz&gender=false&birth=2018-12-12 12:20:30
+@RequestMapping("/test1")
+public String testParam1(Integer id,
+                         String name,
+                         Boolean gender,
+                         @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss") Date birth) {
+  System.out.println("test param1");
+  return "index";
+}
+```
+
+#### 3.2 实体收参【建议】
+
+**要求：请求参数和对象实体的字段名称相同即可**
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>演示参数传递</title>
+</head>
+<body>
+    <form action="${pageContext.request.contextPath}/param/test1">
+        <label for="id">主键：</label><input type="text" id="id" name="id"><br>
+        <label for="name">姓名：</label><input type="text" id="name" name="name"><br>
+        <label>性别：</label><input type="radio" name="gender" value="true">男 <input type="radio" name="gender" value="false">女<br>
+        <label for="birth">生日：</label><input type="text" id="birth" name="birth"><br>
+        <label>爱好：</label><input type="checkbox" value="足球" name="hobby">足球 <input type="checkbox" value="篮球" name="hobby">篮球
+        <input type="checkbox" value="排球" name="hobby">排球<br>
+        <input type="submit" value="提交"><input type="reset" value="重置">
+    </form>
+</body>
+</html>
+```
+
+```java
+@Data
+public class User {
+    private Integer id;
+    private String name;
+    private boolean gender;
+    private Date birth;
+    private String[] hobby;
+}
+@Controller
+@RequestMapping("/param")
+public class ParamController {
+
+    @RequestMapping
+    public String index() {
+        return "param";
+    }
+
+    @RequestMapping("/test1")
+    public String test1(User user) {
+        System.out.println(user);
+        return "hello";
+    }
+}
+```
+
+```shell
+# 控制台打印的结果如下：
+User(id=23, name=囧扥, gender=true, birth=Wed Dec 12 12:12:12 CST 2012, hobby=[篮球, 排球])
+```
+
+#### 3.3 数组收参
+
+传递参数时，多个键值对的键相同，值不同，就可以形成数组参数，详情参见上个示例
+
+#### 3.4 集合收参【了解】
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>集合收参</title>
+</head>
+<body>
+    <form action="${pageContext.request.contextPath}/param/test2">
+        <div><label for="id">主键：</label><input type="text" id="id" name="users[0].id"></div>
+        <div><label for="name">姓名：</label><input type="text" id="name" name="users[0].name"></div>
+        <div><label for="gender">性别：</label><input type="text" id="gender" name="users[0].gender"></div>
+        <hr>
+        <div><label for="id1">主键：</label><input type="text" id="id1" name="users[1].id"></div>
+        <div><label for="name1">姓名：</label><input type="text" id="name1" name="users[1].name"></div>
+        <div><label for="gender1">性别：</label><input type="text" id="gender1" name="users[1].gender"></div>
+        <hr>
+        <div><input type="submit" value="提交"><input type="reset" value="重置"></div>
+    </form>
+</body>
+</html>
+```
+
+```java
+@Data
+public class UserList {
+    private List<User> users;
+}
+@Controller
+@RequestMapping("/param")
+public class ParamController {
+
+    @RequestMapping("/collection")
+    public String collection() {
+        return "param_collection";
+    }
+
+    @RequestMapping("/test2")
+    public String test2(UserList users) {
+        users.getUsers().forEach(System.out::println);
+        return "hello";
+    }
+}
+```
+
+```shell
+# 控制台打印的结果如下：
+User(id=11, name=adf, gender=true, birth=null, hobby=null)
+User(id=22, name=顶起, gender=false, birth=null, hobby=null)
+```
+
+#### 3.5 路径参数
+
+```java
+// {id} 定义名为id的路径；/hello/{id} 的匹配能力和 /hello/* 等价
+// http://.../hello/10	{id} 匹配到10
+// http://.../hello/200	{id} 匹配到200
+@RequestMapping("/hello/{id}")
+// @PathVariable 将 {id}路径匹配到值赋给 id 参数
+// 路径名和参数名相同则 @PathVariable("id") 可简写为 @PathVariable
+public String testParam5(@PathVariable("id") Integer id) {
+  System.out.println("id:" + id);
+  return "hello";
+}
+
+// http://.../hello/tom		{username}匹配到tom
+// http://.../hello/jack	{username}匹配到jack
+@RequestMapping("/hello/{username}")
+public String testParam6(@PathVariable("username") String name) {
+  System.out.println("username:" + name);
+  return "hello";
+}
+```
+
+#### 3.6 中文乱码
+
+首先，页面中字符集统一
+
+```java
+jsp：<%@page pageEncoding="utf-8" %>
+html：<meta charset="UTF-8">
+```
+
+其次，`tomcat` 中字符集设置，对 `get` 请求中，中文参数乱码有效【[参见7.1 get请求收参问题]()】
+
+`Tomcat 配置：URIEncoding=utf-8`
+
+最后，设置下面的 `filter`，对 `post` 请求中，中文参数乱码有效
+
+```xml
+<!--此过滤器会进行：request.setCharactorEncoding("utf-8");的操作-->
+<filter>
+  <filter-name>encoding</filter-name>
+  <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+  <init-param>
+    <param-name>encoding</param-name>
+    <param-value>utf-8</param-name>
+  </init-param>
+<filter-mapping>
+  <filter-name>encoding</filter-name>
+  <url-pattern>/*</url-pattern>
+</filter-mapping>
+```
+
+### 4. 跳转
+
+跳转关键字：`forward:    redirect:`
+
+**forward:** 是一个关键字，`InternalResourceViewResolver`  的父类 `UrlBasedViewResolver` 中有定义，当发现有这个关键字时，就知道该关键字后面跟着的是一个绝对地址，在 `mvc.xml` 中配置的视图解析器就不再起作用，不再拼接前缀、后缀
+
+#### 4.1 转发
+
+```java
+@Controller
+@RequestMapping("/jump")
+public class JumpController {
+
+    @RequestMapping("/test1")
+    public String test1() {
+        System.out.println("test1");
+        return "forward:/hello.jsp";
+    }
+
+    @RequestMapping("/test2")
+    public String test2() {
+        System.out.println("test2");
+        // 因为在一个类中，所以下面的语句等价于：return "forward:test1"; // 相对路径;
+        return "forward:/jump/test1"; // 绝对路径
+    }
+}
+```
+
+#### 4.2 重定向
+
+```java
+@Controller
+@RequestMapping("/jump")
+public class JumpController {
+
+    @RequestMapping("/test3")
+    public String test3() {
+        System.out.println("test3");
+        return "redirect:/hello.jsp";
+    }
+
+    @RequestMapping("/test4")
+    public String test4() {
+        System.out.println("test4");
+        // 因为在一个类中，所以下面的语句等价于：return "redirect:test3";  // 相对路径
+        return "redirect:/jump/test3";  // 绝对路径
+    }
+}
+```
+
+#### 4.3 跳转细节
+
+* 在增删改之后，为了防止请求重复提交，重定向跳转
+* 在查询之后，可以做转发跳转
+
+### 5. 传值
+
+`C` 得到数据后，跳转到 `V`，并向 `V` 传递数据，进而 `V` 中可以渲染数据，让用户看到含有数据的页面
+
+**转发跳转：Request 作用域**
+
+**重定向跳转：Sessioni 作用域**
+
+#### 5.1 Request 和 Session
+
+```java
+// 形参中，即可获得 request 和 session 对象
+@RequestMapping("/test1")
+public String testData(HttpSession session, HttpServletRequest req, Integer id) {
+  session.setAttribute("user", new User());
+  req.setAttribute("user", new User());
+  req.setAttribute("age", 18);
+  req.setAttribute("users", Arrays.asList(new User(), new User()));
+  // return "test2";
+  return "forward:/WEB-INF/test2.jsp";
+}
+```
+
+#### 5.2 JSP 中取值
+
+> 建议：重点复习 EL、JSTL 语法
+
+```jsp
+${sessionScope.user.name}
+${requestScope.age}
+```
+
+#### 5.3 Model
+
+```java
+// model 中的数据，会在 View 渲染之前，将数据复制一份给 request
+@RequestMapping("/test")
+public String testData(Model model) {
+  model.addAttribute("name", "张三");
+  return "index";
+}
+```
+
+#### 5.4 ModelAndView
+
+```java
+// modelandview 可以集中管理 view 和 data
+@RequestMapping("/test")
+public ModelAndView testData() {
+  // 新建 ModelAndView 对象
+  ModelAndView mav = new ModelAndView();
+  // 设置视图名，即如何跳转
+  mav.setViewName("forward:/index.jsp");
+  // 增加数据
+  mav.addObject("age", 10);
+  return mav;
+}
+```
+
+#### 5.5 @SessionAttributes
+
+该注解在类上添加。
+
+* `@SessionAttributes({"gender", "name"})` ，配置了这个以后，再使用 `model` 添加同名的属性值时，就会存入 `session` 中
+* `SessionStatus`，用于移除 `session` 中使用 `model` 添加的值
+
+```java
+@Controller
+@RequestMapping("/data")
+@SessionAttributes(value = {"city", "street"})
+public class DataController {
+
+    @RequestMapping("/test2")
+    public String test2(Model model) {
+        model.addAttribute("country", "中国");
+        model.addAttribute("city", "兰州");
+        model.addAttribute("street", "雁南路");
+        return "data2";
+    }
+
+    @RequestMapping("/test3")
+    public String test3(SessionStatus status) {
+        // 清空所有通过 model 存入 session 的数据
+        status.setComplete();
+        return "data2";
+    }
+}
+```
+
+### 6. 静态资源
+
+静态资源有：`html、js文件、css文件、图片文件`。静态文件没有 `url-pattern`，所以默认是访问不到的。之所以在网站中可以访问，是因为，`tomcat` 中有一个全局的 `servlet`：`org.apache.catalina.servlets.DefaultServlet`，它的 `url-pattern` 是 `/`，是全局默认的 `servlet`，所以每个项目中不能匹配的静态资源的请求，由这个 `servlet` 来处理即可。
+
+但是，在 `springmvc` 中的 `DispatcherServlet` 也采用了 `/` 作为 `url-pattern` ，所以项目中不会再使用全局的 `servlet`，则静态资源不能完成访问
+
+#### 6.1 解决方案1
+
+`DispatcherServlet` 采用其它的 `url-pattern`，如下所示，但是此时，所有访问 `handler` 的路径都要以 `action` 结尾了
+
+```xml
+<servlet>
+  <servlet-name>mvc9</servlet-name>
+  <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+  <servlet-name>mvc9</servlet>
+  <url-pattern>*.action</url-pattern>
+</servlet-mapping>
+```
+
+#### 6.2 解决方案2
+
+`DispatcherServlet` 的 `url-pattern` 依然采用 `/`，但追加配置
+
+```xml
+<!--
+        额外的增加一个 handler，且其 requestMapping：/**，可以匹配所有请求，但是优先级最低。
+        所以，如果其它所有的 handler 都匹配不上，请求会转身 /**。恰好，这个 handler 就是处理静态资源的处理方式：
+        将请求转发到 tomcat 中名为 default 的 servlet
+        RequestMapping  /*  可以匹配到的路径有：/a,/b,/c,...，不能匹配：/a/b,/a/b/c,...
+                        /** 可以匹配任意路径
+        下面配置的 handler 做的事情：将收到的请求转发到 tomcat 的 default servlet
+-->
+<mvc:default-servlet-handler/>
+```
+
+#### 6.3 解决方案3
+
+```xml
+<!--
+		1) mapping是访问路径，location是静态资源存放路径
+		2) 将 /html/** 中的 /** 匹配到的内容，拼接到 /hhh/ 后
+			 http://.../html/a.html	访问 /hhh/a.html
+			 http://.../html/page/b.html 访问 /hhh/page/b.html
+-->
+<mvc:resources mapping="/html/**" location="/hhh/" />
+```
+
+### 7. Json 处理
+
+`springmvc` 默认的 `json` 解决方案选择的是 `Jackson`，所以只需要导入 `jackson` 的 `jar`，即可使用
+
+#### 7.1 导入依赖
+
+```xml
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>2.11.3</version>
+</dependency>
+```
+
+#### 7.2 使用 @ResponseBody
+
+```java
+@Controller
+@RequestMapping("/json")
+public class JsonController {
+
+    @RequestMapping("/test1")
+    @ResponseBody
+    public User test1() {
+        System.out.println("/json/test1");
+        User user = new User();
+        user.setName("测试");
+        user.setBirth(new Date());
+        return user;
+    }
+
+    @RequestMapping("/test2")
+    @ResponseBody
+    public List<User> test2() {
+        System.out.println("/json/test2");
+        User user = new User();
+        user.setName("测试");
+        user.setBirth(new Date());
+        User user1 = new User();
+        user1.setName("again");
+        user1.setHobby(new String[]{"顶起", "加载"});
+        return Arrays.asList(user, user1);
+    }
+
+    @RequestMapping(value = "/test3", produces = "text/html;charset=utf-8")
+    @ResponseBody
+    public String test3() { // 直接返回字符串时，springmvc 就不会再使用 jackson 进行转换，也就不会为返回值设置相应的编码，所以需要添加 produces = "text/html;charset=utf-8" 的注解
+        System.out.println("/json/test3");
+        return "你好";
+    }
+}
+```
+
+#### 7.3 使用 @RestController
+
+如果一个类中的所有方法都需要使用 `@ResponseBody` 注解，就可以把类上的 `@Controller` 注解更换为 `@RestController` 注解，并且在方法上也不需要 `@ResponseBody` 这个注解
+
+#### 7.4 使用 @RequestBody
+
+该注解用于接收 `Json` 参数
+
+> 注意：该注解可以接收的请求类型是：post，不能接收 get 类型的请求
+
+##### 定义 Handler
+
+```java
+// 实体类
+@Data
+public class User {
+  private Integer id;
+  private String name;
+  private Boolean gender;
+}
+@RequestMapping("/users")
+public String addUser(@RequestBody User user) {//@RequestBody 将请求体中的 json 数据转换为 java 对象
+  System.out.println("/users");
+  System.out.println("Post user:" + user);
+  return "index";
+}
+```
+
+##### Ajax 发送 json
+
+```js
+// 原生 ajax
+var xhr = new XMLHttpRequest();
+xhr.open("post", "${pageContext.request.contextPath}/users?" + new Date().getTime();
+xhr.setRequestHeader("content-type", "application/json");//设置请求头
+xhr.send('{"id":1, "name": "shine", "gender": "true"}');//传递 json 串
+
+// jQuery 方式
+var user = {id: 1, name: "shine", gender: true};
+$.ajax({
+  url: '${pageContext.request.contextPath}/json/adduser',
+  type: 'post',
+  data: JSON.stringify(user),
+  contentType: 'application/json',
+  success: function(res) {
+    alert(res);
+  }
+});
+```
+
+#### 7.5 Jackson 常用注解
+
+##### 日期格式化
+
+`@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")`
+
+```java
+// 实体类
+@Data
+public class User {
+  private Integer id;
+  private String name;
+  @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+  private Date birth;
+}
+```
+
+##### 属性名修改
+
+`@JsonProperty("new_name")`
+
+```java
+// 实体类
+@Data
+public class User {
+  @JsonProperty("new_id")	// 不再使用原属性名
+  private Integer id;
+  private String name;
+  private Boolean gender;
+}
+
+// 输出的 json：{"new_id": xx, "name": "xx"}
+```
+
+##### 属性忽略
+
+`@JsonIgnore`
+
+```java
+// 实体类
+@Data
+public class User {
+  @JsonIgnore
+  private Integer id;
+  private String name;
+  private Boolean gender;
+}
+```
+
+##### null 和 empty 属性排除
+
+`Jackson` 默认会输出 `null` 值的属性，如果不需要，可以排除
+
+`@JsonInclude(JsonInclude.Include.NON_NULL)	//null值属性不输出`
+
+`@JsonInclude(JsonInclude.Include.NON_EMPTY)	//empty属性不输出（空串，长度为0的集合，null值）`
+
+```java
+// 实体类
+@Data
+public class User {
+  private Integer id;
+  @JsonInclude(JsonInclude.Include.NON_NULL)	// 若 name=null，忽略此属性
+  private String name;
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
+  private List<String> hobby;	// 若hobby长度为0或==null，忽略此属性
+}
+```
+
+##### 自定义序列化
+
+`@JsonSerialize(using=MySerializer.class)	//使用 MySerializer 输出某属性`
+
+```java
+public class User {
+  private Integer id;
+  private String name;
+  @JsonSerialize(using = MySerializer.class)
+  private Double salary = 10000.126;	//在输出此属性时，使用 MySerializer 输出
+}
+
+// 输出的json：{"id":xx, "name":"xxx", "salary":10000.13}
+
+public class MySerializer extends JsonSerializer<Double> {
+  // value 即 Double salary 的值
+  @Override
+  public void serialize(Double value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+    // 将 Double salary 的值四舍五入
+    String number = BigDecimal.valueOf(value).setScale(2, BigDecimal.ROUND_HALF_UP).toString();
+    // 输出四舍五入后的值
+    gen.writeNumber(number);
+  }
+}
+```
+
+#### 7.6 FastJson
+
+如果不想使用 `Jackson`，则也可以安装其它的 `json` 处理方案，如：`FastJson`
+
+##### 导入依赖
+
+```xml
+<dependency>
+  <groupId>com.alibaba</groudId>
+  <artifactId>fastjson</artifactId>
+  <version>1.2.54</vsersion>
+</dependency>
+```
+
+##### 安装
+
+```xml
+<mvc:annotation-driven>
+  <!--安装FastJson转换器-->
+  <mvc:message-converters>
+    <bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+      <!--声明转换类型：json-->
+      <property name="supportedMediaTypes">
+        <list>
+          <value>application/json</value>
+        </list>
+      </property>
+    </bean>
+  </mvc:message-converters>
+</mvc:annotation-driven>
+```
+
+##### 使用
+
+`@ResponseBody	@RequestBody	@RestController` 使用方法不变
+
+##### 常用注解
+
+* 日期格式化：`@JSONField(format="yyyy/MM/dd")`
+* 属性名修改：`@JSONField(name="birth")`
+* 忽略属性：`@JSONField(serialize=false)`
+* 包含 `null` 值：`@JSONField(serializeFeatures=SerializerFeature.WriteMapNullValue)`，默认会忽略所有 `null` 值，有些注解会输出 `null`
+* 自定义序列化：`@JSONField(serializeUsing = MySerializer2.class)`
+
+```java
+public class User implements Serializeable {
+  @JSONField(serialize = false)
+  private Integer id;
+  @JSONField(name = "NAME", serialzeFeatures = SerializerFeature.WriteNullStringAsEmpty)
+  private String name;
+  @JSONField(serializeFeatures = SerializerFeature.WriteMapNullValue)
+  private String city;
+  @JSONField(format="yyyy/MM/dd")
+  private Date birth;
+  @JSONField(serializeUsing = MySerializer2.class)
+  private Double salary;
+}
+
+public class MySerializer2 implements ObjectSerializer {
+  @Override
+  public void write(JSONSerializer serializer, Object object, Object fieldName, Type fieldType, int features) throws IOException {
+    Double value = (Double) object;	// salary属性值
+    String text = value + "元";	// 在salary后拼接元
+    serializer.write(text);	// 输出拼接后的内容
+  }
+}
+
+// 创建的对象是：new User(1, null, null, new Date(), 100.5)
+// 输出的json是：{"NAME":"", "city":null, "birth":"2020/12/12", "salary": "100.5元"}
+```
+
+### 8. 异常解析器
+
+#### 8.1 现有方案，分散处理
+
+`Controller` 中的每个 `Handler` 自己处理异常。
+
+此种处理方案中，异常处理逻辑，分散在各个 `Handler` 中，不利于集中管理
+
+ ```java
+ public String xxx() {
+   try {
+     ...
+   } catch(Exception1 e) {
+     e.printStackTrace();
+     return "redirect:/xx/error1";
+   } catch(Exception2 e) {
+     e.printStackTrace();
+     return "redirect:/xx/error2";
+   }
+ }
+ ```
+
+#### 8.2 异常解析，统一处理
+
+定义一个异常解析器，集中捕获处理所有异常，这样，`Controller` 中的每个 `Handler` 不再自己处理异常，而是直接 `throws` 所有异常。
+
+此种处理方案，在集中管理异常方面，更有优势！
+
+```java
+// 自定义异常类
+public class MyException1 extends Exception {
+
+    public MyException1(String message) {
+        super(message);
+    }
+}
+public class MyException2 extends Exception {
+
+    public MyException2(String message) {
+        super(message);
+    }
+}
+// 自定义异常解析器
+public class MyExResolver implements HandlerExceptionResolver {
+    @Override
+    public ModelAndView resolveException(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, Exception e) {
+        ModelAndView mav = new ModelAndView();
+        mav.addObject("ex", e.getMessage());
+        if (e instanceof MyException1) {
+            mav.setViewName("forward:/error1.jsp");
+        } else if (e instanceof MyException2) {
+            mav.setViewName("forward:/error2.jsp");
+        }
+        return mav;
+    }
+}
+```
+
+```xml
+<!--mvc.xml-->
+<!--自定义的异常解析器-->
+<bean class="com.ch.wchya.springwebmvc.resolver.MyExResolver"/>
+```
+
+```java
+// Handler
+@Controller
+@RequestMapping("/haha")
+public class ExController {
+
+    @RequestMapping("/test1")
+    public String test1(Integer id) throws MyException1 {
+        System.out.println("/ex/test1");
+        if (id == 1) {
+            throw new MyException1("错误1");
+        }
+        return "hello";
+    }
+
+    @RequestMapping("/test2")
+    public String test2(Integer id) throws MyException2 {
+        System.out.println("/ex/test2");
+        if (id == 1) {
+            throw new MyException2("错误2");
+        }
+        return "hello";
+    }
+}
+```
+
+### 9. 拦截器
+
+作用：抽取 `handler` 中的冗余功能
+
+#### 9.1 定义拦截器
+
+执行顺序：`preHandle--postHandle--afterCompletion`
+
+```java
+public class MyInter1 implements HandlerInterceptro {
+  // 主要逻辑：在 handler 之前执行：抽取 handler 中的冗余代码
+  @Override
+  public boolean preHandle(HttpServletRequest req, HttpServletResponse res, Object handler) throws Exception {
+    System.out.println("pre~~~");
+    /**
+    	response.sendRedirect("/index.jsp");//响应
+    	return false;//中断请求
+    */
+    return true;//放行，后续的拦截器或 handler 就会执行
+  }
+  // 在handler之后执行：进一步的响应定制
+  @Override
+  public void postHandle(HttpServletRequest req, HttpServletResponse res, Object handle, ModelAndView modelAndView) throws Exception {
+    System.out.println("post~~~");
+  }
+}
+```
 
 
 
@@ -13530,7 +16163,6 @@ public void testSubject() {
 
 
 
- 
 
 
 
@@ -13540,29 +16172,7 @@ public void testSubject() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## 第三十三章 Boot Strap
+## 第XX章 Boot Strap
 
 ### 环境搭建
 
