@@ -9792,7 +9792,7 @@ select * from 表名 order by id limit 40,20;
 ##### 提交数据格式
 
 * 表单的 `enctype` 的属性值必须为 `multipart/form-data`
-* 以多段的形式进行拼接提交。以二进制流的方式来处理表单数据，会把指定的文件内容封装进请求参数中
+  * 以多段的形式进行拼接提交。以二进制流的方式来处理表单数据，会把指定的文件内容封装进请求参数中
 
 ```html
 <form enctype="multipart/form-data" method="post"></form>
@@ -16133,30 +16133,178 @@ public class ExController {
 执行顺序：`preHandle--postHandle--afterCompletion`
 
 ```java
-public class MyInter1 implements HandlerInterceptro {
-  // 主要逻辑：在 handler 之前执行：抽取 handler 中的冗余代码
-  @Override
-  public boolean preHandle(HttpServletRequest req, HttpServletResponse res, Object handler) throws Exception {
-    System.out.println("pre~~~");
-    /**
-    	response.sendRedirect("/index.jsp");//响应
-    	return false;//中断请求
-    */
-    return true;//放行，后续的拦截器或 handler 就会执行
-  }
-  // 在handler之后执行：进一步的响应定制
-  @Override
-  public void postHandle(HttpServletRequest req, HttpServletResponse res, Object handle, ModelAndView modelAndView) throws Exception {
-    System.out.println("post~~~");
-  }
+// 主要逻辑：在 handler 之前执行：抽取 handler 中的冗余代码
+public class MyInterceptor implements HandlerInterceptor {
+
+    // 在 handle 之前执行
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        HttpSession session = request.getSession();
+        if (session.getAttribute("state") != null)
+            return true;
+        // 中断之前，响应请求
+        response.sendRedirect("/login.jsp");
+        return false;
+    }
+
+    // 在 handle 之后，响应之前执行
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+
+    }
+
+    // 在视图渲染完毕之后进行，可以用来做资源的回收
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+
+    }
 }
 ```
 
+```java
+@Controller
+@RequestMapping("/inter")
+@SessionAttributes("state")
+public class InterController {
 
+    @RequestMapping("/login")
+    public String login(Model model) {
+        model.addAttribute("state", "ok");
+        return "index";
+    }
 
+    @RequestMapping("/test1")
+    public String test1(Model model) {
+        System.out.println("/inter/test1");
+        return "index";
+    }
 
+    @RequestMapping("/test2")
+    public String test2(Model model) {
+        System.out.println("/inter/test2");
+        return "index";
+    }
+}
+```
 
+#### 9.2 配置拦截路径
 
+```xml
+<!--拦截器-->
+<mvc:interceptors>
+    <mvc:interceptor>
+        <mvc:mapping path="/inter/test1"/>
+        <mvc:mapping path="/inter/test2"/>
+        <mvc:mapping path="/inter/test*"/><!--test开头-->
+        <mvc:mapping path="/inter/**"/><!--任意多级路径-->
+        <mvc:exclude-mapping path="/inter/login"/><!--不拦截此路径-->
+        <bean class="com.ch.wchya.springwebmvc.interceptor.MyInterceptor" /><!--拦截器类-->
+    </mvc:interceptor>
+</mvc:interceptors>
+```
+
+### 10. 上传
+
+#### 10.1 导入 jar
+
+```xml
+<dependency>
+    <groupId>commons-io</groupId>
+    <artifactId>commons-io</artifactId>
+    <version>2.8.0</version>
+</dependency>
+<dependency>
+    <groupId>commons-fileupload</groupId>
+    <artifactId>commons-fileupload</artifactId>
+    <version>1.3.3</version>
+</dependency>
+```
+
+#### 10.2 表单
+
+```html
+<form action="${pageContext.request.contextPath}/upload/test1" method="post" enctype="multipart/form-data">
+    file: <input type="file" name="source"><br>
+    <input type="submit" value="提交">
+</form>
+```
+
+#### 10.3 上传解析器
+
+```xml
+<!--上传解析器，id必须是multipartResolver，要不然springmvc找不到上传解析器-->
+<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+    <!--最大可上传文件的大小，单位：byte，超过此大小后会抛出 MaxUploadSizeExceededException异常，可以使用异常解析器捕获-->
+    <property name="maxUploadSize" value="1048576"/>
+</bean>
+```
+
+#### 10.4 Handler
+
+```java
+@Controller
+@RequestMapping("/upload")
+public class UploadController {
+
+    @RequestMapping("/test1")
+    public String test1(MultipartFile source, HttpSession session) throws IOException {
+        System.out.println("/upload/test1");
+        // 获取原始文件名
+        String filename = source.getOriginalFilename();
+        // 获取上传文件的文件类型
+        String contentType = source.getContentType();
+        System.out.println(filename);
+        System.out.println(contentType);
+        // 上传文件根目录的真实路径
+        String basePath = session.getServletContext().getRealPath(File.separator + "WEB-INF" + File.separator + "upload");
+        // 获取有2、3级目录的存储路径
+        String storePath = FileUploadUtil.newFilePath(basePath, filename);
+        // 获取存储的文件名
+        String newFilename = FileUploadUtil.newFileName(filename);
+        // 获取最终存储的路径和文件名
+        String finalName = storePath + File.separator + newFilename;
+        source.transferTo(new File(finalName));
+        return "login";
+    }
+}
+
+// FileUploadUtil 工具类
+public class FileUploadUtil {
+
+    private FileUploadUtil() {}
+
+    /**
+     * 生成新的文件名称，生成规则：UUID_原文件名称
+     * @param filename 原文件名称
+     * @return 新生成的文件名称
+     */
+    public static String newFileName(String filename) {
+        return UUID.randomUUID().toString().replaceAll("-", "") + "_" + filename;
+    }
+
+    /**
+     * 生成存放上传文件的路径，生成规则：
+     * 根路径/二级目录/三级目录，二级、三级目录都是根据文件名称的 hashCode（生成三级时进行了右移4位操作）和15做与运算以后生成的0~15的数字
+     * 最多可以支持 16 的 8 次方个目录，共有 43 亿个目录
+     * @param basePath 根路径
+     * @param filename 文件名
+     * @return 存放文件的最终路径
+     */
+    public static String newFilePath(String basePath, String filename) {
+        int hashCode = filename.hashCode();
+        int path2 = hashCode & 15; // 和15进行与运算，生成二级目录
+        int path3 = (hashCode >> 4) & 15; // hashCode 右移4位，然后和15进行与运算，生成三级目录
+        String dir = basePath + File.separator + path2 + File.separator + path3; // 将1、2、3级目录拼接在一起
+        // 如果路径不存在，创建
+        File fileDir = new File(dir);
+        if (!fileDir.exists())
+            fileDir.mkdirs();
+
+        // 返回存放文件的最终路径
+        return dir;
+    }
+}
+```
 
 
 
