@@ -9608,7 +9608,7 @@ ${cookie.password.value} // 获取 password 的 cookie 的 value 值
 #### 6.4 JSTL 使用
 
 * 导入两个 `jar` 文件：`standard.jar` 和 `jstl.jar` 文件都放到 `/WEB-INF/lib/` 目录下
-* 在 `jsp` 页面引入标签库 `<%@ tablib uri="http://java.sun.com/jsp/jstl/core" prefix="c" >`
+* 在 `jsp` 页面引入标签库 `<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" >`
 
 #### 6.5 核心标签
 
@@ -16306,9 +16306,196 @@ public class FileUploadUtil {
 }
 ```
 
+### 11. 下载
 
+#### 11.1 下载页面
 
+##### 导入 jstl 依赖
 
+```xml
+<dependency>
+    <groupId>javax.servlet</groupId>
+    <artifactId>jstl</artifactId>
+  	<version>1.2</version>
+    <scope>runtime</scope>
+</dependency>
+<dependency>
+    <groupId>taglibs</groupId>
+    <artifactId>standard</artifactId>
+  	<version>1.1.2</version>
+</dependency>
+```
+
+##### 创建下载jsp页面
+
+```jsp
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>下载</title>
+</head>
+<body>
+    <a href="${pageContext.request.contextPath}/download/test1?name=比翼研发云平台介绍及使用成效.docx">下载附件</a>
+    <table>
+        <thead>
+        <tr>
+            <th>文件名</th>
+            <th>下载链接</th>
+        </tr>
+        </thead>
+        <tbody>
+        <c:forEach items="${allFiles}" var="files">
+            <tr>
+                <td>${files.value}</td>
+                <td><a href="${pageContext.request.contextPath}/download/test1?name=${files.key}">下载</a></td>
+            </tr>
+        </c:forEach>
+        </tbody>
+    </table>
+</body>
+</html>
+```
+
+#### 11.2 Handler
+
+```java
+@Controller
+@RequestMapping("/download")
+public class DownloadController {
+
+    @RequestMapping("/test1")	// 用于下载
+    public void test1(String name, HttpSession session, HttpServletResponse resp) throws IOException {
+        // 获得文件存放的根目录
+        String path = session.getServletContext().getRealPath(File.separator + "WEB-INF" + File.separator + "upload");
+        // 获取真实文件名称（带后缀）
+        String filename = name.substring(name.indexOf("_") + 1);
+        // 获取最终的下载路径
+        String realPath = FileUploadUtil.newFilePath(path, filename);
+        String downloadUrl = realPath + File.separator + name;
+
+        // 设置响应头，告知浏览器，要以附件的形式保存内容，filename=浏览器显示的下载文件名
+        resp.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(filename,"UTF-8"));
+        // 读取目标文件，写出给客户端
+        IOUtils.copy(new FileInputStream(downloadUrl), resp.getOutputStream());
+    }
+
+    @RequestMapping("/filesmap")	// 用于展示可用的下载文件
+    public String filesmap(HttpServletRequest request) {
+        // 获得文件存放的根目录
+        String path = request.getServletContext().getRealPath(File.separator + "WEB-INF" + File.separator + "upload");
+
+        // 获取该目录下的所有文件
+        Map<String, String> allFiles = new HashMap<>();
+        File root = new File(path);
+        if (!root.exists()) {
+            root.mkdirs();
+            request.setAttribute("allFiles",allFiles);
+        } else
+            FileUtil.getAllFilesRecursion(root, allFiles);
+
+        request.setAttribute("allFiles", allFiles);
+        return "download";
+    }
+}
+```
+
+### 12. 验证码
+
+网页中的验证码是网页安全的一个屏障，可以一定程序上防止暴力破解
+
+#### 12.1 导入jar
+
+```xml
+<dependency>
+    <groupId>com.github.penggle</groupId>
+    <artifactId>kaptcha</artifactId>
+    <exclusions>
+        <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+```
+
+#### 12.2 web.xml 配置
+
+```xml
+<servlet>
+    <servlet-name>cap</servlet-name>
+    <servlet-class>com.google.code.kaptcha.servlet.KaptchaServlet</servlet-class>
+    <init-param>
+        <param-name>kaptcha.border</param-name>
+        <param-value>no</param-value>
+    </init-param>
+    <init-param>
+        <param-name>kaptcha.textproducer.char.length</param-name>
+        <param-value>4</param-value>
+    </init-param>
+    <init-param>
+        <param-name>kaptcha.textproducer.char.string</param-name>
+        <param-value>abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789</param-value>
+    </init-param>
+    <init-param>
+        <param-name>kaptcha.background.clear.to</param-name>
+        <param-value>211,229,237</param-value>
+    </init-param>
+    <init-param>
+        <!--session.setAttribute("captcha", "验证码")-->
+        <param-name>kaptcha.session.key</param-name>
+        <param-value>captcha</param-value>
+    </init-param>
+</servlet>
+<servlet-mapping>
+    <servlet-name>cap</servlet-name>
+    <url-pattern>/captcha</url-pattern>
+</servlet-mapping>
+```
+
+#### 12.3 页面
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>验证码</title>
+</head>
+<body>
+    <form action="${pageContext.request.contextPath}/code/test1">
+        <img src="${pageContext.request.contextPath}/captcha" id="validateCode">
+        <input type="text" name="code"><br>
+        <input type="submit" value="提交">
+    </form>
+    <script>
+        var img = document.getElementById("validateCode");
+        img.style.cursor = "pointer";
+        img.style.width = "100px";
+        img.onclick = function (ev) {
+            img.src = "${pageContext.request.contextPath}/captcha?" + new Date().getTime()
+        };
+    </script>
+</body>
+</html>
+```
+
+#### 12.4 handler
+
+```java
+@Controller
+@RequestMapping("/code")
+public class ValidateCodeController {
+
+    @RequestMapping("/test1")
+    public String test1(String code, HttpSession session) {
+        System.out.println("/code/test1");
+        String vCode = (String) session.getAttribute("captcha");
+        if (vCode.equalsIgnoreCase(code))
+            return "index";
+        return "error1";
+    }
+}
+```
 
 
 
