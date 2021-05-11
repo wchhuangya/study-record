@@ -16497,6 +16497,52 @@ public class ValidateCodeController {
 }
 ```
 
+### 13. REST
+
+这是一种开发风格，遵从此风格开发的软件，就符合 `REST` 风格，则称它是 `RESTFUL` 的
+
+两个核心要求：
+
+* 每个资源都有唯一的标识（`URL`）
+* 不同的行为，使用对应的 `http-method`
+
+| 访问标识                                     | 资源            |
+| -------------------------------------------- | --------------- |
+| [http://localhost:8081/xxx/users]()          | 所有用户        |
+| [http://localhost:8081/xxx/users/1]()        | 用户1           |
+| [http://localhost:8081/xxx/users/1/orders]() | 用户1的所有订单 |
+
+| 请求方式 | 标识                                          | 意图                        |
+| -------- | --------------------------------------------- | --------------------------- |
+| `GET`    | [http://localhost:8081/xxx/users]()           | 查询所有用户                |
+| `POST`   | [http://localhost:8081/xxx/users]()           | 在所有用户中增加一个        |
+| `PUT`    | [http://localhost:8081/xxx/users]()           | 在所有用户中修改一个        |
+| `DELETE` | [http://localhost:8081/xxx/users/1]()         | 删除用户1                   |
+| `GET`    | [http://localhost:8081/xxx/users/1]()         | 查询用户1                   |
+| `GET`    | [http://localhost:8081/xxx/users/1/orders]()  | 查询用户1的所有订单         |
+| `POST`   | [htttp://localhost:8081/xxx.users/1/orders]() | 在用户1的所有订单中增加一个 |
+
+#### 13.1 优点
+
+* 看 `URL` 就知道要什么
+* 看 `http method` 就知道要干什么
+
+#### 13.2 使用
+
+##### 定义 RESTFUL 风格的 controller
+
+```java
+@RequestMapping(value="/users", method = RequestMethod.GET)
+```
+
+等价于
+
+```java
+@GetMapping("/users")
+```
+
+
+
 
 
 
