@@ -12476,6 +12476,9 @@ public class LoginUser {
             <!--事务控制类型-->
             <transactionManager type="jdbc"></transactionManager>
             <!--数据库连接参数-->
+            <!--下面这句也可以写为：
+			<dataSource type="POOLED">
+			-->
             <dataSource type="org.apache.ibatis.datasource.pooled.PooledDataSourceFactory">
                 <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
                 <!--注意：<>内不能写&，需要使用转义字符 &amp;-->
@@ -12486,9 +12489,13 @@ public class LoginUser {
         </environment>
     </environments>
 
-    <!--注册mapper文件-->
+    <!--
+		指定映射配置文件的位置，映射配置文件指的是每个dao独立的配置文件
+		如果这里用注解配置的话，此处应该使用class属性指定被注解的dao全限定类名
+	-->
     <mappers>
         <mapper resource="LoginUserDaoMapper.xml"/>
+        <!--<mapper class="com.ch.wchya.mybatisstudy.dao.IMUserDao"/>-->
     </mappers>
 </configuration>
 ```
