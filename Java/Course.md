@@ -12469,6 +12469,15 @@ public class LoginUser {
                                         typeHandlers?, objectFactory?, objectWrapperFactory?,
                                         reflectorFactory?, plugins?, environments?,
                                         databaseIdProvider?, mappers?)-->
+  	
+  	<!--引入数据库相关信息的配置文件-->
+  	<properties resources="jdbc.properties"/>
+  
+  	<!--配置别名-->
+  	<typeAliases>
+      <package name="com.ch.wchya.test.entity"/>
+  	</typeAliases>
+  
     <!--核心配置信息-->
     <environments default="main_config">
         <!--数据库相关信息-->
@@ -12477,14 +12486,14 @@ public class LoginUser {
             <transactionManager type="jdbc"></transactionManager>
             <!--数据库连接参数-->
             <!--下面这句也可以写为：
-			<dataSource type="POOLED">
-			-->
+            <dataSource type="POOLED">
+            -->
             <dataSource type="org.apache.ibatis.datasource.pooled.PooledDataSourceFactory">
-                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="driver" value="${jdbc.driver}"/>
                 <!--注意：<>内不能写&，需要使用转义字符 &amp;-->
-                <property name="url" value="jdbc:mysql://localhost:3306/emp?useUnicode=true&amp;characterEncoding=utf-8"/>
-                <property name="username" value="xxx"/>
-                <property name="password" value="xxx"/>
+                <property name="url" value="${jdbc.url}"/>
+                <property name="username" value="${jdbc.username}"/>
+                <property name="password" value="${jdbc.password}"/>
             </dataSource>
         </environment>
     </environments>
@@ -12492,13 +12501,19 @@ public class LoginUser {
     <!--
 		指定映射配置文件的位置，映射配置文件指的是每个dao独立的配置文件
 		如果这里用注解配置的话，此处应该使用class属性指定被注解的dao全限定类名
-	-->
+		-->
     <mappers>
         <mapper resource="LoginUserDaoMapper.xml"/>
         <!--<mapper class="com.ch.wchya.mybatisstudy.dao.IMUserDao"/>-->
     </mappers>
 </configuration>
 ```
+
+> mybatis 连接池配置的位置：主配置文件的 dataSource 标签，type 属性就是表示采用何种连接池方式（提供了3种方式的配置），type的取值有：
+>
+> * POOLED：采用传统的 javax.sql.DataSource 规范中的连接池，mybatis 中有针对规范的实现
+> * UNPOOLED：采用传统的获取连接的方式，虽然也实现了 javax.sql.DataSource 接口，但是并没有使用池的思想
+> * JNDI：采用服务器提供的 JNDI 技术实现，来获取 DataSource 对象，不同的服务器所能拿到的 DataSource 是不一样的。注意：如果不是 web 或者 maven 的 war 工程，是不能使用的
 
 #### 3.4 创建 mapper 映射文件
 
@@ -16548,9 +16563,528 @@ public class ValidateCodeController {
 @GetMapping("/users")
 ```
 
+#### 13.3 示例
 
+```java
+@RestController
+@RequestMapping("/rest")
+public class RestfulController {
 
+    @GetMapping("/users")
+    public List<User> queryUsers() {
+        System.out.println("query users with get");
+        User user1 = new User(1, "张三", true);
+        User user2 = new User(2, "李四", false);
+        return Arrays.asList(user1, user2);
+    }
 
+    @GetMapping("/users/{id}")
+    public User queryOne(@PathVariable Integer id) {
+        System.out.println("query one with get");
+        return new User(1, "张三", true);
+    }
+
+    @DeleteMapping("/users/{id}")
+    public String deleteOne(@PathVariable Integer id) {
+        System.out.println("delete one with get：" + id);
+        return "ok";
+    }
+
+    @PostMapping("/users")
+    public String saveUser(@RequestBody User user) {
+        System.out.println("add user with post: " + user);
+        return "ok";
+    }
+
+    @PutMapping("/users")
+    public String updateUser(@RequestBody User user) {
+        System.out.println("update user with get: " + user);
+        return "ok";
+    }
+}
+```
+
+### 14. 跨域请求
+
+#### 14.1 域
+
+**域：协议 + IP + 端口**，例如：
+
+* [http://localhost:8081]()
+* [http://localhost:8080]()
+* [http://www.baidu.com:80]()
+
+#### 14.2 Ajax 跨域问题
+
+* `Ajax` 发送请求时，不允许跨域，以防用户信息泄露
+* 当 `Ajax` 跨域请求时，响应会被浏览器拦截，并报错，即浏览器默认不允许 `Ajax` 跨域得到响应内容
+* 互相信任的域之间如果需要 `Ajax` 访问（比如前后端分离项目中，前端项目和后端项目之间），则需要额外的设置才可正常请求
+
+#### 14.3 解决方案
+
+在被访问方的 `Controller` 类上，添加注解
+
+```java
+@CrossOrigin("http://localhost:8080")	// 允许此域发请求访问
+public class SysUserController {
+  ...
+}
+```
+
+携带对方 `cookie`，使得 `session` 可用。
+
+在访问方，`Ajax` 添加属性：`withCredentials=true`
+
+```javascript
+$.ajax({
+  type:'post',
+  url:'http://localhost:8081/web/sys/login',
+  ...
+  xhrFields: {
+    // 跨域携带cookie
+    withCredentials: true
+  }
+});
+// 或
+var xhr = new XMLHttpRequest();
+// 跨域携带cookie
+xhr.withCredentials=true;
+```
+
+### 15. SpringMVC 执行流程
+
+[![gdRtdx.md.png](https://z3.ax1x.com/2021/05/12/gdRtdx.md.png)](https://imgtu.com/i/gdRtdx)
+
+### 16. Spring 整合
+
+#### 16.1 整合思路
+
+此时项目中有两个工厂：
+
+* `DispatcherServlet` 启动的 `springmvc` 工厂 == 负责生产 `C` 及 `springmvc` 自己的系统组件
+* `ContextLoaderListener` 启动的 `spring` 工厂 == 负责生产其它所有组件
+* `springmvc` 的工厂会被设置为 `spring` 工厂的子工厂，可以随意获取 `spring` 工厂中的组件
+* 整合过程，就是累加：**代码 + 依赖 + 配置**，然后将 `service` 注入给 `controller` 即可
+
+#### 16.2 整合技巧
+
+两个工厂不能有彼此侵入，即，生产的组件不能有重合
+
+```xml
+<!--这是 springmvc 的配置，告知 springmvc，哪些包下存在被注解的类
+		use-default-filters=true	凡是被 @Controller,@Service,@Repository 注解的类，都会被扫描
+		use-default-filters=false	默认不扫描包内的任何类，只扫描 include-filter 中指定的注解
+		即，以下配置声明了只扫描被 @Controller 注解的类
+-->
+<context:component-scan base-package="com.ch.wchya.ssm">
+    <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+</context:component-scan>
+
+<!--这是 spring 的配置，配置了自动扫描的路径，除了 Controller 注解不扫描，其它的都扫描-->
+    <context:component-scan base-package="com.ch.wchya.ssm" use-default-filters="true">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+```
+
+#### 16.3 整合
+
+##### web.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+    <!--配置 springmvc 的前端控制器和配置信息-->
+    <servlet>
+        <servlet-name>mvc</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:mvc.xml</param-value>
+        </init-param>
+
+        <load-on-startup>1</load-on-startup>
+
+        <!--  StandardServletMultipartResolver 属性配置  -->
+        <multipart-config>
+            <!--上传到/tmp/upload 目录,如果配置为/使用HttpServletRequest上传时，可能会抛出异常/无权限操作-->
+            <!--<location>/</location>-->
+            <!--文件大小为2M-->
+            <max-file-size>2097152</max-file-size>
+            <!--整个请求不超过4M-->
+            <max-request-size>4194304</max-request-size>
+            <!--所有文件都要写入磁盘-->
+            <file-size-threshold>0</file-size-threshold>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>mvc</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+    
+    <!--配置 spring 的相关内容-->
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:applicationContext.xml</param-value>
+    </context-param>
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
+    <!--此过滤器会进行：request.setCharactorEncoding("utf-8");的操作-->
+    <filter>
+        <filter-name>encoding</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>utf-8</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>encoding</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+</web-app>
+```
+
+##### applicationContext.xml（spring配置文件）
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd
+                          "
+>
+
+    <!--配置自动扫描的路径，除了 Controller 注解不扫描，其它的都扫描-->
+    <context:component-scan base-package="com.ch.wchya.ssm" use-default-filters="true">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!--DataSource-->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <!--基本配置-->
+        <property name="driverClassName" value="${driverClassName}"/>
+        <property name="url" value="${url}"/>
+        <property name="username" value="${username}"/>
+        <property name="password" value="${password}"/>
+
+        <!--高级配置-->
+        <property name="initialSize" value="${initialSize}"/>
+        <property name="minIdle" value="${minIdle}"/>
+        <property name="maxActive" value="${maxActive}"/>
+        <property name="maxWait" value="${maxWait}"/>
+    </bean>
+
+    <!--SqlSessionFactory-->
+    <bean name="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"><!--该配置用于生产 SqlSessionFactory-->
+        <!--注入连接池-->
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <!--注入 dao-mapper 文件信息，如果 mapper 与 dao 同包且同名，该配置可省略-->
+        <property name="mapperLocations">
+            <list>
+                <value>classpath:com/ch/wchya/ssm/dao/*.xml</value>
+            </list>
+        </property>
+        <!--为 mapper 中用到的实体定义所在的包路径，这样，在 mapper 中就可以不用写实体的完全限定名称了-->
+        <property name="typeAliasesPackage" value="com.ch.wchya.entity.ssm"/>
+    </bean>
+
+    <!--dao-mapper 扫描路径配置-->
+    <bean name="mapperscannerconfig" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--dao接口所在的包，如果有多个包，可以用，分隔-->
+        <property name="basePackage" value="com.ch.wchya.ssm.dao"/>
+        <!--如果工厂中只有一个 sqlSessionFactory 的 bean，则此配置可以省略-->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+
+</beans>
+```
+
+##### mvc.xml（springmvc 的配置文件）
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           https://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           https://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/mvc
+                           https://www.springframework.org/schema/mvc/spring-mvc.xsd
+">
+
+    <!--告知 springmvc，哪些包下存在被注解的类
+      use-default-filters=true   凡是被 @Controller,@Service,@Repository 注解的类，都会被扫描
+      use-default-filters=false  默认不扫描包内的任何类，只扫描 include-filter 中指定的注解
+      即，以下配置声明了只扫描被 @Controller 注解的类
+    -->
+    <context:component-scan base-package="com.ch.wchya.ssm" use-default-filters="false">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!--启用注解-->
+    <mvc:annotation-driven>
+        <mvc:message-converters><!--使用 fastjson 作为 json 转换器-->
+            <bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+                <property name="supportedMediaTypes">
+                    <list>
+                        <value>application/json</value>
+                    </list>
+                </property>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+
+    <!--视图解析器
+            作用：1. 捕获后端控制器的返回值，=>    hello
+                 2. 解析：在返回值的前后进行拼接 =>   /hello.jsp
+    -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/views/"/>
+        <property name="suffix" value=".jsp"/>
+        <property name="contentType" value="text/html;charset=UTF-8" />
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+    </bean>
+
+    <!--
+        额外的增加一个 handler，且其 requestMapping：/**，可以匹配所有请求，但是优先级最低。
+        所以，如果其它所有的 handler 都匹配不上，请求会转身 /**。恰好，这个 handler 就是处理静态资源的处理方式：
+        将请求转发到 tomcat 中名为 default 的 servlet
+        RequestMapping  /*  可以匹配到的路径有：/a,/b,/c,...，不能匹配：/a/b,/a/b/c,...
+                        /** 可以匹配任意路径
+        下面配置的 handler 做的事情：将收到的请求转发到 tomcat 的 default servlet
+    -->
+    <mvc:default-servlet-handler/>
+
+</beans>
+```
+
+##### 配置 mybatis 使用 log4j 打印日志
+
+```xml
+<!--mybatis-config.xml，mybatis的主配置文件-->
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <settings>
+        <setting name="logImpl" value="LOG4J"/>
+    </settings>
+</configuration>
+```
+
+```properties
+# log4j 的配置文件
+# Set root category priority to INFO and its only appender to CONSOLE.
+#log4j.rootCategory=INFO, CONSOLE            debug   info   warn error fatal
+log4j.rootCategory=debug, CONSOLE, LOGFILE
+
+# Set the enterprise logger category to FATAL and its only appender to CONSOLE.
+log4j.logger.org.apache.axis.enterprise=FATAL, CONSOLE
+
+# CONSOLE is set to be a ConsoleAppender using a PatternLayout.
+log4j.appender.CONSOLE=org.apache.log4j.ConsoleAppender
+log4j.appender.CONSOLE.layout=org.apache.log4j.PatternLayout
+log4j.appender.CONSOLE.layout.ConversionPattern=%d{ISO8601} %-6r [%15.15t] %-5p %30.30c %x - %m\n
+
+# LOGFILE is set to be a File appender using a PatternLayout.
+log4j.appender.LOGFILE=org.apache.log4j.FileAppender
+log4j.appender.LOGFILE.File=/Users/wchya/project/mybatis-log/
+log4j.appender.LOGFILE.Append=true
+log4j.appender.LOGFILE.layout=org.apache.log4j.PatternLayout
+log4j.appender.LOGFILE.layout.ConversionPattern=%d{ISO8601} %-6r [%15.15t] %-5p %30.30c %x - %m\n
+```
+
+##### Entity
+
+```java
+@Data
+public class MUser {
+  private long id;
+  private String username;
+  private Date birthday;
+  private String sex;
+  private String address;
+}
+```
+
+##### Dao
+
+```java
+public interface MUserDao {
+    List<MUser> findAll();
+    int addMUsers(MUser mUser);
+}
+```
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ch.wchya.ssm.dao.MUserDao">
+    <select id="findAll" resultType="MUser">
+        select * from m_user
+    </select>
+
+    <insert id="addMUsers" parameterType="MUser">
+        insert into m_user(username,birthday,sex,address) values(#{username},#{birthday},#{sex},#{address})
+    </insert>
+</mapper>
+```
+
+##### Service
+
+```java
+public interface MUserService {
+    List<MUser> findAll();
+    int addMUser(MUser mUser);
+}
+@Service("mUserService")
+public class MUserServiceImpl implements MUserService {
+
+    @Autowired
+    private MUserDao mUserDao;
+
+    @Override
+    public List<MUser> findAll() {
+        return mUserDao.findAll();
+    }
+
+    @Override
+    public int addMUser(MUser mUser) {
+        return mUserDao.addMUsers(mUser);
+    }
+}
+```
+
+##### Controller
+
+```java
+@Controller
+@RequestMapping("/muser")
+public class MUserController {
+
+    @Autowired
+    private MUserService mUserService;
+
+    @RequestMapping
+    public String index() {
+        return "addmuser";
+    }
+
+    @RequestMapping("/all")
+    public String all(Model model) {
+        List<MUser> mUsers = mUserService.findAll();
+        model.addAttribute("mUsers", mUsers);
+        return "musers";
+    }
+
+    @RequestMapping("/add")
+    @ResponseBody
+    public String add(@RequestBody MUser mUser) {
+        int count = mUserService.addMUser(mUser);
+        System.out.println(count);
+        return "ok";
+    }
+}
+```
+
+##### JSP
+
+```jsp
+<!--addmuser.jsp-->
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>添加用户</title>
+</head>
+<body>
+<form>
+    <label for="username">姓名：</label><input type="text" id="username" name="username"><br>
+    <label for="birthday">生日：</label><input type="date" id="birthday" name="birthday"><br>
+    <label for="sex">性别：</label><input type="radio" name="sex" id="sex" value="男">男<input type="radio" name="sex" value="女">女<br>
+    <label for="address"></label><input type="text" id="address" name="address"><br>
+    <button id="btnAdd">新增</button>
+</form>
+<script>
+    let addBtn = document.getElementById("btnAdd");
+    addBtn.onclick = function (ev) {
+        let username = document.getElementById("username").value;
+        let birthday = document.getElementById("birthday").value;
+        let sex = document.getElementById("sex").value;
+        let address = document.getElementById("address").value;
+        ev.preventDefault();
+        if (username === '')
+            alert('请输入用户名！');
+        else if (birthday === '')
+            alert('请输入生日！');
+        else if (sex === '')
+            alert('请选择性别！');
+        else if (address === '')
+            alert('请输入地址！')
+        else {
+            let xhr = new XMLHttpRequest();
+            let mUser = {username: username, birthday: birthday, sex: sex, address: address};
+            xhr.open('post', '/muser/add')
+            xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+            xhr.send(JSON.stringify(mUser));
+            xhr.onreadystatechange = function (ev1) {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    window.location.replace('/muser/all');
+                }
+            }
+        }
+    };
+</script>
+</body>
+</html>
+<!--musers.jsp-->
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<html>
+<head>
+    <title>用户列表</title>
+</head>
+<body>
+    <table align="center" border="1">
+        <tr>
+            <th>序号</th>
+            <th>姓名</th>
+            <th>生日</th>
+            <th>性别</th>
+            <th>地址</th>
+        </tr>
+        <c:forEach items="${mUsers}" var="user">
+            <tr>
+                <td>${user.id}</td>
+                <td>${user.username}</td>
+                <td><fmt:formatDate value="${user.birthday}" pattern="yyyy/MM/dd"/> </td>
+                <td>${user.sex}</td>
+                <td>${user.address}</td>
+            </tr>
+        </c:forEach>
+    </table>
+</body>
+</html>
+```
 
 
 
