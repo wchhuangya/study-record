@@ -17086,6 +17086,589 @@ public class MUserController {
 </html>
 ```
 
+## 第三十四章 日志管理体系
+
+### 1. 引言
+
+#### 1.1 日志介绍
+
+用户记录系统中发生的各种事件，记录泊位置常见的有：控制台、磁盘文件等
+
+#### 1.2 日志级别
+
+日志级别从低到高：`TRACE、DEBUG、INFO、WARN、ERROR、FATAL`
+
+#### 1.3 日志作用
+
+* 通过日志观察、分析项目的运行情况（项目维护）
+* 通过日志分析用户的使用情况（大数据分析）
+
+### 2. 解决方案1
+
+#### 2.1 Log4j + Commons-Logging
+
+##### 导入依赖
+
+项目中添加 `Log4j` 和 `Commons-Logging` 的依赖
+
+```xml
+<dependency>
+    <groupId>log4j</groupId>
+    <artifactId>log4j</artifactId>
+    <version>1.2.17</version>
+</dependency>
+<dependency>
+    <groupId>commons-logging</groupId>
+    <artifactId>commons-logging</artifactId>
+    <version>1.2</version>
+</dependency>
+```
+
+#### 2.2 基本使用
+
+```java
+public class HelloLog {
+  // 需要一个输出日志的类，可以创建一个log属性
+  Log log = LogFactory.getLog(HelloLog.class);
+  
+  @Test
+  public void test1() {
+    log.trace("hello trace");
+    log.debug("hello debug");
+    log.info("hello info");
+    log.warn("hello warn");
+    log.error("hello error");
+    log.fatal("hello fatal");
+  }
+}
+```
+
+#### 2.3 配置信息
+
+定义配置文件：`log4j.xml`
+
+| 占位符 | 描述                                                         |
+| ------ | ------------------------------------------------------------ |
+| `%p`   | 输出优先级，即：`DEBUG、INFO、WARN、ERROR、FATAL`            |
+| `%r`   | 输出自应用启动到输出该 `log` 信息耗费的毫秒数                |
+| `%c`   | 输出所在类的全名                                             |
+| `%t`   | 输出产生该日志事件的线程名                                   |
+| `%n`   | 输出一个回车换行符                                           |
+| `%d`   | 输出日志时间点的日期或时间，默认格式为 `ISO8601`，也可以在其后指定格式，比如：`%d[yyyy-MM-dd HH:mm:ss,SSS]`，输出类似：`2020-02-02 02:02:02,222` |
+| `%l`   | 输出日志事件的发生位置，包括类名、发生的线程，以及在代码中的行数，例如：`Test4.main(Test4.java:10)` |
+
+![image-20210515105220651](/Users/wchya/own/markdown/imgs/image-20210515105220651.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration PUBLIC "-//LOGGER" "http://org.apache/log4j/xml/log4j.dtd">
+<log4j:configuration>
+  
+  <!--org.apache.log4j.ConsoleAppender 输出到控制台-->
+  <appender name="myConsole" class="org.apache.log4j.ConsoleAppender">
+    <!--输出格式-->
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%-d{yyyy-MM-dd HH:mm:ss,SSS} [%c]-[%p] %m%n" />
+    </layout>
+  </appender>
+  <!--输出到文件-->
+  <appender name="myFile1" class="org.apache.log4j.RollingFileAppender">
+    <param name="File" value="/Users/wchya/project/logs/log4j/hello.log"/><!--文件位置-->
+    <param name="Append" value="true"/><!--是否选择追加-->
+    <param name="MaxFileSize" value="1kb"/><!--文件最大字节数-->
+    <param name="MaxBackupIndex" value="2"/><!--新文件数量-->
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%p (%c:%l)- %m%n"/>
+    </layout>
+  </appender>
+  <appender name="myFile2" class="org.apache.log4j.DailyRollingFileAppender">
+    <param name="File" value="/Users/wchya/logs/log4j/hello2.log"/><!--文件位置-->
+    <param name="Append" value="true"/><!--是否选择追加-->
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%-d{yyyy-MM-dd HH:mm:ss,SSS} [%c]-[%p] %m%n"/>
+    </layout>
+  </appender>
+  <!--根logger的位置-->
+  <root>
+    <!--优先级设置，all < trace < debug < info < warn < error < fatal < off-->
+    <priority value="all"/>
+    <appender-ref ref="myConsole"/>
+    <appender-ref ref="myFile1"/>
+  </root>
+</log4j:configuration>
+```
+
+### 3. 解决方案2
+
+#### 3.1 Logback + SJF4j
+
+##### 导入依赖
+
+```xml
+<dependency>
+    <groupId>ch.qos.logback</groupId>
+    <artifactId>logback-classic</artifactId>
+    <version>1.2.3</version>
+    <scope>test</scope>
+</dependency>
+```
+
+#### 3.2 基本使用
+
+```java
+public class TestLog2 {
+    private final Logger logger = LoggerFactory.getLogger(TestLog2.class);
+
+    @Test
+    public void test() {
+        System.out.println(logger.getClass());
+        logger.trace("hello trace");
+        logger.debug("hello debug");
+        logger.info("hello info");
+        logger.warn("hello warn");
+        logger.error("hello error");
+    }
+}
+```
+
+#### 3.3 配置信息
+
+定义：`logback.xml`
+
+| 点位符                        | 描述                                                         |
+| ----------------------------- | ------------------------------------------------------------ |
+| `%d[yyyy-MM-dd HH:mm:ss.SSS]` | 日期                                                         |
+| `%5p`                         | 日志级别，5位字符长度显示，如果内容占有不满5位则内容右对齐并在左侧补空格 |
+| `%-5p`                        | 5位字符长度显示日志级别，如果内容占有不满5位则内容左对齐并在右侧补空格，-代表左对齐 |
+| `%logger`                     | 日志所在包和类                                               |
+| `%M`                          | 日志所在方法名                                               |
+| `%L`                          | 日志所在代码行                                               |
+| `%m`                          | 日志下方                                                     |
+| `%n`                          | 换行                                                         |
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!--scan:当此属性设置为true时，配置文件如果发生改变，将会被重新加载，默认值为true-->
+<!--scanPeriod:设置监测配置文件是否有修改的时间间隔，如果没有给出时间单位，默认单位是毫秒。当scan为true时，此属性失效，默认的时间间隔为1分钟-->
+<!--debug:当此属性设置为true时，将打印出logback内部日志信息，实时查看logback运行状态，默认值为false-->
+<configuration scan="true" scanPeriod="60 seconds" debug="true">
+  
+  <!--定义变量，可通过 ${log.path} 和 ${CONSOLE_LOG_PATTERN} 得到变量值-->
+  <property name="log.path" value="/Users/wchya/project/logs/logback/"/>
+  <property name="CONSOLE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} |-[%-5p] in %logger.%M[line-%L] -%m%n"/>
+  <!--输出到控制台-->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <!--Threshold=即最低日志级别，此appender输出大于等于对应级别的日志（当然还要满足root中定义的最低级别）-->
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>debug</level>
+    </filter>
+    <encoder>
+      <!--日志格式（引用变量）-->
+      <Pattern>${CONSOLE_LOG_PATTERN}</Pattern>
+      <!--设置字符集-->
+      <charset>UTF-8</charset>
+    </encoder>
+  </appender>
+  <!--追加到文件中-->
+  <appender name="file" class="ch.qos.logback.core.FileAppender">
+    <file>${log.path}/hello2.log</file>
+    <encoder>
+      <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+    </encoder>
+  </appender>
+  <!--滚动追加到文件中-->
+  <appender name="file2" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!--正在记录的日志文件的路径及文件名-->
+    <file>${log.path}/hello.log</file>
+    <!--日志文件输出格式-->
+    <encoder>
+      <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+      <charset>UTF-8</charset><!--设置字符集-->
+    </encoder>
+    <!--日志记录器的滚动策略，按日期，按大小记录
+				文件超过最大尺寸后，会新建文件，然后新的日志文件中继续写入
+				如果日期变更，也会新建文件，然后在新的日志文件中写入当天日志-->
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!--新建文件后，原日志改名如下 %i=文件序号，i从0开始-->
+      <fileNamePattern>${log.path}/hello-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <!--每个日志文件的最大体量-->
+      <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+        <maxFileSize>8kb</maxFileSize>
+      </timeBasedFileNamingAndTriggeringPolicy>
+      <!--日志文件保留天数，1=只保留昨天的归档日志文件，不设置则保留所有日志-->
+      <maxHistory>1</maxHistory>
+    </rollingPolicy>
+  </appender>
+  
+  <root level="trace">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="file"/>
+    <appender-ref ref="file2"/>
+  </root>
+  
+</configuration>
+```
+
+## 第三十五章 Quartz
+
+### 1. 简介
+
+`Quzrtz:http://www.quartz-scheduler.org/`，是一个定时任务调度框架。比如你遇到这样的问题：
+
+* 想在30分钟后，查看订单是否支付，未支付则取消订单
+* 想在每月29号，信用卡自动还款
+* ……
+* 想定时在某个时间，去做某件事（任务）
+
+`Quartz` 是要做定时任务的调度，设置好触发时间规则，以及相应的任务（`Job`）即可
+
+### 2. 使用
+
+#### 2.1 导入依赖
+
+```xml
+<dependency>
+    <groupId>org.quartz-scheduler</groupId>
+    <artifactId>quartz</artifactId>
+    <version>2.3.2</version>
+</dependency>
+```
+
+#### 2.2 定义 job
+
+```java
+public class HelloJob implements Job {
+    @Override
+    public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+        JobDetail jobDetail = jobExecutionContext.getJobDetail();
+        JobKey key = jobDetail.getKey();
+        System.out.println(key.getName());
+        System.out.println(key.getGroup());
+        System.out.println("Hello job" + new Date());
+    }
+}
+```
+
+#### 2.3 API 测试
+
+```java
+public class HelloQuartz {
+
+    public static void main(String[] args) throws SchedulerException {
+        // 1. 调度器 Scheduler
+        Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
+
+        // 2. 触发器
+        SimpleTrigger trigger = TriggerBuilder.newTrigger().withIdentity("trigger1", "group1")
+                .startNow()
+                .withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInSeconds(1).withRepeatCount(5))
+                .endAt(new GregorianCalendar(2021, 4, 15, 16, 55, 00).getTime())
+                .build();
+
+        // 3. JobDetail
+        JobDetail jobDetail = JobBuilder.newJob(HelloJob.class).withIdentity("job1", "group1").build();
+
+        // 4. 将 JobDetail 和 触发器 增加到调度器中
+        scheduler.scheduleJob(jobDetail, trigger);
+
+        // 5. 启动，调度器开始工作
+        scheduler.start();
+    }
+}
+```
+
+#### 2.4 配置
+
+```properties
+# 名为：quartz.properties，放置在 classpath 下，如果没有此配置则按默认配置启动
+# 指定调度器名称，非实现类
+org.quartz.scheduler.instanceName=DefaultQuartzScheduler
+# 指定线程池实现类
+org.quartz.threadPool.class=org.quartz.simpl.SimpleThreadPool
+# 线程池线程数量
+org.quartz.threadPool.threadCount=10
+# 优先级，默认5
+org.quartz.threadPool.threadPriority=5
+# 非持久化job
+org.quartz.jobStore.class=org.quartz.simpl.RAMJobStore
+```
+
+#### 2.5 核心类说明
+
+* `Scheduler`：调度器。所有的高度都是由它控制，是 `Quartz` 的大脑，所有任务都是由它来管理
+* `Job`：任务，想定时执行的事情（定义业务逻辑）
+* `JobDetail`：基于 `Job`，进一步包装。其中关联一个 `Job`，并为 `Job` 指定更详细的属性，比如标识等
+* `Trigger`：触发器。可以指定给某个任务，指定任务的触发机制
+
+### 3. Trigger
+
+#### 3.1 SimpleTrigger
+
+以一定的时间间隔（单位是毫秒）执行的任务：
+
+* 指定起始和戴上时间（时间段）
+* 指定时间间隔、执行次数
+
+##### 示例
+
+```java
+SimpleTrigger trigger = TriggerBuilder.newTrigger()
+  								.withIdentity("trigger1", "group1")
+  								.startNow()
+  								.withSchedule(SimpleScheduleBuilder.simpleShedule()
+                                		.withIntervalInSeconds(1)	//每秒执行一次
+                                		.repeatForever())//不限执行次数
+  								.endAt(new GregorianCalendar(2021, 5, 15, 16, 35, 0).getTime())
+  								.build();
+```
+
+```java
+SimpleTrigger trigger = TriggerBuilder.newTrigger()
+  								.withIdentity("trigger1", "group1")
+  								.startNow()
+  								.withSchedule(SimpleScheduleBuilder.simpleShedule()
+                                		.withIntervalInMinutes(3)	//每3分钟执行一次
+                                		.withRepeatCount(3))//执行次数不超过3次
+  								.endAt(new GregorianCalendar(2021, 5, 15, 16, 35, 0).getTime())
+  								.build();
+```
+
+#### 3.2 CronTrigger【重点】
+
+适合于更复杂的任务，它支持类似于 `Linux Cron` 的语法（并且更强大）
+
+##### 示例
+
+```java
+// 每天 10:00-12:00，每隔2分钟执行一次
+CronTrigger trigger = TriggerBuilder.newTrigger()
+  						.withIndentity("t1", "g1")
+  						.withSchedule(CronScheduleBuilder.cronSchedule("0 0/2 10-12 * * ?")).build();
+```
+
+##### Cron 表达式组成
+
+表达式组成：`秒 分 时 日 月 星期几 [年]`，其中 年 是可选的，一般不指定，如：`10 20 18 3 5 ?` 代表 `5月3日18点20分10秒，星期几不确定`
+
+| 位置 | 时间域       | 允许值           | 特殊值   |
+| ---- | ------------ | ---------------- | -------- |
+| 1    | 秒           | 0-59             | `,-*/`   |
+| 2    | 分钟         | 0-59             | `,-*/`   |
+| 3    | 小时         | 0-23             | `,-*/`   |
+| 4    | 日期         | 1-31             | `,-*/LW` |
+| 5    | 月份         | 1-12             | `,-*/`   |
+| 6    | 星期         | 1-7（1是星期日） | `,-*/L#` |
+| 7    | 年份（可选） |                  | `,-*/`   |
+
+##### Cron 表达式符号
+
+表达式中可以使用的特殊符号的含义如下
+
+| 符号      | 语义                                                         |
+| --------- | ------------------------------------------------------------ |
+| `*`       | 可用在所有字段中，表示对应时间域的每一个时刻，例如，在分钟字段时，表示每分钟 |
+| `?`       | 该字符只在日期和星期字段中使用，它通常表示不确定值           |
+| `-`       | 表达一个范围，如在小时字段中使用“10-12”，则表示从10到12点，即10，11，12 |
+| `,`       | 表达一个列表值，如在星期字段中使用“MON,WED,FRI”，则表示星期一、三、五 |
+| `/`       | `x/y` 表达一个等步长序列，`x` 为起始值，`y` 为增量步长值。如在分钟字段中使用 `0/15`，则表示为0，15，30和45秒 |
+| `#`       | 该字符只用在星期字段中，`4#2` 代表第一个星期3，`5#4` 代表第4个星期4 |
+| `L`       | 该字符只在日期和星期字段中使用，代表 `Last` 的意思，但它在两个字段中意思不同。 |
+|           | 如果用在星期字段里，则表示星期六，等同于使用数字7            |
+|           | `L` 出现在星期字段里，而且在前面有一个数据 `x`，则表示 “这个月的最后一个周x”，例如，6L表示该月的最后星期五 |
+|           | `L` 在日期字段中，表示这个月份的最后一天，如一月的31号，非闰年的二月28号 |
+| `W`       | 该字符只能出现在日期字段里，是对前导日期的修饰，表示离该日期最近的工作日 |
+|           | 例如 `15W` 表示离该月15号最近的工作日，如果该月15号是星期六，则匹配14号星期五，如果15日是星期日，则匹配16号星期一；如果15号是星期二，那结果就是15号星期二；但必须注意关联的匹配日期不能够跨月 |
+| `LW` 组合 | 在日期字段可以组合使用 `LW`，它的意思是当月的最后一个工作日  |
+
+##### Cron 表达式示例
+
+| 表达式                   | 说明                                                         |
+| ------------------------ | ------------------------------------------------------------ |
+| 0 0 12 * * ?             | 每天12点运行                                                 |
+| 0 15 10 * * ?            | 每天10:15运行                                                |
+| 0 15 10 * * ? 2008       | 在2008年的每天10:15运行                                      |
+| 0 * 14 * * ?             | 每天14点到15点之间每分钟运行一次，开始于14点，结束于14:50    |
+| 0 0/5 14 * * ?           | 每天14点到15点每5分钟运行一次，开始于14点，结束于14:55       |
+| 0 0/5 14,18 * * ?        | 每天14点到15点每5分钟运行一次，此外每天18点到19点第5分钟也运行一次 |
+| 0 0-5 14 * * ?           | 每天14点到14:05，第分钟运行一次                              |
+| 0 0-5/2 14 * * ?         | 每天14点到14:05，第2分钟运行一次                             |
+| 0 10,44 14 ? 3 4         | 3月每周三的14:10分和14:44，每分钟运行一次                    |
+| 0 15 10 ? * 2-6          | 每周一、二、三、四、五的10:15分运行                          |
+| 0 15 10 15 * ？          | 每月15日10:15分运行                                          |
+| 0 15 10 L * ?            | 每月最后一天10:15分运行                                      |
+| 0 15 10 ? * 6L           | 每月最后一个星期五10:15分运行【此时天必须是?】               |
+| 0 15 10 ? * 6L 2007-2009 | 在2007，2008，2009年每个月的最后一个星期五的10:15分运行      |
+
+### 4. Spring 整合 Quartz【重点】
+
+#### 4.1 依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-context-support</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.quartz-scheduler</groupId>
+    <artifactId>quartz</artifactId>
+</dependency>
+```
+
+#### 4.2 定义 Job
+
+```java
+public class HelloJob implements Job {
+    @Override
+    public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {);
+        System.out.println("Hello job" + new Date());
+    }
+}
+```
+
+#### 4.3 配置
+
+* 调度器：`SchedulerFactoryBean`
+* 触发器：`CronTriggerFactoryBean`
+* `JobDetail`：`JobDetailFactoryBean`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd 
+        ">
+  
+  <!--
+			Spring整合Quartz进行配置遵循下面的步骤：
+			1. 定义工作任务的Job
+			2. 定义触发器Trigger，并将触发器与工作任务绑定
+			3. 定义调度器，并将Trigger注册到Scheduler
+	-->
+  <!-- 1. 定义任务的bean，这里使用JobDetailFactoryBean，也可以使用MethodInvokingJobDetailFactoryBean，配置类似-->
+  <bean name="1xJob" class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+    <!--指定job的名称-->
+    <property name="name" value="job1"/>
+    <!--指定job的分组-->
+    <property name="group" value="job_group1"/>
+    <!--指定具体的job类-->
+    <property name="jobClass" value="com.ch.wchya.quartz.job.HelloJob"/>
+  </bean>
+  <!-- 2. 定义触发器的bean，定义一个Cron的Trigger，一个触发器只能和一个任务进行绑定-->
+  <bean id="cronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+    <!--指定Trigger的名称-->
+    <property name="name" value="trigger1"/>
+    <!--指定Trigger的名称-->
+    <property name="group" value="trigger_group1"/>
+    <!--指定Trigger绑定的JobDetail-->
+    <property name="jobDetail" ref="1xJob"/>
+    <!--指定Cron的表达式，当前是每隔5s运行一次-->
+    <property name="cronExpression" value="*/5 * * * * ?"/>
+  </bean>
+  <!--3. 定义调度器，并将Trigger注册到调度器中-->
+  <bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+    <property name="triggers">
+      <list>
+        <ref bean="cronTrigger"/>
+      </list>
+    </property>
+    <!--添加quartz配置，如下两种方式均可-->
+    <!--<property name="configLocation" value="classpath:quartz.properties"/>-->
+    <property name="quartzProperties">
+      <value>
+        # 指定高度器名称，实际类型为：QuartzScheduler
+        org.quartz.scheduler.instanceName=MyScheduler
+        # 指定连接池
+        org.quartz.threadPool.class=org.quartz.simpl.SimpleThreadPool
+				# 线程池线程数量
+        org.quartz.threadPool.threadCount=10
+        # 优先级，默认5
+        org.quartz.threadPool.threadPriority=5
+        # 非持久化job
+        org.quartz.jobStore.class=org.quartz.simpl.RAMJobStore
+      </value>
+    </property>
+  </bean>
+</beans>
+```
+
+#### 4.4 操作
+
+##### 启动任务
+
+工厂启动，调度器启动，任务调度开始
+
+```java
+public class TestJob {
+
+    public static void main(String[] args) {
+        // 工厂启动，任务启动，工厂关闭，任务停止
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    }
+}
+```
+
+##### 任务操作
+
+###### 删除任务
+
+```java
+public static void main(String[] args) throws InterruptedException,ScheduleException {
+  ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+  System.out.println("==============");
+  StdScheduler scheduler = (StdScheduler) context.getBean("scheduler");
+  Thread.sleep(3000);
+  // 删除Job
+  scheduler.deleteJob(JobKey.jobKey("job1","job_group1");
+}
+```
+
+###### 暂停、恢复
+
+```java
+public static void main(String[] args) throws InterruptedException,SchedulerException {
+  ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+  System.out.println("==============");
+  StdScheduler scheduler = (StdScheduler) context.getBean("scheduler");
+  Thread.sleep(3000);
+  // 暂停、恢复工作
+  scheduler.pauseJob(JobKey.jobKey("job1", "job_group1"));// 暂停工作
+  Thread.sleep(3000);
+  scheduler.resumeJob(JobKey.jobKey("job1", "job_group1"));// 恢复工作
+}
+```
+
+###### 批量操作
+
+```java
+public static void main(String[] args) throws InterruptedException,SchedulerException {
+  ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+  System.out.println("==============");
+  StdScheduler scheduler = (StdScheduler) context.getBean("scheduler");
+  Thread.sleep(3000);
+  // 暂停、恢复工作
+  GroupMatcher<JobKey> group1 = GrouopMatcher.goupEquals("group1");
+  scheduler.pauseJobs(group1);// 暂停组中所有工作
+  Thread.sleep(2000);
+  scheduler.resumeJobs(group1);// 恢复组中所有工作
+} 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
