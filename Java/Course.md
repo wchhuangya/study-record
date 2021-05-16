@@ -17178,8 +17178,6 @@ public class HelloLog {
 | `%d`   | 输出日志时间点的日期或时间，默认格式为 `ISO8601`，也可以在其后指定格式，比如：`%d[yyyy-MM-dd HH:mm:ss,SSS]`，输出类似：`2020-02-02 02:02:02,222` |
 | `%l`   | 输出日志事件的发生位置，包括类名、发生的线程，以及在代码中的行数，例如：`Test4.main(Test4.java:10)` |
 
-![image-20210515105220651](/Users/wchya/own/markdown/imgs/image-20210515105220651.png)
-
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE log4j:configuration PUBLIC "-//LOGGER" "http://org.apache/log4j/xml/log4j.dtd">
