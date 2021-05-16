@@ -16809,6 +16809,27 @@ xhr.withCredentials=true;
         <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
     </bean>
 
+    <!--配置事务相关-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!--配置增强通知-->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="get*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="find*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="select*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="add*"/>
+            <tx:method name="save*"/>
+            <tx:method name="insert*"/>
+            <tx:method name="update*"/>
+            <tx:method name="delete*"/>
+        </tx:attributes>
+    </tx:advice>
+    <aop:config>
+        <aop:advisor advice-ref="txAdvice" pointcut="execution(* com.ch.wchya..service..*.*())"/>
+    </aop:config>
 </beans>
 ```
 
@@ -17656,6 +17677,8 @@ public static void main(String[] args) throws InterruptedException,SchedulerExce
   scheduler.resumeJobs(group1);// 恢复组中所有工作
 } 
 ```
+
+
 
 
 
