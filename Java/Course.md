@@ -13337,7 +13337,7 @@ public void testSubject() {
 
 ```xml
 <mapper namespace="com.ch.wchya.sevlet.dao.BookDao">
-	<sql id="books_field"><!-- 定义sql片断 -->
+		<sql id="books_field"><!-- 定义sql片断 -->
     	select id,name,author,publish,sort
     </sql>
     
@@ -13352,7 +13352,7 @@ public void testSubject() {
 
 ```xml
 <mapper namespace="com.ch.wchya.sevlet.dao.BookDao">
-	<sql id="books_field"><!-- 定义sql片断 -->
+		<sql id="books_field"><!-- 定义sql片断 -->
     	select id,name,author,publish,sort
     </sql>
     
@@ -13360,10 +13360,12 @@ public void testSubject() {
     	<include refid="books_field" /><!--通过ID引用sql片断-->
         from t_tooks
         <!--
-			where 标签作用：1. 添加 where 子句；2. 如果以 or、and 开头，会把开头的 or、and 去掉；
-		-->
+				where 标签作用：
+											1. 只会在子元素返回内容的情况下添加 where 子句；
+											2. 如果以 or、and 开头，会把开头的 or、and 去掉；
+				-->
         <where>
-        	<if test="name!=null">
+        		<if test="name!=null">
             username=#{username}
             </if>
             <if test="price!=null">
@@ -16688,6 +16690,142 @@ xhr.withCredentials=true;
 
 #### 16.3 整合
 
+##### pom.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>all</artifactId>
+        <groupId>com.ch.wchya</groupId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>ssm</artifactId>
+
+    <packaging>war</packaging>
+
+    <dependencies>
+
+        <!--project dependency-->
+        <dependency>
+            <groupId>com.ch.wchya</groupId>
+            <artifactId>entity</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!--spring-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aspects</artifactId>
+        </dependency>
+
+        <!--spring mvc-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+        </dependency>
+
+        <!--mysql-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+
+        <!--mybatis-->
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+        </dependency>
+
+        <!--javaweb-->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>taglibs</groupId>
+            <artifactId>standard</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>javax.servlet.jsp-api</artifactId>
+        </dependency>
+
+        <!--json-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+        </dependency>
+
+        <!--log4j-->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+        </dependency>
+
+        <!--junit-->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource><!--设置 src/main/java/ 目录下的 xml 文件也被当作资源读取-->
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>*.xml</include>
+                    <include>*.properties</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
+
+</project>
+```
+
 ##### web.xml
 
 ```xml
@@ -16757,11 +16895,17 @@ xhr.withCredentials=true;
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
                            http://www.springframework.org/schema/beans/spring-beans.xsd
                            http://www.springframework.org/schema/context
                            http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/tx
+                           http://www.springframework.org/schema/tx/spring-tx.xsd
+                           http://www.springframework.org/schema/aop
+                           http://www.springframework.org/schema/aop/spring-aop.xsd
                           "
 >
 
@@ -16787,7 +16931,7 @@ xhr.withCredentials=true;
     </bean>
 
     <!--SqlSessionFactory-->
-    <bean name="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"><!--该配置用于生产 SqlSessionFactory-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"><!--该配置用于生产 SqlSessionFactory-->
         <!--注入连接池-->
         <property name="dataSource" ref="dataSource"/>
         <property name="configLocation" value="classpath:mybatis-config.xml"/>
@@ -16802,11 +16946,11 @@ xhr.withCredentials=true;
     </bean>
 
     <!--dao-mapper 扫描路径配置-->
-    <bean name="mapperscannerconfig" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
         <!--dao接口所在的包，如果有多个包，可以用，分隔-->
         <property name="basePackage" value="com.ch.wchya.ssm.dao"/>
         <!--如果工厂中只有一个 sqlSessionFactory 的 bean，则此配置可以省略-->
-        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+        <!--<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>-->
     </bean>
 
     <!--配置事务相关-->
@@ -16828,8 +16972,9 @@ xhr.withCredentials=true;
         </tx:attributes>
     </tx:advice>
     <aop:config>
-        <aop:advisor advice-ref="txAdvice" pointcut="execution(* com.ch.wchya..service..*.*())"/>
+        <aop:advisor advice-ref="txAdvice" pointcut="execution(* com.ch.wchya..service..*.*(..))"/>
     </aop:config>
+
 </beans>
 ```
 
@@ -17676,15 +17821,768 @@ public static void main(String[] args) throws InterruptedException,SchedulerExce
 } 
 ```
 
+## 第三十六章 开放平台项目实战
 
+### 1. 引言
 
+#### 1.1 开放平台介绍
 
+开放平台（`Open Platform`）：在软件行业和网络中，开放平台是指软件系统通过公开其应用程序编程接口（`API`）或函数（`function`）来使外部的程序可以增加该软件系统的功能或使用该软件系统的资源，而不需要更改该软件系统的源代码。在互联网时代，把网站的服务封装成一系列计算机易识别的数据接口开放出去，供第三方开发者使用，这种行为就叫做 `Open API`，提供开放 `API` 的平台本身就被称为开放平台。
 
+#### 1.2 开放平台的使用场景
 
+企业要调用别人的长板，通过 `API` 技术，互相调用，与行业形成链接。在借助他人长板的同时，也把自己的长板贡献给他人，这就是互相赋能。
 
+开发平台的作用简单地说就是通过第三方的力量来扩展自己的生态和能力，因为光凭自己做的软件并不能覆盖所有的场景，例如阿里，京东可以提供标准化的应用软件，可能满足于一些小的卖家使用，但是数百万形形色色的卖家对于修改化要求的软件，并不是一个公司的力量可以满足的，所以就把这些需求开放给众多的第三方开发者。
 
+开放平台使用广泛、几乎所有的互联网公司都有自己的开放平台，知名的如京东的宙斯（`JD Open Platform`），淘宝开放平台（`Taobao Open Platform`），百度的数据开放平台（[https://open.baidu.com](https://open.baidu.com)），大公司的开放平台都是一个完整的生态链，有很多第三方开发者（`ISV`），专门根据大的平台开放的接口，来开发出一些能用的软件，比如“E店宝”，依赖于淘宝、天猫、京东、拼多多等大型电商开放的接口，开发出的电商 `ERP` 的管理软件，通过这个 `ERP` 可以直接执行淘宝、京东等电商对外提供的功能，如查看订单、退货、上架产品等等。
 
+[![gg5DQH.md.png](https://z3.ax1x.com/2021/05/16/gg5DQH.md.png)](https://imgtu.com/i/gg5DQH)
 
+### 2. 管理平台
+
+#### 2.1 管理平台介绍
+
+管理平台主要是对开放平台中的一些数据进行综合性管理，如客户管理、应用管理、充值管理、`api` 路由管理、网关参数管理、用户 `Token` 管理、日志搜索、权限管理等，实现对服务的限流、熔断等动态配置，通过管理平台可以查看生成的数据，也可以通过管理平台将修改的数据同步到开放平台的风头系统中来实现实时更新功能
+
+#### 2.2 客户管理
+
+##### 介绍
+
+客户指的是注册了开放平台并通过平台来获取响应数据的人，如我们的淘宝账号可以通过淘宝的开放平台提供的 `API` 来实现对淘宝的一些功能的调用，如订单管理、商品管理等
+
+客户主要包含的信息：`用户名、密码、公司名称、账户余额、公司地址、账户状态` 等
+
+客户管理主要是针对在开放平台上注册的用户进行管理，可以对用户的账号密码、企业名称、账户余额等内容进行管理，并且可以代用户进行注册、编辑、删除账户等操作
+
+##### 数据库结构
+
+| 列名       | 类型     | 描述               |
+| ---------- | -------- | ------------------ |
+| `id`       | `int`    | 主键               |
+| `username` | `String` | 用户名             |
+| `password` | `String` | 密码               |
+| `nickname` | `String` | 公司名称           |
+| `address`  | `String` | 地址               |
+| `money`    | `int`    | 余额（毫）         |
+| `state`    | `int`    | 状态：1正常，0停用 |
+
+#### 2.3 应用管理
+
+##### 介绍
+
+应用指的是客户在我们的平台创建的应用，一个客户可以创建多个应用，比如：抖音、今日头条、火山视频都是字节跳动的产品，它们都使用了微信分享和登录这些开放功能，那么在微信的开放平台中，字节跳动就是一个客户，而抖音、今日头条都是字节跳动下面不同的应用，他们需要分别在微信开放平台创建出来才可以使用微信开放的功能
+
+应用主要包含的信息：`所属客户、应用名称、应用的 key、应用的秘钥（签名用）、应用接收信息的回调 URL、应用对开放平台中接口的免费调用次数、应用描述` 等，关联功能为 `客户管理`
+
+应用管理中主要包含创建应用，展示应用的相关信息，编辑修改应用，以及指删除等操作，让管理人员可以随时通过对应用的信息修改来实现动态实时的限制
+
+##### 数据库结构
+
+| 列名          | 类型     | 描述                             |
+| ------------- | -------- | -------------------------------- |
+| `id`          | `int`    | 主键                             |
+| `corpName`    | `String` | 关联企业名称，冗余字段，减少查询 |
+| `appName`     | `String` | 应用名称                         |
+| `appKey`      | `String` | 应用唯一标示 `Key`               |
+| `appSecret`   | `String` | 应用签名秘钥                     |
+| `redirectUrl` | `String` | 应用回调用 `URL`                 |
+| `limit`       | `int`    | 免费接口日调用限制次数           |
+| `description` | `String` | 应用介绍                         |
+| `cusid`       | `int`    | 关联客户 `id`                    |
+| `state`       | `int`    | 状态                             |
+
+#### 2.4 路由管理
+
+##### 介绍
+
+在开放平台中，因为开放的服务的数量不确定，有的服务可能今年开放的，有的服务可能是明年新开发后开放的，有的服务可能过一段时间后下线了，这一切都可能是随时变化的。因为如果每个服务都单独开发一套接口来让客户调用的话就变得非常繁琐，无法实现动态的调整。就像一个公司会有很多部门，每个部门都会招聘人，如果每个部门的抛出信息上面都写对应部门的人的话，就会变得很麻烦。我们需要在公司前台那里给每个部分留一个面试官，分浪费人员，最合适的办法是我们只要都留公司前台地址就行，我们只需要告诉前台每个部门的对接人信息就行，来面试的人员只要说明自己来面试哪个部门即可，前台会根据部门来找到对接人然后通知对接人即可，那个这个前台就是统一的入口，他记录的对接人的信息就属于跌幅信息，我们只需要和前台沟通随时变更对接人信息即可，以后多了新的部门，只要和前台说新部门的信息即可。
+
+路由主要包含的信息：`路由的标识、对应的真正服务 id、对应服务的地址、描述信息、服务状态、幂等性、是否收费` 等
+
+路由管理主要是对路由信息的添加、修改、启用、停用、幂等性状态修改、是否收费等进行相关管理
+
+##### 数据库结构
+
+| 列名             | 类型     | 描述                   |
+| ---------------- | -------- | ---------------------- |
+| `id`             | `int`    | 主键                   |
+| `getewayApiName` | `String` | 路由名称标识           |
+| `indideApiUrl`   | `String` | 服务接口地址           |
+| `serviceId`      | `String` | 服务名称               |
+| `description`    | `String` | 介绍信息               |
+| `state`          | `int`    | 状态：1有效，0无效     |
+| `idempotents`    | `int`    | 幂等性：1幂等，0非幂等 |
+| `needfee`        | `int`    | 是否收费：1收费，0免费 |
+
+#### 2.5 系统参数管理
+
+##### 介绍
+
+我们的所有的服务在请求之前会要求我们必须传递某些名字的参数，就像我们去一家公司面试的时候，不管面试的是什么部门都要带简历一样，这些参数我们称为系统参数
+
+系统参数包含的主要信息：`参数名称、参数描述、参数状态`
+
+系统参数管理主要是针对我们在网关中请求时需要的系统参数进行管理，可以动态添加或者修改删除参数，修改后同步到网关中，网关即可实现动态参数校验的功能
+
+##### 数据库结构
+
+| 列名          | 类型     | 描述               |
+| ------------- | -------- | ------------------ |
+| `id`          | `int`    | 主键               |
+| `name`        | `String` | 参数名             |
+| `description` | `String` | 参数介绍           |
+| `state`       | `int`    | 状态：1启用，0禁用 |
+
+#### 2.6 Token 管理
+
+##### 介绍
+
+我们在访问功能的时候需要登录，单体项目的时候我们可以使用 `session` 来记录数据，但是在分布式系统中，`session` 共享比较复杂，所以我们会使用其它方式来记录这些状态。我们会在用户首次登录的时候给他生成一个 `token`，下次用户带着 `token` 来，我们只需要校验即可
+
+信息在数据库中主要的信息：`客户 id、token 内容、开始时间、过期时间` 等
+
+`Token` 管理主要是管理用户登录后生成的 `token` 数据，修改有效期、删除等
+
+##### 数据库结构
+
+| 列名           | 类型       | 描述         |
+| -------------- | ---------- | ------------ |
+| `id`           | `int`      | 主键         |
+| `userId`       | `int`      | 客户 `id`    |
+| `access_token` | `String`   | `token` 内容 |
+| `startTime`    | `DateTime` | 开始时间     |
+| `expireTime`   | `DateTime` | 结束时间     |
+
+#### 2.7 充值管理
+
+##### 介绍
+
+开放平台部分接口的访问是需要收费的，因为用户需要先充值才可以使用
+
+充值在数据库中的主要信息：`客户 id、订单号、充值金额、日期、付费方式、状态` 等
+
+充值管理主要是查看用户的充值记录，并且可以在自动充值出现问题的时候手动为用户充值
+
+##### 数据库结构
+
+| 列名          | 类型       | 描述                            |
+| ------------- | ---------- | ------------------------------- |
+| `id`          | `int`      | 主键                            |
+| `cusId`       | `int`      | 客户 `id`                       |
+| `createTime`  | `DateTime` | 创建订单时间                    |
+| `updateTime`  | `DateTime` | 更新时间                        |
+| `state`       | `int`      | 状态：0未支付，1已支付，2已取消 |
+| `paymenttype` | `int`      | 支付类型：0银联，1微信，2支付宝 |
+
+### 3. 技术架构
+
+我们的项目是一个管理平台，大部分的管理平台都是对内提供功能或者给用户提供部分可选功能，所以相对起来比较简单，大部分使用的是 `SSM` 单体架构，当前的项目也采用的 `SSM` 架构
+
+#### 3.1 架构技术点
+
+| 技术名称    | 针对的功能 | 介绍                                     | 版本  |
+| ----------- | ---------- | ---------------------------------------- | ----- |
+| `SpringMVC` | 控制层     | 主要用于接收用户请求，封装参数，返回数据 | 5.1.x |
+| `Spring`    | 对象管理   | 主要对项目需要的对象进行生命周期管理     | 5.1.x |
+| `MyBatis`   | 持久层     | 主要是用于和数据库进行交互               | 3.5.x |
+| `Quzrtz`    | 定时任务   | 比如定时备份数据                         | 1.5.x |
+| `LayUI`     | 前端展示   | 用于显示页面数据，传递数据到控制层       | 2.5.x |
+
+#### 3.2 所需工具
+
+| 工具名称        | 功能                  | 介绍                                          |
+| --------------- | --------------------- | --------------------------------------------- |
+| `IntelliJ IDEA` | 代码开发              | 开发集成编辑器                                |
+| `Maven`         | 项目管理              | 项目构建管理工具                              |
+| `Maven Helper`  | 快速运行 `Maven` 操作 | 一款 `IDEA` 插件，可以自定义执行 `Maven` 命令 |
+| `MySQL`         | 持久化数据            | 免费开源的数据库                              |
+| `Tomcat`        | 运行容器              | 基于 `Java Servlet` 规范的容器                |
+| `VS Code`       | 文本编辑              | 免费开源的文本编辑器                          |
+
+### 4. 编码规范
+
+| 名称               | 规范                                   |
+| ------------------ | -------------------------------------- |
+| 包名               | `com.ch.wchya.openapi`                 |
+| 控制层包名         | `controller`                           |
+| 服务层包名         | `service/impl`                         |
+| 数据层包名         | `mapper`                               |
+| 工具类包名         | `utils`                                |
+| 数据库对象包名     | `entity`                               |
+| `view` 对象包名    | `bean`                                 |
+| `mapper.xml`       | `resources` 目录下与接口包名对应的目录 |
+| `spring` 配置文件  | `resources` 下 `spring` 目录           |
+| `mybatis` 配置文件 | `resources` 下 `mybatis` 目录          |
+| 其它配置文件       | `resources` 下 `conf` 目录             |
+| 变量名             | 驼峰命名                               |
+| 状态码             | 接口中定义常量                         |
+| 其它规范           | 具体情况具体定义                       |
+
+### 5. 编码顺序
+
+在我们的实际开发中，我们会遇到选择的问题，就是到底是先写 `controller` 还是 `service` 还是 `dao`。其实先写谁都可以，这个取决于我们自己的角度，如果你先想项目有什么业务，那么一般会先写 `service`；另外一个方面，分析出数据库的表结构后，可以先写数据库相关的操作，也就是 `dao`；也可以先想一下会和前端做什么交互，先写 `controller`。这些，完全取决于我们的角度，当然如果不是前后端分享的项目，页面也是后端编写的，也可以按照需求先把页面写出来
+
+## 第三十七章 SpringBoot
+
+### 1. 介绍
+
+#### 1.1 引言
+
+* 为了使用 `SSM` 框架开发，得准备 `SSM` 框架的模板配置
+* 为了 `Spring` 整合第三方框架，单独的去编写 `xml` 文件
+* 导致 `SSM` 项目后期 `xml` 文件特别多，维护 `xml` 文件的成本很高
+* `SSM` 工程部署也是很麻烦，依赖第三方的容器
+* `SSM` 开发方式是很笨重的
+
+#### 1.2 介绍
+
+* `SpringBoot` 是由 `Pivotal` 团队研发的，`SpringBoot` 并不是一门新技术，只是将之前常用的 `Spring，SpringMVC，data-jpa` 等常用的框架封装到了一起，帮助你隐藏这些框架的整合细节，实现敏捷开发
+* `SpringBoot` 就是一个工具集
+
+#### 1.3 特点
+
+* `SpringBoot` 项目不需要模板化的配置
+* `SpringBoot` 中整合第三方框架时，只需要导入相应的 `starter` 依赖包，就自动整合了
+* `SpringBoot` 默认只有一个 `.properties` 的配置文件，不推荐使用 `xml`，后期会采用 `.java` 的文件去编写配置信息
+* `SpringBoot` 工程在部署时，采用的是 `jar` 包的方式，内部自动依赖 `Tomcat` 容器，提供了多环境的配置
+* 后期要学习的微服务框架 `SpringCloud` 需要建立在 `SpringBoot` 的基础上
+
+### 2. 快速入门
+
+#### 2.1 快速构建 SpringBoot
+
+##### 选择构建项目的类型
+
+[![gXwcgP.md.png](https://z3.ax1x.com/2021/05/23/gXwcgP.md.png)](https://imgtu.com/i/gXwcgP)
+
+##### 项目描述
+
+[![gXwfHg.md.png](https://z3.ax1x.com/2021/05/23/gXwfHg.md.png)](https://imgtu.com/i/gXwfHg)
+
+##### 指定 SpringBoot 的版本和需要的依赖
+
+[![gOYA56.md.png](https://z3.ax1x.com/2021/05/23/gOYA56.md.png)](https://imgtu.com/i/gOYA56)
+
+> 第一次创建 SpringBoot 工程时，会下载大量依赖，在创建之前确保 maven 已经配置了阿里云的私服，要不然会下载灰常慢
+
+##### 修改 pom 配置
+
+```xml
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter</artifactId>
+</dependency>
+<!--将上面的配置修改为下面的内容，就将项目改为 web 项目了-->
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+```
+
+##### 创建 Controller
+
+```java
+@RestController
+public class TestController {
+
+    @GetMapping("/test")
+    public String test() {
+        return "Hello SpringBoot!";
+    }
+}
+```
+
+##### 快速运行项目
+
+运行 `SpringBoot` 项目自动创建的 `XXXApplication` 的 `main` 方法即可
+
+##### 访问 Controller
+
+在网页中输入：`http://localhost:8080/test` 即可访问
+
+#### 2.2 SpringBoot 的目录结构
+
+1. `pom.xml` 文件
+   1. 指定了一个父工程：指定当前工程为 `SpringBoot`，帮助我们声明了 `starter` 依赖的版本
+   2. 项目的元数据：包名，项目名，版本号等
+   3. 指定了 `properties` 信息：指定了 `java` 的版本
+   4. 导入依赖：默认情况导入 `spring-boot-starter，spring-boot-starter-test`
+   5. 插件：`spring-boot-maven-plugin`
+
+2. `.gitignore` 文件：帮助我们忽略了一些文件和目录
+
+3. `src` 目录
+
+   ```
+   -- src
+     	-- main
+     		-- java
+     			-- 包名
+     				-- 启动类.java			# 需要将 Controller 类，放在启动类的子包中或同级包下
+     		-- resources
+     			-- static						# 存放静态资源
+     			-- templates				# 存放模板页面
+     			-- application.properties	# SpringBoot 提供的唯一配置文件
+     	-- test									# 只是为了测试用
+   ```
+
+#### 2.3 SpringBoot 启动的三种方式
+
+1. 运行启动类的 `main` 方法即可运行 `SpringBoot` 工程（开发时用）
+2. 采用 `maven` 的命令去运行 `SpringBoot` 工程：`mvn spring-boot:run`
+3. 采用 `jar` 包的方式运行（正式项目使用）
+   1. 将当前项目打包成一个 `jar` 文件：`mvc clean package`
+   2. 通过 `java -jar jar文件的全路径+名称+后缀` 的方式运行
+
+#### 2.4 SpringBoot 配置文件
+
+`SpringBoot` 使用一个全局的配置文件，也叫核心配置文件，配置文件名 **在约定的情况下，名字是固定的：application.xml/yml**，支持两种格式的配置文件：
+
+* `application.properties` ：扁平的 `k/v` 格式
+* `application.yml` ：树形结构
+  * 基本语法：`k:(空格)v`，表示一对键值对（空格必须有）
+  * 以空格的缩进来控制层级关系，只要是左对齐的一列数据，都是同一个层级的
+  * 属性和值都是大小写敏感的
+
+> 建议使用 `yml` 格式的配置文件，因为它的可读性更强
+
+##### 配置文件加载顺序
+
+```xml
+<includes>
+  <include>**/application.yml</include>
+  <include>**/application.yaml</include>
+  <include>**/application*.properties</include>
+</includes>
+```
+
+如果同时存在不同后缀的文件，按照上面的顺序加载主配置文件。规则：**多个不同配置文件中同时存在同一个配置时，按照优先顺序进行加载；单独出现在某个配置文件中的所有配置都会被加载**
+
+### 3. SpringBoot 常用注解
+
+#### 3.1 @Configuration 和 @Bean
+
+之前在使用 `SSM` 开发时，在 `xml` 文件中编写 `bean` 标签，但是 `springboot` 不推荐使用 `xml`，应该如下进行配置：
+
+```java
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+    private int id;
+    private String name;
+}
+
+@Configuration
+public class UserConfig {
+
+    @Bean
+    public User user() {
+        User user = new User();
+        user.setId(1);
+        user.setName("张三");
+        return user;
+    }
+
+    /**
+     * 上面的内容相关于原来在 xml 中声明以下的内容：
+     * <beans ...>
+     *  <bean id="user" class="com.ch.wchya.bootstudy.entity.User"/>    
+     * </beans><!--部署 springboot 的插件，只有加了这个插件，当运行 javr -jar xxx.jar 才能正常启动-->
+     */
+}
+```
+
+* `@Configuration` 相当于 `xml` 中的 `beans` 标签
+* `@Bean` 注解相当于 `bean` 标签
+  * `id="方法名|注解中的name属性(优先级更高)"`
+  * `class="方法的返回结果"`
+
+##### 应用实例
+
+```java
+@RestController
+public class TestController {
+
+    @Autowired
+    private User user;
+
+    @GetMapping("/user")
+    public User user() {
+        return user;
+    }
+}
+```
+
+在浏览器中访问：`http://localhost:8080/user`，就可以看到返回的 `User` 对象
+
+#### 3.2 @SpringBootApplication
+
+这是一个复合注解，由以下注解组成：
+
+* `@SpringBootConfiguration` 就是 `@Configuration` 注解，代表启动类就是一个配置
+* `@EnableAutoConfiguration` 实现自动装配，`springboot` 工程启动时，运行一个 `SpringFactoriesLoader` 的类，加载 `META-INF/spring.factories` 配置类（已经开启的），以 `for` 循环的方式，一个一个加载
+  * 好处：无需编写大量的整合配置信息，只需按照 `springboot` 提供好了的约定去整合即可
+  * 坏处：如果说导入了一个 `starter` 依赖，就需要填写它必要的配置信息
+  * 手动关闭自动装配指定内容：`@SpringBootConfiguration(exclude=QuartzAutoConfiguration.class)`
+* `@ComponentScan`：扫描注解
+
+### 4. SpringBoot 常用配置
+
+#### 4.1 配置文件格式
+
+`SpringBoot` 的配置文件支持 `properties` 和 `yml`，甚至他还支持 `json`。
+
+更推荐使用 `yml` 文件格式：
+
+优点：
+
+* `yml` 文件，会根据换行和缩进帮助咱们管理配置文件所在位置
+* `yml` 文件，相比 `properties` 更轻量级一些
+
+劣势：
+
+* 严格遵循换行和缩进
+* 在填写 `value` 时，一定要在 `:` 后面跟上空格
+
+#### 4.2 多环境配置
+
+1. 在 `application.yml` 文件中添加一个配置项：
+
+   ```yaml
+   spring:
+   	profiles:
+   		active: 环境名
+   ```
+
+2. 在 `resources` 目录下，创建多个 `application-环境名.yml` 文件即可
+
+3. 在部署工程时，通过 `java -jar jar文件 --spring.profiles.active=环境名` 就可以动态指定所使用的环境了
+
+#### 4.3 引入外部配置文件信息
+
+和传统的 `SSM` 方式一样，通过 `@Value` 的注解去获取 `properties/yml` 文件中的内容：
+
+```yaml
+# application.yml
+picPath: /Users/wchya/pictures
+```
+
+```java
+@RestController
+public class TestController {
+
+    @Value("${picPath}")
+    private String picPath;
+
+    @GetMapping("/path")
+    public String path() {
+        return picPath;
+    }
+}
+```
+
+如果在 `yml` 文件中需要编写大量的自定义配置，并且具有统一的前缀时，采用如下方式：
+
+```yaml
+# application.yml
+aliyun:
+  xxxx: xxxxxxx
+  yyyy: yyyyyyy
+  zzzz: zzzzzzz
+```
+
+```java
+@ConfigurationProperties(prefix = "aliyun")
+@Component
+@Data
+public class AliyunProperties {
+    private String xxxx;
+    private String yyyy;
+    private String zzzz;
+}
+
+@RestController
+public class TestController {
+
+    @Autowired
+    private AliyunProperties properties;
+
+    @GetMapping("/aliyun")
+    public AliyunProperties aliyun() {
+        return properties;
+    }
+}
+```
+
+#### 4.4 热加载
+
+##### 导入依赖
+
+```xml
+<!--热部署-->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-devtools</artifactId>
+    <optional>true</optional>
+</dependency>
+```
+
+##### 修改配置
+
+* `Preferences -> Build,Excution,Deployment -> Compiler`，勾选 `Build project Automatically` 选项
+* 按下 `command + option + shift + /` 组合键，在弹出的对话框中选择 `compiler.automake.allow.when.app.running` 并勾选
+
+##### 大功告成
+
+以后在项目配置修改后，就不用重启配置了
+
+### 5. 整合 MyBatis
+
+#### 5.1 配置文件方式整合 MyBatis
+
+##### 导入依赖
+
+```xml
+<!--mysql-->
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+</dependency>
+<!--druid-->
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>druid-spring-boot-starter</artifactId>
+    <version>1.1.22</version>
+</dependency>
+<!--mybatis-->
+<dependency>
+    <groupId>org.mybatis.spring.boot</groupId>
+    <artifactId>mybatis-spring-boot-starter</artifactId>
+    <version>1.3.2</version>
+</dependency>
+```
+
+##### 编写配置文件
+
+```java
+// 实体类
+@Data
+public class District {
+
+  private long id;
+  private String name;
+
+}
+@Data
+public class Air {
+
+  private long id;
+  private long districtId;
+  private java.sql.Date monitorTime;
+  private long pm10;
+  private long pm25;
+  private String monitoringStation;
+  private java.sql.Date lastModifyTime;
+
+}
+```
+
+```java
+// Mapper 接口
+public interface AirMapper {
+    List<Air> finaAll();
+}
+```
+
+```xml
+<!--resources/mapper/AirMapper.xml-->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ch.wchya.bootstudy.mapper.AirMapper">
+    <select id="finaAll" resultType="com.ch.wchya.bootstudy.entity.Air">
+        select id,districtId,monitor_time,pm10,pm25,monitoring_station,last_modify_time from air
+    </select>
+</mapper>
+```
+
+```java
+// 在启动类中添加注解，扫描 mapper 所在接口的包
+@SpringBootApplication
+@MapperScan(basePackages = "com.ch.wchya.bootstudy.mapper")
+public class BootstudyApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(BootstudyApplication.class, args);
+    }
+}
+```
+
+```yaml
+# application.yml
+
+# MyBatis 配置信息
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.ch.wchya.bootstudy.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    
+# 连接数据库配置信息
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/webmaster?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+    username: wchya
+    password: Own12345
+    type: com.alibaba.druid.pool.DruidDataSource
+```
+
+##### 测试
+
+* 右击 `Mapper` 接口的类名（在 `java` 文件中），选择 `goto -> Test`，就会自动在 `test` 目录下，创建当前接口的测试类
+* 还会在启动类所在的包下（`test` 目录），创建一个 `项目名ApplicationTests.java` 文件
+* 修改上面 `java` 文件的修饰符为 `public`，然后让接口的测试类继承该类
+* 注入 `AirMapper`，写测试方法，运行
+
+```java
+class AirMapperTest extends BootstudyApplicationTests {
+
+    @Autowired
+    private AirMapper airMapper;
+
+    @Test
+    public void test() {
+        List<Air> airs = airMapper.finaAll();
+        airs.forEach(System.out::println);
+    }
+}
+```
+
+#### 5.2 注解方式整合 MyBatis
+
+##### 创建 Mapper 接口
+
+```java
+public interface DistrictMapper {
+    List<District> findAll();
+}
+```
+
+##### 添加 Mybatis 注解
+
+```java
+public interface DistrictMapper {
+    @Select("select * from district")
+    List<District> findAll();
+
+    @Select("select * from district where id=#{id}")
+    District findOneById(@Param("id") long id);
+}
+```
+
+> 还是需要在启动类中添加 @MapperScan 注解
+
+##### 测试
+
+```java
+class DistrictMapperTest extends BootstudyApplicationTests {
+
+    @Autowired
+    private DistrictMapper districtMapper;
+
+    @Test
+    void findAll() {
+        List<District> districts = districtMapper.findAll();
+        districts.forEach(System.out::println);
+    }
+
+    @Test
+    void findOneById() {
+        District district = districtMapper.findOneById(3);
+        System.out.println(district);
+    }
+}
+```
+
+###### 可以看到执行的sql语句
+
+```yaml
+# MyBatis 日志输出，这句配置的意思是：将接口所在的包写成 Key，并将日志级别设置为 debug
+logging:
+  level:
+    com.ch.wchya.bootstudy.mapper: debug
+```
+
+#### 5.3 SpringBoot 整合分页助手
+
+##### 导入依赖
+
+```xml
+<!--pageHelper-->
+<dependency>
+    <groupId>com.github.pagehelper</groupId>
+    <artifactId>pagehelper-spring-boot-starter</artifactId>
+    <version>1.2.12</version>
+</dependency>
+```
+
+##### 测试使用
+
+```java
+@Test
+void findAllByPage() {
+    PageHelper.startPage(0, 2);
+    List<District> districts = districtMapper.findAll();
+    PageInfo<District> pageInfo = new PageInfo<>(districts);
+    pageInfo.getList().forEach(System.out::println);
+}
+```
+
+### 6. SpringBoot 整合 JSP
+
+#### 6.1 导入依赖
+
+```xml
+<!--jsp核心引擎依赖-->
+<dependency>
+    <groupId>org.apache.tomcat.embed</groupId>
+    <artifactId>tomcat-embed-jasper</artifactId>
+</dependency>
+<!--jstl-->
+<dependency>
+    <groupId>javax.servlet</groupId>
+    <artifactId>jstl</artifactId>
+</dependency>
+```
+
+#### 6.2 创建 webapp 和 WEB-INF 目录存放 JSP 页面
+
+[![gXTfS0.md.png](https://z3.ax1x.com/2021/05/23/gXTfS0.md.png)](https://imgtu.com/i/gXTfS0)
+
+#### 6.3 指定前缀和后缀
+
+```yaml
+spring:
+  mvc:
+    view:
+      prefix: /WEB-INF/
+      suffix: .jsp
+```
+
+```java
+@Controller
+public class JspController {
+
+    @GetMapping("/index")
+    public String index(Model model) {
+        model.addAttribute("name", "张三");
+        return "index";
+    }
+}
+```
 
 
 
