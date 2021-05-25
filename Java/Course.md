@@ -18023,7 +18023,33 @@ public static void main(String[] args) throws InterruptedException,SchedulerExce
 
 在我们的实际开发中，我们会遇到选择的问题，就是到底是先写 `controller` 还是 `service` 还是 `dao`。其实先写谁都可以，这个取决于我们自己的角度，如果你先想项目有什么业务，那么一般会先写 `service`；另外一个方面，分析出数据库的表结构后，可以先写数据库相关的操作，也就是 `dao`；也可以先想一下会和前端做什么交互，先写 `controller`。这些，完全取决于我们的角度，当然如果不是前后端分享的项目，页面也是后端编写的，也可以按照需求先把页面写出来
 
-## 第三十七章 SpringBoot
+## 第三十七章 SSM 综合实
+
+### 1. 功能介绍
+
+#### 1.1 环境搭建
+
+`maven` 工程搭建，基于 `mysql` 数据库的商品表信息，并完成 `SSM` 整合
+
+#### 1.2 商品查询
+
+基于 `SSM` 整合基础上完成商品查询，要掌握主页面及商品显示页面的创建
+
+#### 1.3 商品添加
+
+进一步巩固 `SSM` 整合，并完成商品添加功能，要注意事务操作以及产品添加页面的生成
+
+#### 1.4 订单查询
+
+订单的查询操作，主要完成简单的多表查询操作，查询订单时，需要查询出与订单关联的其它表中信息，做之前要清楚订单及其它关联关系
+
+#### 1.6 订单分页查询
+
+分页查询，使用的是 `mybatis` 分布插件 `pageHelper`
+
+
+
+## 第三十八章 SpringBoot
 
 ### 1. 介绍
 
@@ -18144,6 +18170,7 @@ public class TestController {
   * 基本语法：`k:(空格)v`，表示一对键值对（空格必须有）
   * 以空格的缩进来控制层级关系，只要是左对齐的一列数据，都是同一个层级的
   * 属性和值都是大小写敏感的
+  * 如果有特殊字符 `% &` ，记得用单引号 `'` 包起来
 
 > 建议使用 `yml` 格式的配置文件，因为它的可读性更强
 
@@ -18158,6 +18185,27 @@ public class TestController {
 ```
 
 如果同时存在不同后缀的文件，按照上面的顺序加载主配置文件。规则：**多个不同配置文件中同时存在同一个配置时，按照优先顺序进行加载；单独出现在某个配置文件中的所有配置都会被加载**
+
+##### 外部约定配置文件加载顺序
+
+`SpringBoot` 启动还会扫描以下位置的 `application.yml` 文件作为 `spring boot ` 的默认配置文件（优先级从低到高）：
+
+* `classpath` 根目录下
+* `classpath` 根 `config/`
+* 项目根目录
+  * 如果当前项目是继承/耦合关系的 `maven` 项目的话，项目根目录=父`maven` 项目的根
+* 项目根目录 `/config`
+* 直接子目录 `/config` （在命令行上的输入的目录路径）
+
+以下是官网上的内容：
+
+1. `optional:classpath:/`
+2. `optional:classpath:/config/`
+3. `optional:file:./`
+4. `optional:file:./config/`
+5. `optional:file:./config/*/`
+6. `optional:classpath:custom-config/`
+7. `optional:file:./custom-config/`
 
 ### 3. SpringBoot 常用注解
 
@@ -18259,6 +18307,10 @@ public class TestController {
 2. 在 `resources` 目录下，创建多个 `application-环境名.yml` 文件即可
 
 3. 在部署工程时，通过 `java -jar jar文件 --spring.profiles.active=环境名` 就可以动态指定所使用的环境了
+
+4. 使用 `spring.config.location` 动态指定配置文件位置（可以不在项目中），该方式下，配置文件里的内容是不会进行互补的
+
+> 还可以在 bean 上使用 @Profile("环境名") 来确定某个 bean 在哪个环境下起作用，使用了访该注解后，可以定义同名的访问路径
 
 #### 4.3 引入外部配置文件信息
 
