@@ -18047,6 +18047,309 @@ public static void main(String[] args) throws InterruptedException,SchedulerExce
 
 分页查询，使用的是 `mybatis` 分布插件 `pageHelper`
 
+#### 1.7 Spring Security
+
+`Spring Security` 是 `Spring` 项目组中用来提供安全认证服务的框架，它的使用很复杂，在这个项目中，只介绍了 `Spring Security` 的基本操作，通过该项目掌握 `spring security` 框架的配置及基本的认证与授权操作
+
+#### 1.8 用户管理
+
+用户管理中我们会介绍基于 `Spring Security` 的用户登录、退出操作，以及用户查询、添加、详情等操作，这些功能的练习是对前期 `SSM` 知识点的进一步巩固
+
+#### 1.9 角色管理
+
+角色管理主要完成角色查询、角色添加
+
+#### 1.10 资源权限管理
+
+资源权限管理主要完成查询、添加操作，它的操作与角色管理类似，角色 管理以及资源权限管理都是对权限管理的补充
+
+#### 1.11 权限关联与控制
+
+用户角色关联、角色权限关联，这两个操作是为了后续完成授权操作的基础
+
+#### 1.12 AOP 日志处理
+
+`AOP` 日志处理，使用 `spring AOP` 切面来完成系统级别的日志收集
+
+### 2. 数据库
+
+#### 2.1 产品表
+
+```sql
+create table product
+(
+    id            int auto_increment comment '主键'
+        primary key,
+    productNum    varchar(50)   not null comment '产品编号，唯一',
+    productName   varchar(50)   null comment '产品名称（路线名称）',
+    cityName      varchar(50)   null comment '出发城市',
+    DepartureTime timestamp     null comment '出发时间',
+    productPrice  double(10, 2) null comment '产品价格',
+    productDesc   varchar(500)  null comment '产品描述',
+    productStatus int           null comment '状态（0关闭，1开启）'
+);
+```
+
+#### 2.2 订单表
+
+```sql
+create table `order`
+(
+    id          int auto_increment comment '主键'
+        primary key,
+    orderNum    varchar(50)  not null comment '下单编号，不为空',
+    orderTime   timestamp    null comment '下单时间',
+    peopleCount int          null comment '出行人数',
+    orderDesc   varchar(500) null comment '订单描述（其它信息）',
+    payType     int          null comment '支付方式（0支付宝，1微信，2其它）',
+    orderStatus int          null comment '订单状态（0未支付，1已支付）',
+    productId   int          null comment '产品id（外键）',
+    memberId    int          null comment '会员（联系人）id（外键）'
+);
+```
+
+#### 2.3 会员表
+
+```sql
+create table member
+(
+    id       int auto_increment comment '主键'
+        primary key,
+    name     varchar(20) null comment '姓名',
+    nickname varchar(20) null comment '昵称',
+    phoneNum varchar(11) null comment '电话号码',
+    email    varchar(50) null comment '邮箱'
+);
+
+insert into MEMBER (name, nickname, phonenum, email) values ('张三', '小三', '18888888888', 'zs@163.com');
+```
+
+#### 2.4 旅客表
+
+```sql
+create table traveller
+(
+    id              int auto_increment comment '主键'
+        primary key,
+    name            varchar(20) null comment '姓名',
+    sex             varchar(1)  null comment '性别',
+    phoneNum        varchar(11) null comment '电话号码',
+    credentialsType int         null comment '证件类型：0身份证，1护照，2军官证',
+    credentialsNum  varchar(50) null comment '证件号码',
+    travellerType   int         null comment '旅客类型（人群）0成人，1儿童'
+);
+
+insert into TRAVELLER (name, sex, phonenum, credentialstype, credentialsnum, travellertype)
+values ('张龙', '男', '13333333333', 0, '123456789009876543', 0);
+insert into TRAVELLER (id, name, sex, phonenum, credentialstype, credentialsnum, travellertype)
+values ('张小龙', '男', '15555555555', 0, '987654321123456789', 1);
+```
+
+#### 2.5 用户表
+
+```sql
+create table user
+(
+    id       int auto_increment comment '主键'
+        primary key,
+    email    varchar(50) not null comment '邮箱，唯一',
+    username varchar(50) null comment '用户名',
+    password varchar(50) null comment '密码（加密）',
+    phoneNum varchar(11) null comment '电话号码',
+    status   int         null comment '状态：0未开启，1开启'
+);
+```
+
+#### 2.6 角色表
+
+```sql
+create table role
+(
+    id       int auto_increment comment '主键'
+        primary key,
+    roleName varchar(20)  null comment '角色名',
+    roleDesc varchar(100) null comment '角色描述'
+);
+```
+
+#### 2.6 资源权限表
+
+```sql
+create table resource_right
+(
+    id             int auto_increment comment '主键'
+        primary key,
+    permissionName varchar(50)  null comment '权限名',
+    url            varchar(255) null comment '资源路径'
+);
+```
+
+#### 2.7 日志表
+
+```sql
+create table oper_log
+(
+    id            int auto_increment comment '主键'
+        primary key,
+    visitTime     timestamp    null comment '访问时间',
+    username      varchar(50)  null comment '操作者用户名',
+    ip            varchar(50)  null comment '访问者ip',
+    url           varchar(255) null comment '访问资源url',
+    executionTime int          null comment '执行时长'
+);
+```
+
+
+
+
+
+```sql
+-- 用户表
+create table users
+(
+    id       varchar(32) not null
+        primary key,
+    email    varchar(50) not null,
+    username varchar(50) null,
+    PASSWORD varchar(50) null,
+    phoneNum varchar(20) null,
+    STATUS   int         null,
+    constraint email
+        unique (email)
+);
+
+-- 角色表
+create table role
+(
+    id       varchar(32) not null
+        primary key,
+    roleName varchar(50) null,
+    roleDesc varchar(50) null
+);
+
+
+-- 用户角色关联表
+create table users_role
+(
+    userId varchar(32) not null,
+    roleId varchar(32) not null,
+    primary key (userId, roleId),
+    constraint fk_roleid_id
+        foreign key (roleId) references role (id),
+    constraint fk_userid_id
+        foreign key (userId) references users (id)
+);
+
+-- 资源权限表
+create table permission
+(
+    id             varchar(32) not null
+        primary key,
+    permissionName varchar(50) null,
+    url            varchar(50) null
+);
+
+-- 角色权限关联表
+create table role_permission
+(
+    permissionId varchar(32) not null,
+    roleId       varchar(32) not null,
+    primary key (permissionId, roleId),
+    constraint fk_permissionid_id
+        foreign key (permissionId) references permission (id),
+    constraint fk_roleidd_id
+        foreign key (roleId) references role (id)
+);
+
+-- 会员表
+create table member
+(
+    id       int         not null comment '主键'
+        primary key,
+    name     varchar(20) null comment '姓名',
+    nickname varchar(20) null comment '昵称',
+    phoneNum varchar(20) null comment '电话号码',
+    email    varchar(50) null comment '邮箱'
+);
+
+-- 订单表
+create table orders
+(
+    id          varchar(32)  not null
+        primary key,
+    orderNum    varchar(20)  not null,
+    orderTime   timestamp    null,
+    peopleCount int          null,
+    orderDesc   varchar(500) null,
+    payType     int          null,
+    orderStatus int          null,
+    productId   varchar(32)  null,
+    memberId    varchar(32)  null,
+    constraint orderNum
+        unique (orderNum),
+    constraint fk_memberid_id
+        foreign key (memberId) references member (id),
+    constraint fk_productid_id
+        foreign key (productId) references product (id)
+);
+
+-- 订单旅客表
+create table order_traveller
+(
+    orderId     varchar(32) not null,
+    travellerId varchar(32) not null,
+    primary key (orderId, travellerId),
+    constraint fk_orderid_id
+        foreign key (orderId) references orders (id),
+    constraint fk_travellerid_id
+        foreign key (travellerId) references traveller (id)
+);
+
+-- 产品表
+create table product
+(
+    id            int auto_increment comment '主键'
+        primary key,
+    productNum    varchar(50)   not null comment '产品编号，唯一',
+    productName   varchar(50)   null comment '产品名称（路线名称）',
+    cityName      varchar(50)   null comment '出发城市',
+    DepartureTime timestamp     null comment '出发时间',
+    productPrice  double(10, 2) null comment '产品价格',
+    productDesc   varchar(500)  null comment '产品描述',
+    productStatus int           null comment '状态（0关闭，1开启）'
+);
+
+-- 旅客表
+create table traveller
+(
+    id              varchar(32) not null
+        primary key,
+    NAME            varchar(20) null,
+    sex             varchar(20) null,
+    phoneNum        varchar(20) null,
+    credentialsType int         null,
+    credentialsNum  varchar(50) null,
+    travellerType   int         null
+);
+
+-- 日志表
+create table oper_log
+(
+    id            int auto_increment comment '主键'
+        primary key,
+    visitTime     timestamp    null comment '访问时间',
+    username      varchar(50)  null comment '操作者用户名',
+    ip            varchar(50)  null comment '访问者ip',
+    url           varchar(255) null comment '访问资源url',
+    executionTime int          null comment '执行时长'
+);
+
+```
+
+
+
+
+
 
 
 ## 第三十八章 SpringBoot
