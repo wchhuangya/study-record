@@ -9,6 +9,7 @@
 本文还介绍了 `Spring` 与 `AspectJ` 的集成(目前在特性方面是最丰富的--当然还有 `Java` 企业空间中最成熟的 `AOP` 实现)。
 
 # 1. IoC 容器
+
 本章介绍 `Spring` 的反转控制( `IoC` )容器。
 
 ## 1.1 介绍 IoC 容器和 Bean
@@ -762,3 +763,37 @@ public class ExampleBean {
 
 #### xml 中 c 命名空间的简写
 
+# 5. 面向切面编程
+
+面向切面编程（`AOP`）是面向对象编程的一种方式，它提供了另外一种思考程序结构的方式。`OOP` 中模块化的关键单位是 “类”，然而，`AOP` 中模块化的关键单位是 “切面”。切面可以使关注点模块化（例如事务管理），这种方式可以横切多个类型和对象（这些关注点通常被称为 `AOP` 哲学中的 “横切” 问题）
+
+`Spring` 的一个关键组件就是 `AOP` 框架，而 `Spring IoC` 容器并不依赖于 `AOP`（这就意味着如果你不想使用 `AOP`，那你就只使用 `Spring IoC` 就可以了），`AOP` 是 `Spring IoC` 的一种补充，提供了一个非常棒的中间件解决方案。
+
+>Spring 通过使用基于 xml 的方法或 @AspectJ 注释样式提供简单而强大的写作自定义切面的方式。 这两个风格都提供所有类型的 advice 和使用 AspectJ Pointcut 语言，同时仍然使用 Spring AOP 进行编织。
+
+在 `Spring` 框架中，`AOP` 被用于：
+
+* 提供声明式的企业服务，最重要的服务莫过于 **声明事务管理服务**
+* 可以让用户实现自定义的切面，在 `OOP` 模式中补充 `AOP` 模式的使用
+
+## 5.1 概念
+
+让我们从定义一些 `AOP` 的概念和术语开始。这些元素不是 `Spring` 所特有的。不幸的是，`AOP` 的术语不是特别的直观。但是，如果 `Spring` 使用了自己的术语，一定会有着更多的混淆。
+
+* `Aspect（切面）`：涉及了多个类的模块化的聚集，在企业级 `Java` 应用中，事务管理是一个很好的示例。在 `Spring AOP` 中，`Aspect（切面）` 由一个常规的类实现，这个类要么配置在 `xml` 文件中，要么使用 `@Aspect` 注解
+* `Join point(连接点)`：程序执行期间的一个点，例如方法执行或异常处理。在 `Spring AOP` 中，一个 `join point（连接点）` 总是代表着一个方法的执行
+* `Advice（增强）`：在某个特定的 **连接点** 上，由 **切面** 采取的行动。`advice（增强）` 的不同类型包括：`around、before、after`（增强类型在后面有讨论）在许多 `AOP` 框架中，包括 `Spring`，将 `advice（增强）` 模块化为一个拦截器，并围绕着 **连接点** 维护着一个拦截器链
+
+
+
+
+
+
+
+
+
+- Pointcut: A predicate that matches join points. Advice is associated with a pointcut expression and runs at any join point matched by the pointcut (for example, the execution of a method with a certain name). The concept of join points as matched by pointcut expressions is central to AOP, and Spring uses the AspectJ pointcut expression language by default.
+- Introduction: Declaring additional methods or fields on behalf of a type. Spring AOP lets you introduce new interfaces (and a corresponding implementation) to any advised object. For example, you could use an introduction to make a bean implement an `IsModified` interface, to simplify caching. (An introduction is known as an inter-type declaration in the AspectJ community.)
+- Target object: An object being advised by one or more aspects. Also referred to as the “advised object”. Since Spring AOP is implemented by using runtime proxies, this object is always a proxied object.
+- AOP proxy: An object created by the AOP framework in order to implement the aspect contracts (advise method executions and so on). In the Spring Framework, an AOP proxy is a JDK dynamic proxy or a CGLIB proxy.
+- Weaving: linking aspects with other application types or objects to create an advised object. This can be done at compile time (using the AspectJ compiler, for example), load time, or at runtime. Spring AOP, like other pure Java AOP frameworks, performs weaving at runtime.

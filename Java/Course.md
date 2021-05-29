@@ -18023,7 +18023,7 @@ public static void main(String[] args) throws InterruptedException,SchedulerExce
 
 在我们的实际开发中，我们会遇到选择的问题，就是到底是先写 `controller` 还是 `service` 还是 `dao`。其实先写谁都可以，这个取决于我们自己的角度，如果你先想项目有什么业务，那么一般会先写 `service`；另外一个方面，分析出数据库的表结构后，可以先写数据库相关的操作，也就是 `dao`；也可以先想一下会和前端做什么交互，先写 `controller`。这些，完全取决于我们的角度，当然如果不是前后端分享的项目，页面也是后端编写的，也可以按照需求先把页面写出来
 
-## 第三十七章 SSM 综合实
+## 第三十七章 SSM 综合实战
 
 ### 1. 功能介绍
 
@@ -18264,7 +18264,7 @@ create table role_permission
 -- 会员表
 create table member
 (
-    id       int         not null comment '主键'
+    id       varchar(32) not null comment '主键'
         primary key,
     name     varchar(20) null comment '姓名',
     nickname varchar(20) null comment '昵称',
@@ -18278,7 +18278,7 @@ create table orders
     id          varchar(32)  not null
         primary key,
     orderNum    varchar(20)  not null,
-    orderTime   timestamp    null,
+    orderTime   datetime     null,
     peopleCount int          null,
     orderDesc   varchar(500) null,
     payType     int          null,
@@ -18308,12 +18308,12 @@ create table order_traveller
 -- 产品表
 create table product
 (
-    id            int auto_increment comment '主键'
+    id            varchar(32) '主键'
         primary key,
     productNum    varchar(50)   not null comment '产品编号，唯一',
     productName   varchar(50)   null comment '产品名称（路线名称）',
     cityName      varchar(50)   null comment '出发城市',
-    DepartureTime timestamp     null comment '出发时间',
+    DepartureTime datetime      null comment '出发时间',
     productPrice  double(10, 2) null comment '产品价格',
     productDesc   varchar(500)  null comment '产品描述',
     productStatus int           null comment '状态（0关闭，1开启）'
@@ -18337,7 +18337,7 @@ create table oper_log
 (
     id            int auto_increment comment '主键'
         primary key,
-    visitTime     timestamp    null comment '访问时间',
+    visitTime     datetime     null comment '访问时间',
     username      varchar(50)  null comment '操作者用户名',
     ip            varchar(50)  null comment '访问者ip',
     url           varchar(255) null comment '访问资源url',
