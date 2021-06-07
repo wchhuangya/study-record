@@ -23,3 +23,16 @@
 </dependency>
 ```
 
+## security 的两种配置文件写法
+
+这种写法不需要在里面的元素上添加 `security:` 的前缀
+
+```xml
+<b:beans xmlns="http://www.springframework.org/schema/security"
+         xmlns:b="http://www.springframework.org/schema/beans"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+                  http://www.springframework.org/schema/security https://www.springframework.org/schema/security/spring-security.xsd">
+    
+</b:beans>
+```
