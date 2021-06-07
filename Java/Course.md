@@ -8108,7 +8108,7 @@ public class UserServlet extends HttpServlet {
 在之前案例中，调用业务逻辑和显示结果页面都在同一个 `Servlet` 中，就会产生设计的问题：
 
 * 不符合单一职能原则、各司其职的思想
-* 不得后续的维护
+* 不利于后续的维护
 
 **结论：应该将业务逻辑和显示结果分离开**
 
@@ -8187,7 +8187,7 @@ public class UserServlet extends HttpServlet {
 * 重定向是浏览器做了至少两次的访问请求
 * 重定向浏览器地址改变
 * 重定向再次跳转之间传输的信息会丢失（`request` 范围）
-* 生定向可以指向任何的资源，包括当前应用程序中的其它资源、同一个站点上的其它应用程序中的资源、其它站点的资源
+* 重定向可以指向任何的资源，包括当前应用程序中的其它资源、同一个站点上的其它应用程序中的资源、其它站点的资源
 
 #### 8.4 转发、重定向总结
 
@@ -17251,6 +17251,52 @@ public class MUserController {
 </body>
 </html>
 ```
+
+### 17. SpringMVC 绑定参数之类型转换
+
+#### 实体类中加日期格式化注解
+
+```java
+@DateTimeFormat(pattern="yyyy-MM-dd HH:mm")
+private Date createTime;
+```
+
+#### 属性编辑器
+
+> Spring 3.1 之前提供
+
+在 `Controller` 类中通过 `@initBinder` 完成
+
+```java
+/**
+ *	在Controller层中添加一段数据绑定代码
+ *	@param webDataBinder
+*/
+public void initBinder(WebDataBinder webDataBinder) throws Exception {
+  SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+  sdf.setLenient(false);
+  webDataBinder.registerCustomeEditor(Date.class, new CustomDateEditor(sdf, true));
+}
+```
+
+> 自定义类型转换器必须实现 PropertyEditor 接口或者继承 PropertyEditorSupport 类
+
+```java
+public class YourClass extends PropertyEditorSupport { // 或者 implements PropertyEditor
+  public void setAsText(String text) {
+  	  SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+  		Date date = sdf.parse(text);
+    	this.setValue(date);
+	}    
+  
+  public String setAsText() {
+    Date date = (Date) this.getValue();
+    return this.dateFormat.format(date);
+  }
+}
+```
+
+
 
 ## 第三十四章 日志管理体系
 

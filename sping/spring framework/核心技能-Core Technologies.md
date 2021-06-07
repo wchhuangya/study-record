@@ -36,7 +36,7 @@
 
 下图显示了 `Spring` 如何工作的。应用程序类与配置元数据组合在一起，这样在创建和初始化 `ApplicationContext` 之后，你就拥有了一个完全配置和可执行的系统或应用程序：
 
-![](index_files/c8d97c64-0c60-4518-8771-fbc2b2b089b2.jpg)
+[![2mccan.md.jpg](https://z3.ax1x.com/2021/05/31/2mccan.md.jpg)](https://imgtu.com/i/2mccan)
 
 ### 1.2.1 配置元数据
 
@@ -116,7 +116,7 @@ ApplicationContext context = new ClassPathXmlApplicationContext("services.xml", 
 
 下面的示例显示数据访问对象 `daos.xml` 文件：
 
-```xmml
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -783,17 +783,57 @@ public class ExampleBean {
 * `Aspect（切面）`：涉及了多个类的模块化的聚集，在企业级 `Java` 应用中，事务管理是一个很好的示例。在 `Spring AOP` 中，`Aspect（切面）` 由一个常规的类实现，这个类要么配置在 `xml` 文件中，要么使用 `@Aspect` 注解
 * `Join point(连接点)`：程序执行期间的一个点，例如方法执行或异常处理。在 `Spring AOP` 中，一个 `join point（连接点）` 总是代表着一个方法的执行
 * `Advice（增强）`：在某个特定的 **连接点** 上，由 **切面** 采取的行动。`advice（增强）` 的不同类型包括：`around、before、after`（增强类型在后面有讨论）在许多 `AOP` 框架中，包括 `Spring`，将 `advice（增强）` 模块化为一个拦截器，并围绕着 **连接点** 维护着一个拦截器链
+* `Pointcut（切点）`：用于匹配 **连接点** 的断言。**增加** 关联着一个 **切点表达式**，**增加** 会运行在任意匹配 **切点** 的 **连接点**（例如，有某个名称的方法的执行）。由 **切点表达式** 匹配的 **连接点** 的概念是 `AOP` 的核心，`Spring` 默认使用 `AspectJ` **切点** 表达式语言
+* `Introduction`：为一个类型添加额外的方法或字段。`Spring AOP` 可以让你引入新的接口（和相应的实现）给任何对象。例如，使用 `introduction` 创建一个实现了 `IsModified` 接口的 `bean`，并以此来简化 `caching` 的实现
+* `Target Object（目标对象）`：由一个或多个 **切面** “建议” 的对象，也被叫做 `advised object`。因为 `Spring AOP` 通过运行时代理实现，因此，此对象始终是代理对象
+* `AOP proxy（AOP 代理）`：为了实现 **切面** 契约，由 `AOP` 框架创建的一个对象。在 `Spring` 框架中，`AOP` 代理是 `JDK 动态代理` 或者 `CGLIB` 代理
+* `Weaving（织入）`：将切面和其它应用程序类型或对象链接以创建建议对象。这可以在编译时、加载时或运行时完成。`Spring AOP` 和其它纯粹的 `Java AOP` 框架一样，都在运行时执行织入
+
+`Spring AOP` 包括下面几种类型的 **增强**：
+
+* `before`：在 **连接点** 之前返回的 **增强**。它不能阻止流程进入 **连接点**（除非它本身抛出异常）
+* `after returning`：在 **连接点** 正常完成之后返回的 **增强**
+* `after throwing`：如果方法因为异常而退出，就会返回该 **增强**
+* `after`：不管 **连接点** 如何退出，都会运行的 **增强**（例如：方法不论是正常退出还是异常退出）
+* `around`：在 **连接点** 周围的 **增强**。这是最大的一种 **增强**，该 **增强** 可以在在方法调用之前、之后执行自定义的行为。它还负责选择是否进入连接点或快捷方式执行，通过返回其自己的返回值或抛出异常来快捷方式执行。
+
+环绕型 **增强** 是最普遍的增强。因为 `spring aop`，例如 `AspectJ`，提供了全方位的增强类型，建议使用最不强大的增强类型，但是它可以实现所需的行为。例如，如果你仅仅需要使用方法的返回值来更新缓存，那你最好实现   `after returning` 增强而不是 `around` 增强，当然，`around` 增强也可以完成同样的事情。使用最具体的建议类型会提供更简单的编程模型，出错的可能性会比较少。例如，无需在 `around` 增强的连接点上执行 `proceed()` 方法，因此，你不能无法调用它。
+
+所有的增强参数都是静态类型，因此，需要把增强参数设置成合适的类型（例如：方法执行后的返回值类型）而不是 `Object` 数组
+
+连接点和切点匹配的概念是 `AOP` 的关键，它将自身与仅提供拦截的旧技术分开。切点启用增强形成了独立于面向对象层次结构定位。例如，可以将声明式事务管理应用于跨越多个对象的一组方法（例如服务层中的所有业务操作）
+
+## 能力和目标
+
+`Spring AOP` 使用纯 `Java` 语言实现，不需要任何特殊的编译进程。`Spring AOP` 不需要控制类加载器的层次结构，因此，它最适用于 `Servlet` 容器或应用服务。
+
+`Spring AOP` 目前仅仅支持方法执行连接点（基于 `Spring Bean` 方法执行的增强）。虽然没有实现字段拦截，但是，在不破坏 `Spring` 核心 `API` 的情况下，可以添加字段拦截的支持。如果需要增强字段获取，那就考虑使用 `AspectJ` 这样的语言
+
+`Spring AOP` 对 `AOP` 的方法不同于大多数其他 `AOP` 框架。 目的不是提供最完整的 `AOP` 实现（虽然 `Spring AOP` 非常有能力）。 相反，目的是在 `AOP` 实现和 `Spring IoC` 之间提供密切集成，以帮助解决企业应用程序中的常见问题。
+
+因此，例如，`Spring AOP` 功能通常与 `Spring IOC` 容器结合使用。 通过使用普通 `bean` 定义语法配置切面（尽管这允许强大的“自动代理”功能）。 这是与其他 `AOP` 实现的关键差异。 不能使用 `Spring AOP` 轻松或有效地完成一些内容，例如建议非常细粒度的对象（通常是域对象）。 `AspectJ` 是这种情况下的最佳选择。 但是，我们的经验是 `Spring Aop` 为企业级 `Java` 应用程序中的大多数问题提供了优异的解决方案，这些问题适用于 `AOP`。
+
+`Spring Aop` 永远不会尝试与 `AspectJ` 竞争，提供全面的 `AOP` 解决方案。 我们认为，基于代理的框架，如`Spring Aop` 和诸如 `Aspectj` 的全面框架是有价值的，它们是互补的，而不是在竞争中。 `Spring` 无缝集成了`Spring AOP` 和 `IOC` 的 `AspectJ`，以在一致的基于 `Spress` 的应用程序体系结构中启用 `AOP` 的所有使用。 该集成不会影响 `Spring Aop API` 或 `AOP Alliance API`。 `Spring AOP` 仍然兼容
+
+## 5.3 AOP 代理
+
+`Spring AOP` 默认为 `AOP` 代理使用标准 `JDK` 的动态代理。 这使得任何接口（或一组接口）都能被代理。
+
+`Spring AOP` 还可以使用 `CGLIB` 代理。 这对于代理类而不是接口是必要的。 默认情况下，如果业务对象未实现接口，则使用 `CGLIB`。 由于对界面而不是类的程序来说，商业类通常是实现一个或多个业务界面。 有可能强制使用 `CGLIB`，在某些案例中，建议在接口上未声明的方法或需要将代理对象传递给一个具体类型的方法。
+
+重要的是要掌握 `Spring AOP` 基于代理的事实。 请参阅了解 `AOP` 代理以彻底检查此实现细节实际意味着什么。
+
+## 5.4 @AspectJ Support
+
+`@AspectJ` 指的是常规 `Java` 类作为切面的典型引用方式。` AspectJ` 项目引入了 `@AspectJ` 样式作为 `Aspectj 5` 的一部分。` Spring` 使用 `AspectJ` 提供的库来解释与 `AspectJ 5` 相同的注释，用于 `PointCut` 解析和匹配。 但是，`AOP` 运行时仍然是纯粹的 `Spring AOP`，并且对 `Aspectj` 编译器或编织没有依赖关系。
+
+### 5.4.1 启动 @AspectJ 支撑
+
+要在 `Spring` 配置中使用 `@AspectJ` 切面，需要基于 `@AspectJ` 切面和自动代理 `Bean` 来启用 `Spring` 支持，以基于这些方面的建议。 通过自动代理，如果 `Spring` 检测出一个 `bean` 有一个或多个切面 `advice`，它会自动为该 `Bean` 生成代理以拦截方法调用，并确保根据需要确保运行建议。
 
 
 
+可以使用XML或Java样式配置启用@AspectJ支持。 在任何一种情况下，您还需要确保AspectJ的AspectJweaver.jar库位于申请的类路径（1.8或更高版本）上。 此库可在Aspectj分发的lib目录中或从Maven中央存储库中使用。
 
 
 
-
-
-
-- Pointcut: A predicate that matches join points. Advice is associated with a pointcut expression and runs at any join point matched by the pointcut (for example, the execution of a method with a certain name). The concept of join points as matched by pointcut expressions is central to AOP, and Spring uses the AspectJ pointcut expression language by default.
-- Introduction: Declaring additional methods or fields on behalf of a type. Spring AOP lets you introduce new interfaces (and a corresponding implementation) to any advised object. For example, you could use an introduction to make a bean implement an `IsModified` interface, to simplify caching. (An introduction is known as an inter-type declaration in the AspectJ community.)
-- Target object: An object being advised by one or more aspects. Also referred to as the “advised object”. Since Spring AOP is implemented by using runtime proxies, this object is always a proxied object.
-- AOP proxy: An object created by the AOP framework in order to implement the aspect contracts (advise method executions and so on). In the Spring Framework, an AOP proxy is a JDK dynamic proxy or a CGLIB proxy.
-- Weaving: linking aspects with other application types or objects to create an advised object. This can be done at compile time (using the AspectJ compiler, for example), load time, or at runtime. Spring AOP, like other pure Java AOP frameworks, performs weaving at runtime.
