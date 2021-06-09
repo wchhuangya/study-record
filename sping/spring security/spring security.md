@@ -412,7 +412,9 @@ protected void configure(HttpSecurity http) throws Exception {
 }
 ```
 
-按照上面这样修改后，再启动服务器，新的问题来了：`Error resolving template "login"`
+按照上面这样修改后，再启动服务器，新的问题来了：`Error resolving template "login"`。这个问题是因为到目前为止，我们只是在配置和编写 `security` 相关的代码，还没有时间照顾 `spring mvc`，`just do it`
+
+
 
 
 
