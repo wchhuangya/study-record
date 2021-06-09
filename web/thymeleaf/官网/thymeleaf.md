@@ -234,3 +234,199 @@ public class GTVGApplication {
 
 配置 `TemplateEngine` 对象有很多种方法，但是代码中这为数不多的几行，已经把必须的步骤都展示给我们了
 
+### 模板解析器
+
+```java
+ServletContextTemplateResolver templateResolver = 
+        new ServletContextTemplateResolver(servletContext);
+```
+
+模板解析器其实就是实现了 `Thymeleaf` 接口 `org.thymeleaf.templateresolver.ITemplateResolver` 的类：
+
+```java
+public interface ITemplateResolver {
+
+    ...
+  
+    /*
+     * Templates are resolved by their name (or content) and also (optionally) their 
+     * owner template in case we are trying to resolve a fragment for another template.
+     * Will return null if template cannot be handled by this template resolver.
+     */
+    public TemplateResolution resolveTemplate(
+            final IEngineConfiguration configuration,
+            final String ownerTemplate, final String template,
+            final Map<String, Object> templateResolutionAttributes);
+}
+```
+
+这些对象负责确定我们的模板将如何访问，并且在此 `GTVG` 应用程序中，`org.thymeleaf.templaterSolver.servletContextTemplaterSolver` 意味着我们将从 `Servlet` 上下文中作为资源检索我们的模板文件：应用程序范围内的 `javax .servlet.servletContext` 对象，在每个 `Java Web` 应用程序中存在，它可以从 `Web` 应用程序 `root` 中解析资源。
+
+但只有这些还是不够的，还需要在它的上面设置一些配置参数。 首先，模板模式：
+
+```java
+templateResolver.setTemplateMode(TemplateMode.HTML);
+```
+
+`HTML` 是 `ServletContextTemplaterSolver` 的默认模板模式，这样的好处是：会清楚的知道代码文件发生的事情
+
+```java
+templateResolver.setPrefix("/WEB-INF/templates/");
+templateResolver.setSuffix(".html");
+```
+
+前缀和后缀修改了我们将传递给引擎的模板名称以获取要使用的实际资源名称。 	
+
+使用此配置，模板名称“产品/列表”将对应于：
+
+```java
+servletContext.getResourceAsStream("/WEB-INF/templates/product/list.html")
+```
+
+作为可选项，通过 `CachettLMS` 属性，在模板解析器处配置解析模板可以生存在缓存中的时间量：
+
+```java
+templateResolver.setCacheTTLMs(3600000L);
+```
+
+如果达到最大高速缓存大小，则达到 `TTL` 之前仍然可以从缓存中启动模板，并且它是当前缓存的最旧的条目。
+
+> 可以通过实现 `ICacheManager` 接口或通过修改 `StandardCacheManager` 对象来管理默认缓存来定义缓存行为和大小。
+
+关于模板解析器要了解的东西还很多，但是，我们接下来要模板引擎对象的创建了
+
+### 模板引擎
+
+模板引擎对象是 `org.thymeleaf.itemplingengine` 接口的实现。 这些实现之一是由 `Thymeleaf` 核心提供：`org.thymeleaf.templingeNgine`，我们在此创建一个实例：
+
+```java
+templateEngine = new TemplateEngine();
+templateEngine.setTemplateResolver(templateResolver);
+```
+
+相当简单，不是吗？ 我们所需要的只是创建一个实例并将模板解析器设置为它。
+
+模板解析器是唯一需要的参数，尽管稍后将涵盖许多其他（消息解析器，缓存大小等）。 但是现在，这就是我们所需要的。
+
+我们的模板引擎现在准备就绪，我们可以开始使用 `Thymeleaf` 创建我们的页面。
+
+# 3. 使用文本
+
+## 3.1 多语言版本的 welcome
+
+我们的第一个任务就是创建杂货铺网站的首页。
+
+该页面的第一个版本是极其的简单：只是一个标题和欢迎的文字。`/WEB-INF/templates/home.html`：
+
+```html
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+  <head>
+    <title>Good Thymes Virtual Grocery</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" media="all" 
+          href="../../css/gtvg.css" th:href="@{/css/gtvg.css}" />
+  </head>
+
+  <body>
+  
+    <p th:text="#{home.welcome}">Welcome to our grocery store!</p>
+  
+  </body>
+
+</html>
+```
+
+需要注意到的第一件事是此文件是可以由任何浏览器正确显示的 `HTML5`，因为它不包含任何非 `HTML` 标记（浏览器忽略他们不理解的所有属性，如 `Th：xxx`）。
+
+但是，此模板并不是一个有效的 `HTML5` 文档，因为文件中使用的这些非标准属性在 `TH：*` 表单中不允许使用`HTML5` 规范。 实际上，我们甚至将 `XMLNS` 添加到 `<HTML>` 标记，绝对是非 `HTML5`：
+
+```html
+<html xmlns:th="http://www.thymeleaf.org">
+```
+
+这对模板处理没有任何影响，但是作为一种声明，可以防止 `IDE` 抱怨所有这些 `TH` 的命名空间所定义的属性。
+
+那么如果我们想制作这个符合 `HTML5` 规范的模板该怎么办？ 非常简单：在属性名上使用 `data-` 前缀，而不是冒号（:)：
+
+```html
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <title>Good Thymes Virtual Grocery</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" media="all" 
+          href="../../css/gtvg.css" data-th-href="@{/css/gtvg.css}" />
+  </head>
+
+  <body>
+  
+    <p data-th-text="#{home.welcome}">Welcome to our grocery store!</p>
+  
+  </body>
+
+</html>
+```
+
+`HTML5` 规范允许自定义的数据前缀属性，因此，在上面的此代码中，我们的模板将是一个有效的 `HTML5` 文档。
+
+> 这两个符号的写法都是完全等同的和可互换的，但为了简单和代码样本的简单性，本教程将使用命名空间表示法（`TH：`）。 此外，`TH：*` 符号更普遍，允许在每个 `Thymeleaf ` 模板模式（`XML，文本......`）中允许，而数据符号仅在 `HTML` 模式下允许。
+
+### 使用 th:text 和外部化文本
+
+外部化文本是将模板代码的片段从模板文件中提取，以便它们可以保存在单独的文件中（通常是 `oproperties` 文件），并且它们可以轻松地替换为以其他语言编写的等效文本（一个名为 `Internationalization` 或 `Simply I18N`）的等效文本 。 外部化文本碎片通常称为“消息”。
+
+消息始终具有标识它们的键，`Thymeleaf` 允许指定文本应与 `＃{...}` 语法对应的特定消息：
+
+```html
+<p th:text="#{home.welcome}">Welcome to our grocery store!</p>
+```
+
+我们可以在这里看到的实际上是 `Thymeleaf` 特标准方言的两个不同的功能：
+
+* `TH：TEXT` 属性，它对表达式进行计算，得出值，并把值设置到标签的主体内容中，在替换 `Welcome to our grocery store!` 这段文字时更有效率
+* 在标准表达式语法中指定的 `＃{home.welcome}` 表达式指示 `th：text` 属性应该是与我们正在处理模板的那个语言环境对应的 `home.welcome` 键的值
+
+那么，到底什么是外部化文本？
+
+在 `Thymeleaf` 中，外部化文本的位置是可配置的，并且，它也依赖于项目中使用的 `org.thymeleaf.messageresolver.IMessageResolver` 接口的实现。一般情况下，将使用 `*.properties` 文件，当然，如果有需求，我们可以创建自己的实现，例如，从数据库获取信息
+
+但是，在初始化期间，还没有为我们的模板引擎指定消息解析器，也就是说，现在应用使用的是 **标准的信息解析器**，是由 `org.thymeleaf.messageresolver.StandardMessageResolver` 实现的
+
+标准的信息解析器期望在与 `/WEB-INF/templates/home.html` 同级的的文件夹下，找到名称相同，后缀为 `.properties` 的文件，并从中找到信息，文件可能的位置如下：
+
+* 英语：`/WEB-INF/templates/home_en.properties`
+* 西班牙语：`/WEB-INF/templates/home_es.properties`
+* 葡萄牙语（巴西）：`/WEB-INF/templates/home_pt_BR.properties`
+* 默认文本（如果没有匹配到）：`/WEB-INF/templates/home.properties`
+
+下面是 `home_es.properties` 文件内的部分内容：
+
+```properties
+home.welcome=¡Bienvenido a nuestra tienda de comestibles!
+```
+
+要让 `Thymeleaf` 处理自己的模板，以上就是我们所要做的所有事情了。下面，让我们创建首页对应的 `Controller`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
