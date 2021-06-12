@@ -234,7 +234,7 @@ public class GTVGApplication {
 
 配置 `TemplateEngine` 对象有很多种方法，但是代码中这为数不多的几行，已经把必须的步骤都展示给我们了
 
-### 模板解析器
+## 2.3 模板解析器
 
 ```java
 ServletContextTemplateResolver templateResolver = 
@@ -295,7 +295,7 @@ templateResolver.setCacheTTLMs(3600000L);
 
 关于模板解析器要了解的东西还很多，但是，我们接下来要模板引擎对象的创建了
 
-### 模板引擎
+## 2.4 模板引擎
 
 模板引擎对象是 `org.thymeleaf.itemplingengine` 接口的实现。 这些实现之一是由 `Thymeleaf` 核心提供：`org.thymeleaf.templingeNgine`，我们在此创建一个实例：
 
@@ -411,6 +411,407 @@ home.welcome=¡Bienvenido a nuestra tienda de comestibles!
 ```
 
 要让 `Thymeleaf` 处理自己的模板，以上就是我们所要做的所有事情了。下面，让我们创建首页对应的 `Controller`
+
+### 上下文
+
+在这里，我们将创建实现了 `IGTVGController` 接口的类 `HomeController`：
+
+```java
+public class HomeController implements IGTVGController {
+
+    public void process(
+            final HttpServletRequest request, final HttpServletResponse response,
+            final ServletContext servletContext, final ITemplateEngine templateEngine)
+            throws Exception {
+        
+        WebContext ctx = 
+                new WebContext(request, response, servletContext, request.getLocale());
+        
+        templateEngine.process("home", ctx, response.getWriter());
+        
+    }
+
+}
+```
+
+代码中的第一件事情就是上下文的创建。`Thymeleaf` 的上下文是实现了 `org.thymeleaf.context.IContex` 接口的对象，在模板被执行期间，该上下文中包含了一个变量 `Map` ，该 `Map` 中存放的是所有需要的数据，当然，上下文中还有外部化文本中必须用到的本地化配置的字符
+
+```java
+public interface IContext {
+
+    public Locale getLocale();
+    public boolean containsVariable(final String name);
+    public Set<String> getVariableNames();
+    public Object getVariable(final String name);
+    
+}
+```
+
+下面的代码是接口的实现版本，也就意味着这段代码可以在基于 `ServletAPI` 的 `web` 应用（比如 `SpringMVC`）中运行：
+
+```java
+public interface IWebContext extends IContext {
+    
+    public HttpServletRequest getRequest();
+    public HttpServletResponse getResponse();
+    public HttpSession getSession();
+    public ServletContext getServletContext();
+    
+}
+```
+
+在 `Thymeleaf` 的核心类库中，为这些接口每个都提供了具体的实现：
+
+* `org.thymeleaf.context.Context` 实现了 `IContext` 接口
+* `org.thymeleaf.context.WebContext` 实现了 `IWebContext` 接口
+
+和你在 `Controller` 中看到的一样，`WebContext` 正是我们所使用的。事实上，这是因为要使用 `ServletContextTemplateResolver`， 必须要求上下文实现 `IWebContext`
+
+```java
+WebContext ctx = new WebContext(request, response, servletContext, request.getLocale());
+```
+
+构造器方法的四个参数中，只有三个参数是必须的，这是因为如果没有指定本地化参数，将会使用系统默认的本地化参数（但在真实的应用环境中，千万不要让它发生）
+
+在模板中，可以从 `WebContext` 获取请求参数、`request、session、application` 对象的属性：
+
+* `${x}` ：将从 `Thymeleaf` 上下文，或从 `request` 属性中获取 `x`
+* `${param.x}`：将返回 `request` 中 `x` 参数的值（可能是多值）
+* `${session.x}`：将返回 `session` 的属性 `x` 的值
+* `${application.x}`：将返回 `servlet` 上下文中属性 `x` 的值
+
+### 执行模板引擎
+
+随着上下文对象的准备完毕，现在就可以使用上下文调用模板引擎来处理模板了（通过名称），并把结果传递给 `response writer`，这样就可以通过响应流进行输出了：
+
+```java
+templateEngine.process("home", ctx, response.getWriter());
+```
+
+下面是使用西班牙本地化的结果：
+
+```html
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <title>Good Thymes Virtual Grocery</title>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" type="text/css" media="all" href="/gtvg/css/gtvg.css" />
+  </head>
+
+  <body>
+  
+    <p>¡Bienvenido a nuestra tienda de comestibles!</p>
+
+  </body>
+
+</html>
+```
+
+## 3.2 变量和文本更多的内容
+
+### 非转义文本
+
+`home` 页面最简单的版本看起来已经完成了，但是这里面还有一些问题没有考虑到……比如说下面的信息应该如何处理？
+
+```properties
+home.welcome=Welcome to our <b>fantastic</b> grocery store!
+```
+
+如果按照先前的模板执行，将会得到如下的结果：
+
+```html
+<p>Welcome to our &lt;b&gt;fantastic&lt;/b&gt; grocery store!</p>
+```
+
+这和我们的预期明显不一样，这是因为要在浏览器中显示，因此 `<b>`被转义了
+
+这是 `th:text` 属性的默认行为。如果你想要停留 `html` 标签的原样不对其进行转义，那你需要使用另一个属性：`th:utext`：
+
+```html
+<p th:utext="#{home.welcome}">Welcome to our grocery store!</p>
+```
+
+输出如下：
+
+```html
+<p>Welcome to our <b>fantastic</b> grocery store!</p>
+```
+
+### 变量的使用和显示
+
+现在，我们要在页面中添加更多的内容。例如：在欢迎文字的下方，显示一下日期，效果如下：
+
+```html
+Welcome to our fantastic grocery store!
+
+Today is: 12 july 2010
+```
+
+首先，需要修改 `Controller`，把日期添加为一个上下文的变量
+
+```java
+public void process(
+            final HttpServletRequest request, final HttpServletResponse response,
+            final ServletContext servletContext, final ITemplateEngine templateEngine)
+            throws Exception {
+        
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
+    Calendar cal = Calendar.getInstance();
+        
+    WebContext ctx = 
+            new WebContext(request, response, servletContext, request.getLocale());
+    ctx.setVariable("today", dateFormat.format(cal.getTime()));
+        
+    templateEngine.process("home", ctx, response.getWriter());
+        
+}
+```
+
+就这样，在上下文中添加了一个名为 `today` 的 `String` 类型的变量，现在，把它显示到模板中：
+
+```html
+<body>
+
+  <p th:utext="#{home.welcome}">Welcome to our grocery store!</p>
+
+  <p>Today is: <span th:text="${today}">13 February 2011</span></p>
+  
+</body>
+```
+
+如你所见，在上面的代码中仍然使用的 `th:text` 属性（这是合适的，因为我们想替换整个标签的内容），但是语法上稍稍有些不一样，这次，没有使用 `#{}` （消息表达式 ），使用了 `${}`。这是 **变量表达式**，它包含了 `OGNL` 表达式（`Object Graph Navigation Language`），上面讨论过，这会在上下文变量 `Map` 中执行
+
+`${today}` 的意思是：“给我名为 `today` 变量的值”。这样的表达式会更加复杂（如：`${user.name}` 就是获取 `user` 变量的 `getName()` 方法的值）
+
+属性值会有非常多的可能：消息、变量表达式等，下一节将带你一探究竟。
+
+# 标准表达式语法
+
+先停下杂货铺网站的创建，休息一下，学习 `Thymeleaf` 语法中最重要的部分：`Thymeleaf` 标准表达式语法
+
+上面，已经看到了两种可用的语法：信息表达式（`#{}`）、变量表达式（`${}`）：
+
+```html
+<p th:utext="#{home.welcome}">Welcome to our grocery store!</p>
+
+<p>Today is: <span th:text="${today}">13 february 2011</span></p>
+```
+
+当然，还有一些其它的类型
+
+首先，快速的浏览一下标准表达式元素：
+
+* 变量表达式：`${}`
+* 选择变量表达式：`*{}`
+* 信息表达式：`#{}`
+* `URL` 连接表达式：`@{}`
+* 片断表达式：`~{}`
+
+字面量：
+
+* 文本字面值：`'one text'`，`'Another One!'`
+* 数字字面值：`0`，`34`，`3.0`，`12.3`
+* 布尔字面值：`true`，`false`
+* `Null` 字面值：`null`
+* 文字标记：`one`，`sometext`，`main`
+
+文本操作：
+
+* 字符串连接符：`+`
+* 文本替换：`|The name is ${name}|`
+
+数学操作符：
+
+* 二元操作符：`+、-、*、/、%`
+* 减号（一元操作符）：`-`
+
+布尔操作符：
+
+* 二元操作符：`and、or`
+* 取反（一元操作符）：`!、not`
+
+比较和相等：
+
+* 比较：`>、>=、<、<=`（`gt、ge、lt、le`）
+* 相等性操作符：`==、!=`（`eq、ne`）
+
+条件操作符：
+
+* `if-then`：`(if) ? (then)`
+* `if-then-else`：`(if) ? (then) : (else)`
+* 默认值：`(value) ?: (defaultvalue)`
+
+特殊的标识：
+
+* 无操作：`_`
+
+以上这些操作符都可以组合或是嵌套使用：
+
+```html
+'User is of type ' + (${user.isAdmin()} ? 'Administrator' : (${user.type} ?: 'Unknown'))
+```
+
+## 4.1 消息
+
+我们已经知道了，`#{}` 消息表达式可以这样使用：
+
+```html
+<p th:utext="#{home.welcome}">Welcome to our grocery store!</p>
+```
+
+本地化文本如下：
+
+```properties
+home.welcome=¡Bienvenido a nuestra tienda de comestibles!
+```
+
+但是，有个问题我们还没有考虑到：如果信息不是静态的该怎么办？例如，我们可以知道某个时刻访问网站的用户是谁，并且想用它的名字来问候他，如下所求：
+
+```html
+<p>¡Bienvenido a nuestra tienda de comestibles, John Apricot!</p>
+```
+
+这就意味着我们需要在消息中添加变量：
+
+```properties
+home.welcome=¡Bienvenido a nuestra tienda de comestibles, {0}!
+```
+
+通过 `java.text.MessageFormat` 标准语法指定了参数，这就意味着你可以使用 `java.text.*` 包下的类，来引入一个 `number` 类型的参数，或是一个 `date` 类型的参数
+
+为了给参数指定值，需要在 `HTTP session` 中指定一个名为 `user` 的属性，可以这样做：
+
+```html
+<p th:utext="#{home.welcome(${session.user.name})}">
+  Welcome to our grocery store, Sebastian Pepper!
+</p>
+```
+
+> ​	注意：这里 `th:utext` 的使用意味着格式化的信息将不会被转义。示例中假设 `user.name` 已经转义过了
+
+多个参数之间，使用 **逗号** 分隔
+
+消息键的值也可以是变量：
+
+```html
+<p th:utext="#{${welcomeMsgKey}(${session.user.name})}">
+  Welcome to our grocery store, Sebastian Pepper!
+</p>
+```
+
+## 4.2 变量
+
+你是否已经注意到：事实上，`${}` 表达式实际上是包含在上下文中的变量 `Map` ，使用 `OGNL` 表达式执行的结果
+
+> 在使用了 `Spring MVC` 的应用程序中，`OGNL` 将被替换为 `Spring EL`，但是，它们俩个的语法是非常的相似（实际上，大多数常见的案例是出奇的一致）
+
+通过 `OGNL` 语法可知，下面代码中的表达式：
+
+```html
+<p>Today is: <span th:text="${today}">13 february 2011</span>.</p>
+```
+
+实际等价于：
+
+```java
+ctx.getVariable("today");
+```
+
+但是，`OGNL` 允许我们创建更为强大的表达式：
+
+```html
+<p th:utext="#{home.welcome(${session.user.name})}">
+  Welcome to our grocery store, Sebastian Pepper!
+</p>
+```
+
+实际上是通过执行下面的语句获得变量的值：
+
+```java
+((User) ctx.getVariable("session").get("user")).getName();
+```
+
+`getter` 方法只是 `OGNL` 语法的一部分：
+
+```java
+/*
+ * Access to properties using the point (.). Equivalent to calling property getters.
+ */
+${person.father.name}
+
+/*
+ * Access to properties can also be made by using brackets ([]) and writing 
+ * the name of the property as a variable or between single quotes.
+ */
+${person['father']['name']}
+
+/*
+ * If the object is a map, both dot and bracket syntax will be equivalent to 
+ * executing a call on its get(...) method.
+ */
+${countriesByCode.ES}
+${personsByName['Stephen Zucchini'].age}
+
+/*
+ * Indexed access to arrays or collections is also performed with brackets, 
+ * writing the index without quotes.
+ */
+${personsArray[0].name}
+
+/*
+ * Methods can be called, even with arguments.
+ */
+${person.createCompleteName()}
+${person.createCompleteNameWithSeparator('-')}
+```
+
+### 基本对象表达式
+
+当基于上下文变量计算 `OGNL` 表达式时，表达式可以使用某些内置的对象，这样会让表达式更加灵活。这些内置的对象会被每一个 `OGNL` 标准所引用，使用 `#` 语法就可以：
+
+* `#ctx`：上下文对象
+* `#vars`：变量上下文
+* `#local`：本地化上下文
+* `#request`：（只存在于 `web` 上下文中）`HttpServletRqeust` 对象
+* `#response`：（只存在于 `web` 上下文中）`HttpServletResponse` 对象
+* `#session`：（只存在于 `web` 上下文中）`HttpSession` 对象
+* `#ServletContext`：（只存在于 `web` 上下文中）`ServletContext` 对象
+
+利于这些对象，就可以这样写代码了：
+
+```html
+Established locale country: <span th:text="${#locale.country}">US</span>.
+```
+
+详情参见 [附录A]()
+
+### 表达式实用程序集对象
+
+除了上面说的基本对象外，`Thymeleaf` 还给我们提供了一系列的实用工具集对象，用于帮助我们在表达式中执行一些常用的任务
+
+- `#execInfo`: 正在处理的模板信息
+- `#messages`: 在变量表达式中，获取外部化消息的方法，同样，可以通过 `#{}` 语法获取
+- `#uris`: 用于转义 `URLs/URIs` 内容的方法
+- `#conversions`: 用于执行配置约定服务（如果有的话）的方法
+- `#dates`: 用于 `java.util.Date` 对象的方法：格式化，成分提取等
+- `#calendars`: 类似于 `#dates`，但是对应的是 `java.util.Calendar` 对象
+- `#numbers`: 用于格式化数字对象的方法
+- `#strings`: 用于 `String` 对象的方法：包含，以...开头，预附加/追加等
+- `#objects`: 用于一般 `Object` 的方法
+- `#bools`: 用于布尔计算的方法
+- `#arrays`: 用于数据的方法
+- `#lists`: 用于列表的方法
+- `#sets`: 用于集合的方法
+- `#maps`: 用于 `Map` 的方法
+- `#aggregates`: 在数组或集合上创建聚合的方法
+- `#ids`: 用于处理可能重复出现的 `id` 属性（例如：迭代的结果中）
+
+详情请参见 [附录B]()
+
+### 在 home 页面对日期进行重新格式化
 
 
 
