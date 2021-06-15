@@ -9127,6 +9127,21 @@ public class AuthorityFilter implements Filter {
 
 ### 3. jsp 开发【重点】
 
+> jsp 开发需要的 jar 包（maven配置）如下：
+>
+> ```xml
+> <dependency>
+>   <groupId>javax.servlet</groupId>
+>   <artifactId>javax.servlet-api</artifactId>
+>   <scope>provided</scope>
+> </dependency>
+> <dependency>
+>   <groupId>javax.servlet</groupId>
+>   <artifactId>jsp-api</artifactId>
+>   <scope>provided</scope>
+> </dependency>
+> ```
+
 #### 3.1 创建 JSP
 
 在 `web` 目录下新建 `*.jsp` 文件（与 `WEB-INF` 平级）
@@ -9169,7 +9184,7 @@ public class AuthorityFilter implements Filter {
 
 ##### Jsp.java 源文件存放目录
 
-使用 `IDEA` 开发工具，`Tomcat` 编译后的 `JSP` 文件（`Xxx_jsp.class` 和 `Xxx_jsp.java`）的dhyty地址：
+使用 `IDEA` 开发工具，`Tomcat` 编译后的 `JSP` 文件（`Xxx_jsp.class` 和 `Xxx_jsp.java`）的存放地址：
 
 启动应用后，在控制台查找 `catalina.base=路径` ，路径就是实际的项目部署地址，在 `路径/work/Catalina/localhost/应用上下文/` 下就是真实的存放路径
 
@@ -9275,7 +9290,7 @@ public class AuthorityFilter implements Filter {
 | 属性           | 描述                                                         |
 | -------------- | ------------------------------------------------------------ |
 | `contentType`  | 指定当前 `jsp` 页面的 `MIME` 类型和字符编码格式              |
-| `errorPage`    | 指定当 `jsp` 页面发生异常时需要转身的错误处理页面            |
+| `errorPage`    | 指定当 `jsp` 页面发生异常时需要转向的错误处理页面            |
 | `isErrorPage`  | 指定当前页面是否可以作为另一个 `jsp` 页面的错误处理页面      |
 | `import`       | 导入要使用的 `java` 类                                       |
 | `language`     | 定义 `jsp` 页面所使用的脚本语言，默认是 `java`               |
@@ -9312,7 +9327,7 @@ public class AuthorityFilter implements Filter {
 
 ##### include
 
-* 语法：`<jsp:iinclude page="相对 URL 地址" />`
+* 语法：`<jsp:include page="相对 URL 地址" />`
 * `<jsp:include> `动作元素会将外部文件输出结果包含在 JSP 中（动态包含）
 
 | 属性 | 描述                        |
@@ -9398,7 +9413,7 @@ public class AuthorityFilter implements Filter {
 | `config`      | `javax.servlet.ServletConfig`            |                               |
 | `exception`   | `java.lang.Throwable`                    | 由 `isErrorPage="false"` 开关 |
 | `out`         | `javax.servlet.jsp.JspWriiter`           |                               |
-| `pageContext` | `javaxservletjspPageContext`             |                               |
+| `pageContext` | `javax.servlet.jsp.PageContext`          |                               |
 | `page`        | `java.lang.Object` 当前对象 `this`       | 当前 `servlet` 实例           |
 
 ##### 四大域对象
@@ -9467,11 +9482,11 @@ public class AuthorityFilter implements Filter {
 
 #### 5.1 概念
 
-`EL` 使 `Jsp` 写起来更简单、简洁。主要用于获取作用域中的数据
+`EL` 使 `Jsp` 写起来更简单、简洁。主要用于 **获取*作用域*中的数据**
 
 #### 5.2 作用
 
-`用于替换作用域对象.getAttribute("name")`
+`用于替换：作用域对象.getAttribute("name")`
 
 #### 5.3 EL 的应用（获取基本类型、字符串）
 
@@ -9681,7 +9696,7 @@ ${cookie.password.value} // 获取 password 的 cookie 的 value 值
 
 ##### url 标签
 
-在 `Cookie` 彬的情况下，通过重写 `URL` 拼接 `JSESSIONID` 来传递 `ID` 值，便于下一次访问时仍可查找到上一次的 `Session` 对象
+在 `Cookie` 禁用的情况下，通过重写 `URL` 拼接 `JSESSIONID` 来传递 `ID` 值，便于下一次访问时仍可查找到上一次的 `Session` 对象
 
 ```jsp
 <c:url context="/${pageContext.request.contextPath}" value="/xxxController" />
