@@ -82,7 +82,7 @@
 
 [![R9X9KA.md.png](https://z3.ax1x.com/2021/06/19/R9X9KA.md.png)](https://imgtu.com/i/R9X9KA)
 
- 	## 1.5 RBAC
+## 1.5 RBAC
 
 如何实现授权？业界通常基于 `RBAC` 实现授权
 
@@ -183,7 +183,282 @@ public class ApplicationContext {
 }
 ```
 
+## 2.3 实现认证功能
 
+### 2.3.1 认证页面
+
+在 `webapp/WEB-INF/view` 目录下定义认证页面 `login.jsp`，本安全只是测试认证流程，页面没有添加 `css` 样式，页面实现可填入用户名，密码，触发登录提交表单信息至 `/login`，内容如下：
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>登录页面</title>
+</head>
+<body>
+    <form action="/login" method="post">
+        <label for="username">用户名：</label><input type="text" id="username" name="username"><br>
+        <label for="password">密码：</label><input type="password" id="password" name="password"><br>
+        <input type="submit" value="登录">
+    </form>
+</body>
+</html>
+```
+
+### 2.3.2 认证接口
+
+用户进入认证页面，输入账号和密码，点击登录，请求 `/login` 进行身份认证
+
+1. 定义认证接口，此接口用于对传来的用户名、密码校验，若成功则返回该用户的详细信息，否则抛出错误异常：
+
+   ```java
+   public interface AuthenticationService {
+       /**
+        * 用户认证
+        * @param authenticationRequest 用户认证请求：账号和密码
+        * @return 认证成功的用户信息
+        */
+       User authentication(AuthenticationRequest authenticationRequest);
+   }
+   ```
+
+   认证请求的实体：
+
+   ```java
+   @Data
+   public class AuthenticationRequest {
+       // 认证请求参数：账号、密码
+       private String username;
+       private String password;
+   }
+   ```
+
+   认证成功后返回的用户详细信息，也就是当前登录用户的信息：
+
+   ```java
+   @Data
+   @AllArgsConstructor
+   public class User {
+       // 用户身份信息
+       private String id;
+       private String username;
+       private String password;
+       private String fullname;
+       private String mobile;
+   }
+   ```
+
+2. 认证实现类，根据用户名查找用户信息，并校验密码，这里模拟了两个用户：
+
+   ```java
+   @Service("authenticationService")
+   public class AuthenticationServiceImpl implements AuthenticationService {
+       @Override
+       public User authentication(AuthenticationRequest authenticationRequest) {
+           if (authenticationRequest == null || StringUtils.isEmpty(authenticationRequest.getUsername()) || StringUtils.isEmpty(authenticationRequest.getPassword())) {
+               throw new RuntimeException("用户名或密码为空");
+           }
+   
+           // 根据账号去查询数据库，这里测试程序采用模拟方法
+           User user = getUser(authenticationRequest.getUsername());
+           if (user == null)
+               throw new RuntimeException("查询不到该用户");
+   
+           if (!user.getPassword().equals(authenticationRequest.getPassword()))
+               throw new RuntimeException("账号或密码错误");
+           
+           // 认证通过，返回用户身份信息
+           return user;
+       }
+   
+       // 模拟用户查询
+       public User getUser(String username) {
+           return userMap.get(username);
+       }
+   
+       // 用户信息
+       private Map<String, User> userMap = new HashMap<>();
+       {
+           userMap.put("zhangsan", new User("1010", "zhangsan", "123", "张三", "133443"));
+           userMap.put("lisi", new User("1011", "lisi", "456", "李四", "144553"));
+       }
+   }
+   ```
+
+3. 登录 `controller`，对 `/login` 请求处理，它调用 `AuthenticationService` 完成认证并返回登录结果提示信息：
+
+   ```java
+   @RestController
+   public class LoginController {
+       @Autowired
+       private AuthenticationService authenticationService;
+   
+       /**
+        * 用户登录
+        * @param authenticationRequest 登录请求
+        * @return 登录成功后，返回用户信息
+        */
+       @RequestMapping(value = "/login", produces = "text/plain; charset=utf-8")
+       public String login(AuthenticationRequest authenticationRequest) {
+           User user = authenticationService.authentication(authenticationRequest);
+           return user.getFullname() + " 登录成功";
+       }
+   }
+   ```
+
+4. 测试：启动项目，访问路径，进行测试
+
+## 2.4 实现会话功能
+
+会话是指用户登入系统后，系统会记住该用户的登录状态，它可以存在于系统连续操作直到退出系统的过程
+
+认证的目的是对系统资源的保护，每次对资源的访问，系统必须得知道是认证在访问资源，才能对该请求进行合法性拦截。因此，在认证成功后，一般会把认证成功的用户信息放入 `session` 中，在后续的请求中，系统能够从 `session` 中获取到当前用户，用这样的方式来实现会话机制
+
+1. 增加会话控制：首先 `User` 中定义一个 `SESSION_USER_KEY`，作为 `session` 中存放登录用户信息的 `key`
+
+   ```java
+   public static final String SESSION_USER_KEY = "_user";
+   ```
+
+   然后修改 `LoginController`，认证成功后，将用户信息放入当前会话。并增加用户登出方法，登出时将该 `session` 置为失效
+
+2. 增加测试资源：修改 `LoginController`，增加测试资源，它从当前会话 `session` 中获取当前登录用户，并返回提示信息给前台
+
+   ```java
+   @GetMapping(value = "/r/r1", produces = "text/plain; charset=utf-8")
+   public String r1(HttpSession session) {
+       String fullname = null;
+       Object user = session.getAttribute(User.SESSION_USER_KEY);
+       if (user != null) {
+           fullname = ((User) user).getFullname();
+       } else {
+           fullname = "匿名";
+       }
+       return fullname + " 访问资源1";
+   }
+   ```
+
+## 2.5 实现授权功能
+
+现在我们已经完成了用户身份凭证的校验以及登录的状态保持，并且我们也知道了如何获取当前登录用户（从 `session` 中获取）的信息，接下来，用户访问系统需要经过授权，即需要完成如下功能：
+
+* 匿名用户（未登录用户）访问拦截：禁止匿名用户访问某些资源
+* 登录用户访问拦截：根据用户的权限决定是否能访问某些资源
+
+1. 增加权限数据
+
+   为了实现这样的功能，我们需要在 `User` 里增加权限属性，用过表示该登录用户所拥有的权限，同时修改 `User` 的构造方法
+
+   ```java
+   @Data
+   @AllArgsConstructor
+   public class User {
+       public static final String SESSION_USER_KEY = "_user";
+       // 用户身份信息
+       private String id;
+       private String username;
+       private String password;
+       private String fullname;
+       private String mobile;
+       // 用户权限
+       private Set<String> authorities;
+   }
+   ```
+
+   并且在 `AuthenticationServiceImpl` 中为模拟用户初始化权限，其中张三给了 `p1` 权限，李四给了 `p2` 权限：
+
+   ```java
+   // 用户信息
+   private Map<String, User> userMap = new HashMap<>();
+   {
+       Set<String> authorities1 = new HashSet<>();
+       authorities1.add("p1");
+       Set<String> authorities2 = new HashSet<>();
+       authorities2.add("p2");
+       userMap.put("zhangsan", new User("1010", "zhangsan", "123", "张三", "133443", authorities1));
+       userMap.put("lisi", new User("1011", "lisi", "456", "李四", "144553", authorities2));
+   }
+   ```
+
+2. 增加测试资源
+
+   我们想实现针对不同的用户能访问不同的资源，前提是得有多个资源，因此在 `LoginController` 中增加测试资源 2：
+
+   ```java
+   @GetMapping(value = "/r/r2", produces = "text/plain; charset=utf-8")
+   public String r2(HttpSession session) {
+       String fullname = null;
+       Object user = session.getAttribute(User.SESSION_USER_KEY);
+       if (user != null) {
+           fullname = ((User) user).getFullname();
+       } else {
+           fullname = "匿名";
+       }
+       return fullname + " 访问资源2";
+   }
+   ```
+
+3. 实现授权拦截器
+
+   在 `interceptor` 包下定义 `SimpleAuthenticationInterceptor` 拦截器，实现授权拦截：
+
+   3.1 校验用户是否登录
+
+   3.2 校验用户是否拥有操作权限
+
+   ```java
+   @Component
+   public class SimpleAuthenticationInterceptor implements HandlerInterceptor {
+       @Override
+       public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+           // 在这个方法中校验用户请求的 url 是否在用户的权限范围内
+           Object object = request.getSession().getAttribute(User.SESSION_USER_KEY);
+           if (object == null) {
+               writeContent(response, "没有登录");
+           }
+           User user = (User) object;
+           if (user.getAuthorities().contains("p1") && request.getRequestURI().contains("/r/r1")) {
+               return true;
+           }
+           if (user.getAuthorities().contains("p2") && request.getRequestURI().contains("/r/r2")) {
+               return true;
+           }
+   
+           writeContent(response, "没有权限，拒绝访问");
+           return false;
+       }
+   
+       private void writeContent(HttpServletResponse response, String msg) throws IOException {
+           response.setContentType("text/html; charset=utf-8");
+           PrintWriter writer = response.getWriter();
+           writer.write(msg);
+           writer.close();
+           response.resetBuffer();
+       }
+   }
+   ```
+
+   在 `WebConfig` 中配置拦截器，匹配 `/r/**` 的资源为受保护的系统资源，访问该资源的请求进入 `SimpleAuthenticationInterceptor` 拦截器：
+
+   ```java
+   @Autowired
+   private SimpleAuthenticationInterceptor simpleAuthenticationInterceptor;
+   
+   @Override
+   public void addInterceptors(InterceptorRegistry registry) {
+       registry.addInterceptor(simpleAuthenticationInterceptor).addPathPatterns("/r/**");
+   }
+   ```
+
+4. 测试：
+
+   未登录情况下，`/r/r1` 与 `/r/r2` 均提示 “请先登录”
+
+   张三登录情况下，由于张三有 `p1` 权限，因此可以访问 `/r/r1`，张三没有 `p2` 权限，访问 `/r/r2` 时提示 “权限不足
+
+   李四登录情况下，由于李四有 `p2` 权限，因此可以访问 `/r/r2`，李四没有 `p1` 权限，访问 `/r/r1` 时提示 “权限不足
+
+   测试结果全部符合预期结果
 
 
 
