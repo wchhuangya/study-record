@@ -171,6 +171,121 @@ if (主体.hasPermission("查询工资权限标识")) {    
 
 创建 `maven` 工程 `security-springmvc`，工程结构如下：
 
+[![RiNvWj.png](https://z3.ax1x.com/2021/06/20/RiNvWj.png)](https://imgtu.com/i/RiNvWj)
+
+`pom.xml` 文件内容如下：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <parent>
+    <artifactId>all</artifactId>
+    <groupId>com.ch.wchya</groupId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>security-springmvc</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>war</packaging>
+
+  <name>security-springmvc</name>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>com.ch.wchya</groupId>
+      <artifactId>entity</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jsp-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jstl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>taglibs</groupId>
+      <artifactId>standard</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>security-springmvc</finalName>
+    <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
+      <plugins>
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <!-- see http://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_war_packaging -->
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.0.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.22.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-war-plugin</artifactId>
+          <version>3.2.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>2.5.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>2.8.2</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>
+```
+
 ### 2.2.2 Spring 容器配置
 
 在 `config` 包下定义 `ApplicationConfig.java`，它对应 `web.xml` 中 `ContextLoaderListener` 的配置：
@@ -180,6 +295,64 @@ if (主体.hasPermission("查询工资权限标识")) {    
 @ComponentScan(basePackages = "com.ch.wchya.security.springmvc", excludeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = Controller.class)})
 public class ApplicationContext {
     // 在此配置除了 Controller 的其它 bean，比如：数据库连接池，事务管理器，业务 bean 等
+}
+```
+
+### 2.2.3 Servlet Context 容器配置
+
+```java
+@Configuration
+@EnableWebMvc
+@ComponentScan(basePackages = "com.ch.wchya.security.springmvc", includeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = Controller.class)})
+public class WebConfig implements WebMvcConfigurer {
+
+    @Autowired
+    private SimpleAuthenticationInterceptor simpleAuthenticationInterceptor;
+
+    @Bean
+    public InternalResourceViewResolver viewResolver() {
+        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+        viewResolver.setPrefix("/WEB-INF/view/");
+        viewResolver.setSuffix(".jsp");
+        return viewResolver;
+    }
+
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addViewController("/").setViewName("login");
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(simpleAuthenticationInterceptor).addPathPatterns("/r/**");
+    }
+}
+```
+
+### 2.2.4 启动 Spring 容器
+
+> 路径：com.ch.wchya.security.springmvc.init
+
+```java
+public class SpringApplicationInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
+
+    // spring 窗口，相当于加载 applicationContext.xml
+    @Override
+    protected Class<?>[] getRootConfigClasses() {
+        return new Class[]{ApplicationContext.class};
+    }
+
+    // servletContext，相当于加载 spring-mvc.xml
+    @Override
+    protected Class<?>[] getServletConfigClasses() {
+        return new Class[]{WebConfig.class};
+    }
+
+    // url-mapping
+    @Override
+    protected String[] getServletMappings() {
+        return new String[]{"/"};
+    }
 }
 ```
 
@@ -459,6 +632,412 @@ public class ApplicationContext {
    李四登录情况下，由于李四有 `p2` 权限，因此可以访问 `/r/r2`，李四没有 `p1` 权限，访问 `/r/r1` 时提示 “权限不足
 
    测试结果全部符合预期结果
+
+## 2.6 小结
+
+基于 `session` 领证方式是一种常见的谁方式，至今还有非常多的系统在使用。我们在此小节使用 `Spring mvc` 技术对它进行简单实现，旨在让大家更清晰实在的了解用户认证、授权以及会话的功能意义及实现套路，也就是它们分别干了哪些事儿？大概需要怎么做？
+
+而在正式生产项目中，我们往往会考虑使用第三方安全框架（如 `spring security、shiro` 等安全框架）来实现谁授权功能，因为这样做能一定程序提高生产力，提交软件标准化程度，另外往往这些框架的可扩展性考虑的非常全面。但是缺点也非常明显，这些通用化组件为了提高支持范围会增加很多可能我们不需要的功能，结构上也会比较抽象，如果我们不够了解它，一旦出现问题，将会很难定位
+
+# 3. Spring Security 快速上手
+
+## 3.1 Spring Security 介绍
+
+`Spring Security` 是一个能够为基于 `Spring` 的企业应用系统提供声明式的安全访问控制解决方案的安全框架。由于它是 `Spring` 生态系统中的一员，因此它伴随着整个 `Spring` 生态系统不断修正、升级，在 `spring boot` 项目中加入 `spring security` 更是十分简单，使用 `spring security` 减少了为企业系统安全控制编写大量重复代码的工作
+
+## 3.2 创建工程
+
+### 3.2.1 创建 maven 工程
+
+创建 `maven` 工程 `security-spring`，工程结构如下：
+
+[![RibKJS.png](https://z3.ax1x.com/2021/06/20/RibKJS.png)](https://imgtu.com/i/RibKJS)
+
+`pom.xml` 文件内容如下：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <parent>
+    <artifactId>all</artifactId>
+    <groupId>com.ch.wchya</groupId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>security-spring</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>war</packaging>
+
+  <name>security-spring Maven Webapp</name>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.ch.wchya</groupId>
+      <artifactId>entity</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-config</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>security-spring</finalName>
+    <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
+      <plugins>
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <!-- see http://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_war_packaging -->
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.0.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.22.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-war-plugin</artifactId>
+          <version>3.2.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>2.5.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>2.8.2</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>
+```
+
+### 3.2.2 Spring 容器配置
+
+同 `security-springmvc` 项目：
+
+```java
+@Configuration
+@ComponentScan(basePackages = "com.ch.wchya.security.spring", excludeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = Controller.class)})
+public class ApplicationContext {
+    // 在此配置除了 Controller 的其它 bean，比如：数据库连接池、事务管理器、业务 bean 等
+}
+```
+
+> 注意：`basePackages` 的内容有变化
+
+### 3.2.3 Servlet Context 配置
+
+与 `security-springmvc` 项目相比，删除了很多内容，尤其是 `spring-security` 会自己实现拦截器，不再需要我们手动注册的那种拦截器了：
+
+```java
+@Configuration
+@EnableWebMvc
+@ComponentScan(basePackages = "com.ch.wchya.security.spring", includeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = Controller.class)})
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void configureViewResolvers(ViewResolverRegistry registry) {
+        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+        viewResolver.setPrefix("/WEB-INF/views");
+        viewResolver.setSuffix(".jsp");
+        registry.viewResolver(viewResolver);
+    }
+}
+```
+
+### 3.2.4 加载 Spring 容器
+
+同 `security-springmvc` 项目：
+
+```java
+public class SpringApplicationInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
+    @Override
+    protected Class<?>[] getRootConfigClasses() {
+        return new Class[]{ApplicationContext.class};
+    }
+
+    @Override
+    protected Class<?>[] getServletConfigClasses() {
+        return new Class[]{WebConfig.class};
+    }
+
+    @Override
+    protected String[] getServletMappings() {
+        return new String[]{"/"};
+    }
+}
+```
+
+## 3.3 认证
+
+### 3.3.1 认证页面
+
+`Spring Security` 默认提供认证页面，不需要额外开发
+
+[![RibPRe.png](https://z3.ax1x.com/2021/06/20/RibPRe.png)](https://imgtu.com/i/RibPRe)
+
+### 3.3.2 安全配置
+
+`Spring Security` 提供了用户名密码登录、退出、会话管理等认证功能，只需要配置即可使用
+
+1. 在 `config` 包下定义 `WebSecurityConfig`，安全配置的内容包括：用户信息、密码编码器、安全拦截机制
+
+   ```java
+   @EnableWebSecurity
+   public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+   
+       // 定义用户信息服务（查询用户信息）
+       @Bean
+       public UserDetailsService userDetailsService() {
+           InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+           manager.createUser(User.withUsername("zhangsan").password("123").authorities("p1").build());
+           manager.createUser(User.withUsername("lisi").password("456").authorities("p2").build());
+           return manager;
+       }
+   
+       // 定义密码编码器
+       @Bean
+       public PasswordEncoder passwordEncoder() {
+           return NoOpPasswordEncoder.getInstance();
+       }
+   
+       // 安全拦截机制（最重要）
+       @Override
+       protected void configure(HttpSecurity http) throws Exception {
+           http.authorizeRequests()
+                   .antMatchers("/r/**").authenticated()    //  所有/r/**的请求必须认证通过
+                   .anyRequest().permitAll()                //  除了/r/**，其它的请求可以访问
+                   .and()
+                   .formLogin()                             // 允许表单登录
+                   .successForwardUrl("/login-success");    // 自定义登录成功的页面地址
+       }
+   }
+   ```
+
+   在 `userDetailsService()` 方法中，我们返回了一个 `UserDetailService` 给 `spring` 容器，`sprign security` 会使用它来获取用户信息。我们暂时使用 `InMemoryUserDetailsManager` 实现类，并在其中分别创建了 `zhangsan、lisi` 两个用户，设置密码和权限
+
+   在 `configure()` 中，我们通过 `HttpSecurity` 设置了安全拦截规则，其中包含了以下内容：
+
+   1.1 `url` 匹配 `/r/**` 的资源，经过认证后才能访问
+
+   1.2 其它 `url` 完全开放
+
+   1.3 支持 `form` 表单认证，认证成功后转身 `/login-success`
+
+   关于 `HttpSecurity` 的配置清单请参考附录 `HttpSecurity`
+
+2. 加载 `WebSecurityConfig`
+
+   修改 `SpringApplicationInitializer` 的 `getRootConfigClasses()` 方法，添加 `WebSecurityConfig.class`
+
+   ```java
+   @Override
+   protected Class<?>[] getRootConfigClasses() {
+       return new Class[]{ApplicationContext.class, WebSecurityConfig.class};
+   }
+   ```
+
+### 3.3.2 Spring Security 初始化
+
+`Spring Security` 初始化，这里有两种情况：
+
+* 若当前环境没有使用 `Spring` 或者 `Spring mvc`，则需要将 `WebSecurityConfig`（`Spring Security` 的配置类）传入超类，以确保获取配置，并创建 `spring context`
+
+  在 `init` 包下定义 `SpringSecurityApplicationInitializer`：
+
+  ```java
+  public class SpringSecurityApplicationInitializer extends AbstractSecurityWebApplicationInitializer {
+    public SpringSecurityApplicationInitializer() {
+      super(WebSecurityConfig.class);
+    }
+  }
+  ```
+
+* 相反，若当前环境已经使用 `spring`，我们应该在现有的 `springContext` 中注册 `spring security`（上一步已经将 `WebSecurityConfig` 加载至 `rootcontext`），此方法可以什么都不做
+
+在 `init` 包下定义 `SpringSecurityApplicationInitializer`：
+
+```java
+public class SpringSecurityApplicationInitializer extends AbstractSecurityWebApplicationInitializer {
+  public SpringSecurityApplicationInitializer() {
+    // super(WebSecurityConfig.class); 如果是上面说的第一种情况，去掉这句的注释
+  }
+}
+```
+
+### 3.2.3 默认根路径请求
+
+在 `WebConfig.java` 中添加默认请求根路径跳转到 `/login`，此 `url` 为 `spring security` 提供：
+
+```java
+// 默认 url 根路径跳转到 /login, 此 url 为 spring security 提供
+@Override
+public void addViewControllers(ViewControllerRegistry registry) {
+  registry.addViewController("/").setViewName("redirect:/login");
+}
+```
+
+`spring security` 默认提供的登录页面
+
+### 3.2.4 认证成功页面
+
+在安全配置中，认证成功将跳转到 `/login-success`，代码如下：
+
+```java
+@Override
+protected void configure(HttpSecurity http) throws Exception {
+    http.authorizeRequests()
+            .antMatchers("/r/**").authenticated()    //  所有/r/**的请求必须认证通过
+            .anyRequest().permitAll()                          //  除了/r/**，其它的请求可以访问
+            .and()
+            .formLogin()                                        // 允许表单登录
+            .successForwardUrl("/login-success");               // 自定义登录成功的页面地址
+}
+```
+
+`spring security` 支持 `form` 表单认证，认证成功后转身 `/login-success`
+
+在 `LoginController` 中定义 `/login-success`：
+
+```java
+@RequestMapping(value = "/login-success", produces = "text/plain; charset=utf-8")
+public String loginSuccess() {
+    return "登录成功";
+}
+```
+
+### 3.2.5 测试
+
+1. 启动项目：
+
+   ![RibPRe.png](https://z3.ax1x.com/2021/06/20/RibPRe.png)
+
+   页面会根据 `WebConfig` 中 `addViewController` 配置的规则，跳转至 `/login`，`/login` 是 `spring security` 提供的登录页面
+
+2. 登录
+
+   输入错误的用户名、密码：
+
+   [![RiOmIx.png](https://z3.ax1x.com/2021/06/20/RiOmIx.png)](https://imgtu.com/i/RiOmIx)
+
+   输入正确的用户名、密码，登录成功
+
+3. 退出
+
+   请求 `/logout` 退出
+
+   [![RiOIOJ.png](https://z3.ax1x.com/2021/06/20/RiOIOJ.png)](https://imgtu.com/i/RiOIOJ)
+
+   退出后来到登录页面
+
+   [![RiXkff.png](https://z3.ax1x.com/2021/06/20/RiXkff.png)](https://imgtu.com/i/RiXkff)
+
+## 3.4 授权
+
+实现授权需要对用户的访问进行拦截校验，校验用户的权限是否可以操作指定的资源，`spring security` 默认提供授权实现方法
+
+在 `LoginController` 添加 `/r/r1` 或 `/r/r2`
+
+```java
+@GetMapping(value = "/r/r1", produces = "text/plain; charset=utf-8")
+public String r1() {
+    return "访问资源1";
+}
+
+@GetMapping(value = "/r/r2", produces = "text/plain; charset=utf-8")
+public String r2() {
+    return "访问资源2";
+}
+```
+
+修改 `WebSecurityConfig` 的内容，添加授权代码：
+
+```java
+@Override
+protected void configure(HttpSecurity http) throws Exception {
+    http.authorizeRequests()
+            .antMatchers("/r/r1").hasAuthority("p1")
+            .antMatchers("/r/r2").hasAuthority("p2")
+            .antMatchers("/r/**").authenticated()    //  所有/r/**的请求必须认证通过
+            .anyRequest().permitAll()                          //  除了/r/**，其它的请求可以访问
+            .and()
+            .formLogin()                                        // 允许表单登录
+            .successForwardUrl("/login-success");               // 自定义登录成功的页面地址
+}
+```
+
+测试：
+
+* 登录成功
+* 访问 `/r/r1` 和 `/r/r2`，有权限则正常访问，否则返回 403（拒绝访问）
+
+## 3.5 小结
+
+通过快速上手，使用 `Spring Security` 实现了认证和授权，`Spring security` 提供了基于账号和密码的认证方式，通过安全配置即可实现请求拦截，授权功能，`Spring Security` 能完成的不仅仅是这些
+
+# 4. Spring Security 应用详解
+
+## 4.1 集成 SpringBoot
+
+### 4.1.1 SpringBoot 介绍
+
+`Spring Boot` 是一套 `Spring` 的快速开发框架，基于 `Spring 4.0` 设计，使用 `Spring Boot` 开发可以避免一些繁琐的工程搭建和配置，同时它集成了大师的常用框架，快速导入依赖包，避免依赖包的冲突。基本上常用的开发框架都支持 `Spring Boot` 开发，例如：`MyBatis、Dubbo` 等，`Spring` 家族更是如此，例如：`Spring cloud、Spring mvc、Spring Security` 等，使用 `Spring Boot` 开发可以大大提高生产率，所以 `Spring Boot` 的使用率非常高
+
+本章讲解如何通过 `Spring Boot` 开发 `Spring Security` 应用，`Spring Boot` 提供 `Spring-boot-starter-security` 用于开发 `Spring Security` 应用
+
+### 4.1.2 创建 Maven 工程
+
+
+
+
+
+
+
+
 
 
 
