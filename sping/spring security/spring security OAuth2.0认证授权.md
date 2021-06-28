@@ -1037,11 +1037,21 @@ protected void configure(HttpSecurity http) throws Exception {
 
 
 
+## 4.2 工作原理
 
+### 4.2.1 结构总览
 
+`Spring Security` 所解决的问题就是案例访问控制，而案例访问控制功能其实就是对所有进入系统的请求进行拦截，校验每个请求是否能够访问它所期望的资源。根据前边知识的学习，可以通过 `Filter` 或 `AOP` 等技术来实现，`Spring Security` 对 `Web` 资源的保护是靠 `Filter` 实现的，所以从这个 `Filter` 来入手，逐步深入 `Spring Security` 原理
 
+当初始化 `Spring Security`时，会创建一个名为 `SpringSecurityFilterChain` 的 `Servlet` 过滤器，类型为：`org.springframework.security.web.FilterChainProxy`，它实现了 `javax.servlet.Filter`，因此外部的请求会经过此类，下图是 `Spring Security` 过滤器链结构图：
 
+[![Rm4FgO.md.png](https://z3.ax1x.com/2021/06/23/Rm4FgO.md.png)](https://imgtu.com/i/Rm4FgO)
 
+`FilterChainProxy` 是一个代理，真正起作用的是 `FilterChainProxy` 中 `SecurityFilterChain` 所包含的各个 `Filter`，同时这些 `Filter` 作为 `Bean` 被 `Spring` 管理，它们是 `Spring Security` 核心，各有各的职责，但他们并不直接处理用户的 **认证**，也不直接处理用户的 **授权**，而是把它们交给了认证管理器（`AuthenticationManager`）和决策管理器（`AccessDecisionManager`）进行处理，下图是 `FilterChainProxy` 相关类的 `UML` 图示：
+
+[![Rm5pLQ.md.png](https://z3.ax1x.com/2021/06/23/Rm5pLQ.md.png)](https://imgtu.com/i/Rm5pLQ)
+
+`Spring Security` 功能的实现主要是由一系列过滤器链相互配合完成
 
 
 
