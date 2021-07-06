@@ -15338,7 +15338,7 @@ public class TestSpringTest {
 
 **所以 MVC 框架大都会设计一款前端控制器，选型是 Servlet 或 Filter ，在框架最前沿率先工作，接收所有请求**
 
-此控制器在接收到请求后，还会负责 `springMVC` 的核心的高度管理，所以既是前端又是核心
+此控制器在接收到请求后，还会负责 `springMVC` 的核心的调度管理，所以既是前端又是核心
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -16693,12 +16693,12 @@ xhr.withCredentials=true;
 		use-default-filters=false	默认不扫描包内的任何类，只扫描 include-filter 中指定的注解
 		即，以下配置声明了只扫描被 @Controller 注解的类
 -->
-<context:component-scan base-package="com.ch.wchya.ssm">
+<context:component-scan base-package="com.ch.wchya.ssm" use-default-filters="false">
     <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
 </context:component-scan>
 
 <!--这是 spring 的配置，配置了自动扫描的路径，除了 Controller 注解不扫描，其它的都扫描-->
-    <context:component-scan base-package="com.ch.wchya.ssm" use-default-filters="true">
+    <context:component-scan base-package="com.ch.wchya.ssm">
         <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
     </context:component-scan>
 ```
