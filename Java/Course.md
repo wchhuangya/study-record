@@ -3580,7 +3580,53 @@ public class DemoRecursionTraverseFoldersAndDelFiles {
 }
 ```
 
-* * 
+## 反射
+
+### 1. 类对象
+
+* 类的对象：基于某个类 `new` 出来的对象，也称为实例对象
+* 类对象：类加载的产物，封装了一个类的所有信息（类名、父类、接口、属性、方法、构造方法）
+
+> * 每个类加载到内存后都对应一个 Class 对象
+> * 每个类有且仅有一个 Class 对象
+
+[![WuPzFK.md.png](https://z3.ax1x.com/2021/07/15/WuPzFK.md.png)](https://imgtu.com/i/WuPzFK)
+
+> 在启动时添加参数：-verbose:class ，可以显示类的加载过程
+
+#### 1.1 获取类对象
+
+* 通过类的对象，获取类对象
+
+  ```java
+  Student student = new Student();
+  Class c = student.getClass();
+  ```
+
+* 通过类名获取类对象
+
+  ```java
+  Class c = Student.class;
+  ```
+
+* 通过静态方法获取类对象【推荐使用】
+
+  ```java
+  Class c = Class.forName("包名.类名");
+  ```
+
+#### 1.2 常用方法
+
+* `public String getName()`
+* `public Package getPackage()`
+* `public Class<? super T> getSuperClass()`
+* `public Class<?>[] getInterfaces()`
+* `public Constructor<?>[] getConstructors()`
+* `public T newInstance()`
+* `public Method[] getMethods()`
+* `public Field[] getFields()`
+
+
 
 ## 第二十章 MySQL 数据库
 
