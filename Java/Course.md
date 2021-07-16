@@ -3623,7 +3623,7 @@ public class DemoRecursionTraverseFoldersAndDelFiles {
 * `public Class<?>[] getInterfaces()`：获取当前类对象所继承的接口数组
 * `public Constructor<?>[] getConstructors()`：获取当前类对象的构造器数组
 * `public T newInstance()`：使用当前类对象创建一个实例。该方法已经过时，应该使用：`类对象.getDeclaredConstructor().newInstance()`
-* `public Method[] getMethods()`：获取当前类对象的方法数组
+* `public Method[] getMethods()`：获取类及父类的的公共方法数组
 * `public Field[] getFields()`：获取当前类对象的字段数组
 
 
