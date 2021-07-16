@@ -3617,14 +3617,14 @@ public class DemoRecursionTraverseFoldersAndDelFiles {
 
 #### 1.2 常用方法
 
-* `public String getName()`
-* `public Package getPackage()`
-* `public Class<? super T> getSuperClass()`
-* `public Class<?>[] getInterfaces()`
-* `public Constructor<?>[] getConstructors()`
-* `public T newInstance()`
-* `public Method[] getMethods()`
-* `public Field[] getFields()`
+* `public String getName()`：获取当前类对象所代表的类的名字
+* `public Package getPackage()`：获取当前类对象所在的包名
+* `public Class<? super T> getSuperClass()` ：获取当前类对象的父类
+* `public Class<?>[] getInterfaces()`：获取当前类对象所继承的接口数组
+* `public Constructor<?>[] getConstructors()`：获取当前类对象的构造器数组
+* `public T newInstance()`：使用当前类对象创建一个实例。该方法已经过时，应该使用：`类对象.getDeclaredConstructor().newInstance()`
+* `public Method[] getMethods()`：获取当前类对象的方法数组
+* `public Field[] getFields()`：获取当前类对象的字段数组
 
 
 
@@ -11994,7 +11994,7 @@ public class LoginServlet extends HttpServlet {
 
 #### 1.3 为什么要使用
 
-目前网上有大师开源的 `JS` 框架，但是 `jQuery` 是目前最流行的 `JS` 框架，而且提供了大师的扩展。很多大公司都在使用 `jQuery`，如：
+目前网上有大量开源的 `JS` 框架，但是 `jQuery` 是目前最流行的 `JS` 框架，而且提供了大量的扩展。很多大公司都在使用 `jQuery`，如：
 
 * `Google`
 * `Microsoft`
