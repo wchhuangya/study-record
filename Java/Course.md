@@ -4177,7 +4177,7 @@ public @interface MyAnnotation {
 * 注解类型
 * 以上类型的一维数组
 
-### 4.3 原注解
+#### 4.3 原注解
 
 用来描述注解的注解
 
@@ -4187,7 +4187,37 @@ public @interface MyAnnotation {
 * `RetentionPolicy.RUNTIME`：注解记录在 `class` 文件中，运行 `java` 程序时，`JVM` 会保留注解，程序可以通过反射获取该注解
 * `RetentionPolicy.SOURCE`：编译时直接丢弃这种策略的注解
 
+```java
+@Retention(value = RetentionPolicy.RUNTIME)
+// 上面的注解必须添加，否则在运行时，注解不会被保留
+public @interface PersonInfo {
+    String name();
+    int age();
+    String sex();
+}
 
+public class Person {
+
+    @PersonInfo(name = "张三", age = 32, sex = "男")
+    public void show(String name, int age, String sex) {
+        System.out.println(name + "==" + age + "==" + sex);
+    }
+}
+
+public class TestPerson {
+
+    public static void main(String[] args) throws Exception {
+        Class<?> aClass = Class.forName("com.ch.wchya.javase.annotation.Person");
+        Method show = aClass.getMethod("show", String.class, int.class, String.class);
+        PersonInfo personInfo = show.getAnnotation(PersonInfo.class);
+        System.out.println(personInfo.name());
+        System.out.println(personInfo.age());
+        System.out.println(personInfo.sex());
+        Person person = (Person) aClass.getDeclaredConstructor().newInstance();
+        show.invoke(person, personInfo.name(), personInfo.age(), personInfo.sex());
+    }
+}
+```
 
 
 
