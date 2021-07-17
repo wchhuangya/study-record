@@ -3624,7 +3624,572 @@ public class DemoRecursionTraverseFoldersAndDelFiles {
 * `public Constructor<?>[] getConstructors()`：获取当前类对象的构造器数组
 * `public T newInstance()`：使用当前类对象创建一个实例。该方法已经过时，应该使用：`类对象.getDeclaredConstructor().newInstance()`
 * `public Method[] getMethods()`：获取类及父类的的公共方法数组
-* `public Field[] getFields()`：获取当前类对象的字段数组
+* `public Method[] getDclaredMethods()`：获取类自身所有的方法，不包括继承的方法
+* `public Field[] getFields()`：获取当前类对象公开的、父类继承的字段数组
+
+### 2. 示例
+
+```java
+// 带操作的类
+public class Person implements Serializable, Cloneable {
+    private String name;
+    private int age;
+
+    public Person() {
+    }
+
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    public void eat() {
+        System.out.println("想吃什么就吃什么");
+    }
+
+    public void eat(String name) {
+        System.out.println(name + "正在吃饭！");
+    }
+
+    @Override
+    public String toString() {
+        return "Person{" +
+                "name='" + name + '\'' +
+                ", age=" + age +
+                '}';
+    }
+
+    private void privateMethod() {
+        System.out.println("这是一个私有的方法");
+    }
+
+    public static void stataicMethod() {
+        System.out.println("这是一个静态的方法");
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+}
+
+// 实际的测试方法
+public class PersonReflect {
+
+    public static void main(String[] args) throws Exception {
+//        getClazz();
+//        reflectOpt1();
+//        reflectOpt2();
+//        reflectOpt3();
+        /*// 可以调用任何对象方法的工具类方法
+        Properties properties = new Properties();
+        // 正常调用
+        *//*properties.setProperty("username", "zhangsan");
+        System.out.println(properties);*//*
+        // 实用工具类方法调用
+        invokeAny(properties, "setProperty", new Class[]{String.class, String.class}, "username", "zhangsan");
+        System.out.println(properties);*/
+        reflectOpt4();
+    }
+
+    /**
+     * 获取对象的三种方式
+     * @throws Exception
+     */
+    public static void getClazz() throws Exception {
+        // 1. 使用类的对象获取类对象
+        Person person = new Person();
+        Class<? extends Person> aClass = person.getClass();
+        System.out.println(aClass.hashCode());
+        // 2. 使用 类名.class 获取类对象
+        Class<Person> bClass = Person.class;
+        System.out.println(bClass.hashCode());
+        // 3. 使用 Class 的静态方法【推荐使用】
+        Class<?> cClass = Class.forName("com.ch.wchya.javase.reflect.Person");
+        System.out.println(cClass.hashCode());
+    }
+
+    /**
+     * 1. 使用反射获取名称、接口、报名
+     * @throws Exception
+     */
+    public static void reflectOpt1() throws Exception {
+        // 获取类对象
+        Class<?> aClass = Class.forName("com.ch.wchya.javase.reflect.Person");
+        System.out.println(aClass.getName()); // 获取类的名称（包含路径）
+        System.out.println(aClass.getTypeName()); // 和上面的方法获取的值一样
+        System.out.println(Arrays.toString(aClass.getInterfaces())); // 获取类继承的接口
+        System.out.println(aClass.getPackage().getName()); // 获取包名
+        System.out.println(aClass.getSimpleName()); // 只获取类名
+    }
+
+    /**
+     * 2. 使用反射获取构造器，实例化对象
+     * @throws Exception
+     */
+    public static void reflectOpt2() throws Exception {
+        // 获取类对象
+        Class<?> aClass = Class.forName("com.ch.wchya.javase.reflect.Person");
+        // 获取构造器
+        Constructor<?>[] cons = aClass.getConstructors();
+        for (Constructor<?> con : cons) {
+            System.out.println(con.toString());
+        }
+        // 获取单个无参构造器
+        Constructor<?> con = aClass.getConstructor();
+        Person zhangsan = (Person) con.newInstance();
+        zhangsan.eat();
+        // 获取有参构造器
+        Constructor<?> con1 = aClass.getConstructor(String.class, int.class);
+        Person lisi = (Person) con1.newInstance("李四", 23);
+        lisi.eat();
+        // 另外一种构造类的对象的方法
+        Person another = (Person) aClass.getDeclaredConstructor().newInstance();
+        another.eat();
+    }
+
+    /**
+     * 3. 使用反射获取方法
+     * @throws Exception
+     */
+    public static void reflectOpt3() throws Exception {
+        // 获取类对象
+        Class<?> aClass = Class.forName("com.ch.wchya.javase.reflect.Person");
+        // 获取所有自身以及从父类继承的公共方法
+        Method[] methods = aClass.getMethods();
+        for (Method method : methods) {
+            System.out.println(method);
+        }
+        System.out.println("--------------------");
+        // 获取自身的所有方法
+        Method[] declaredMethods = aClass.getDeclaredMethods();
+        for (Method method : declaredMethods) {
+            System.out.println(method);
+        }
+        System.out.println("--------------------");
+        // 获取一般的无参成员方法并调用
+        Method eat = aClass.getMethod("eat");
+        Person zhangsan = (Person) aClass.getDeclaredConstructor().newInstance();
+        eat.invoke(zhangsan); // 相当于：zhangsan.eat()
+
+        System.out.println("--------------------");
+        // 获取一般的有参成员方法并调用
+        Method eat1 = aClass.getMethod("eat", String.class);
+        eat1.invoke(zhangsan, "桃子");
+
+        System.out.println("--------------------");
+        // 获取 toString() 方法
+        Method toString = aClass.getMethod("toString");
+        Object res = toString.invoke(zhangsan);
+        System.out.println(res);
+
+        System.out.println("--------------------");
+        // 获取私有方法并调用，因为是私有方法，所以一定要：1. 使用 getDeclaredMethod 才可以获取到方法；2. 把可访问性设置为 true 才可以进行调用
+        Method privateMethod = aClass.getDeclaredMethod("privateMethod");
+        privateMethod.setAccessible(true);
+        privateMethod.invoke(zhangsan);
+
+        System.out.println("--------------------");
+        // 获取静态的方法，因为静态方法在正常调用时，不需要使用类，所以你懂的
+        Method stataicMethod = aClass.getMethod("stataicMethod");
+        // stataicMethod.invoke(aClass);
+        stataicMethod.invoke(null); // 或者可以像上面这样调用，但是不正规
+    }
+
+    /**
+     * 4. 使用反射实现一个可以调用任何对象方法的通用方法
+     */
+    private static Object invokeAny(Object object, String methodName, Class<?>[] types, Object...args) throws Exception {
+        // 获取类对象
+        Class<?> aClass = object.getClass();
+        // 获取方法
+        Method method = aClass.getMethod(methodName, types);
+        // 调用方法
+        return method.invoke(object, args);
+    }
+
+    /**
+     * 根据反射获取任何对象的属性
+     * @throws Exception
+     */
+    public static void reflectOpt4() throws Exception {
+        // 获取类对象
+        Class<?> aClass = Class.forName("com.ch.wchya.javase.reflect.Person");
+        // 获取公开的、父类继承的属性
+        Field[] fields = aClass.getFields();
+        System.out.println(fields.length);
+
+        System.out.println("-------------------");
+        Field[] declaredFields = aClass.getDeclaredFields();
+        System.out.println(Arrays.toString(declaredFields));
+
+        System.out.println("-------------------");
+        // 获取单个属性
+        Field name = aClass.getDeclaredField("name");
+        // 设置私有的访问权限无效
+        name.setAccessible(true);
+        Person zhangsan = (Person) aClass.getDeclaredConstructor().newInstance();
+        name.set(zhangsan, "zhangsan");
+        // 获取值
+        System.out.println(zhangsan.getName());
+    }
+}
+```
+
+## 设计模式
+
+### 1. 定义
+
+一套被反复使用、多数人知晓的、经过分类编目的、代码设计经验的总结。
+
+简单理解：就是特定问题的固定解决方法
+
+### 2. 好处
+
+使用设计模式是为了可重用代码、让代码更容易被他人理解、保证代码可靠性、重用性
+
+### 3. 工厂设计模式
+
+* 工厂设计模式主要负责对象创建的问题
+* 开发中有一个非常重要的原则：开闭原则，即：对扩展开放，对修改关闭
+* 可以通过反射进行工厂模式的设计，完成动态的对象创建
+
+#### 3.1 实现
+
+##### 父产品与子产品
+
+因为父产品是一类产品的规格说明，所以我们把父产品定义为接口：
+
+```java
+public interface Usb {
+    void service();
+}
+```
+
+子产品是实现了父产品接口的类：
+
+```java
+public class Mouse implements Usb{
+    @Override
+    public void service() {
+        System.out.println("鼠标开始工作了……");
+    }
+}
+public class Upan implements Usb{
+    @Override
+    public void service() {
+        System.out.println("U盘开始工作了……");
+    }
+}
+public class Fan implements Usb{
+    @Override
+    public void service() {
+        System.out.println("风扇开始工作了……");
+    }
+}
+```
+
+##### 产品工厂类
+
+用于生产产品的工厂类
+
+```java
+public class UsbFactory {
+
+    /**
+     * 使用工厂的方法创建对象
+     * @param type - 要创建的对象类型，1-鼠标，2-U盘，3-风扇
+     * @return Usb 接口类型的对象
+     */
+    public static Usb createUsb(int type) {
+        Usb usb = null;
+        if (type == 1) {
+            usb = new Mouse();
+        } else if (type == 2) {
+            usb = new Upan();
+        } else if (type == 3) {
+            usb = new Fan();
+        }
+        return usb;
+    }
+}
+```
+
+##### 消费者类
+
+```java
+public class Consumer {
+
+    public static void main(String[] args) {
+        System.out.println("请输入要购买的产品编号：1 - 鼠标；2 - U盘；3 - 风扇；");
+        Scanner scanner = new Scanner(System.in);
+        int input = scanner.nextInt();
+        Usb usb = UsbFactory.createUsb(input);
+        if (usb != null) {
+            System.out.println("恭喜你，购买成功！");
+            usb.service();
+        } else {
+            System.out.println("对不起，没有该类型的产品！");
+        }
+    }
+}
+```
+
+##### 思考
+
+这样实现的工厂模式确实可以根据用户的需求来生产不同的产品。但是，这样实现工厂模式的问题也很明显：如果需要新增产品，就势必需要修改工厂类的实现（添加判断条件）。这样的话，就违背了“开闭原则”，不符合良好程序代码设计的初衷
+
+##### 改良
+
+* 需要修改生产对象的方法：由 **根据选择实例化对象** 变为 **根据类的完全限定路径反射生成对象**
+* 需要新增 ***.properties** 文件，用于存储 **产品类型和产品的实际类型的完全限定路径之间的关系**
+
+##### 新的生产对象的方法
+
+```java
+public class UsbFactory {
+
+    /**
+     * 使用工厂方法创建对象
+     * @param type - 要创建对象的全路径名称
+     * @return Usb 接口类型的对象
+     */
+    public static Usb createUsb(String type) {
+        Usb usb = null;
+        try {
+            Class<?> aClass = Class.forName(type);
+            usb = (Usb) aClass.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return usb;
+    }
+}
+```
+
+##### 新的消费者
+
+```java
+public class Consumer {
+
+    public static void main(String[] args) throws Exception {
+        System.out.println("请输入要购买的产品编号：1 - 鼠标；2 - U盘；3 - 风扇；4 - 键盘；");
+        Scanner scanner = new Scanner(System.in);
+        int input = scanner.nextInt();
+        Properties properties = new Properties();
+        properties.load(Consumer.class.getResourceAsStream("/usb.properties"));
+        Usb usb = UsbFactory.createUsb(properties.get(input + "").toString());
+        if (usb != null) {
+            System.out.println("恭喜你，购买成功！");
+            usb.service();
+        } else {
+            System.out.println("对不起，没有该类型的产品！");
+        }
+    }
+}
+```
+
+##### 总结
+
+使用 `.properties` 类来存储产品类型和产品的实际类型的完全限定路径之间的关系，就可以做到“开闭原则”，大大提升了工厂类的使用场景
+
+### 4. 单例模式
+
+单例：只允许创建一个该类的对象
+
+#### 4.1 饿汉式
+
+类加载时创建，天生线程安全
+
+```java
+public class Singleton {
+
+    private static final Singleton instance = new Singleton();
+
+    private Singleton() {}
+
+    public static Singleton getInstance() {
+        return instance;
+    }
+}
+```
+
+测试饿汉式单例模式：
+
+```java
+public class TestSingleton {
+
+    public static void main(String[] args) {
+        for (int i = 0; i < 13; i++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println(Singleton.getInstance().hashCode());
+                }
+            }).start();
+        }
+    }
+}
+```
+
+经过测试会发现，饿汉式单例模式下获取的对象的地址都是一样的，也就是说，它是线程安全的
+
+#### 4.2 懒汉式
+
+使用时创建，线程不安全，加同步
+
+```java
+public class Singleton2 {
+    private static Singleton2 instance = null;
+
+    private Singleton2() {}
+
+    public static synchronized Singleton2 getInstance() {
+        if (instance == null) {
+            instance = new Singleton2();
+        }
+        return instance;
+    }
+  
+    // 或者使用同步代码块的方法
+    /*public static Singleton2 getInstance() {
+        synchronized (Singleton2.class) {
+            if (instance == null) {
+                instance = new Singleton2();
+            }
+            return instance;
+        }
+    }*/
+}
+```
+
+测试懒汉式单例模式
+
+```java
+public class TestSingleton2 {
+
+    public static void main(String[] args) {
+        for (int i = 0; i < 13; i++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println(Singleton2.getInstance().hashCode());
+                }
+            }).start();
+        }
+    }
+}
+```
+
+经过测试发现，加了同步锁的懒汉式单例模式在不同线程中获取到的对象都是同一个，也就是说，它也是线程安全的
+
+在多线程的条件下，同步锁的执行会有一些效率问题，这是因为每个线程访问这段代码时，都会进行同步锁的判断，影响效率。因此，我们做如下的修改：
+
+```java
+public static Singleton2 getInstance() {
+    if (instance == null) {
+        synchronized (Singleton2.class) {
+            if (instance == null) {
+                instance = new Singleton2();
+            }
+        }
+    }
+    return instance;
+}
+```
+
+#### 4.3 总结
+
+* 优点
+  * 饿汉式：线程安全
+  * 懒汉式：生命周期短，节省空间
+* 缺点
+  * 饿汉式：生命周期长，浪费空间
+  * 懒汉式：线程不安全，需要同步锁解决
+
+#### 4.4 加强懒汉式
+
+使用时创建，线程安全
+
+```java
+public class Singleton3 {
+
+    private Singleton3() {}
+
+    private static class Holder {
+        static Singleton3 s = new Singleton3();
+    }
+
+    public static Singleton3 getInstance() {
+        return Holder.s;
+    }
+}
+```
+
+## 注解
+
+### 1. 什么是注解
+
+注解（`Annoatation`）是代码里的特殊标记，程序可以读取注解，一般用于替代配置文件
+
+### 2. 应用
+
+开发人员可以通过注解告诉类如何运行：
+
+* 在 `Java` 技术里注解的典型应用是：可以通过反射技术得到类里的注解，以决定怎么去运行类
+
+### 3. 常见注解
+
+`@Override`、`@Deprecated`
+
+### 4. 定义注解
+
+使用 `@interface` 关键字，注解中只能包含属性
+
+#### 4.1 定义
+
+使用 `@interface` 关键字
+
+```java
+public @interface MyAnnotation {
+    String name() default "张三";
+    int age() default 20;
+}
+```
+
+#### 4.2 注解属性类型
+
+* `String` 类型
+* 基本数据类型
+* `Class` 类型
+* 枚举类型
+* 注解类型
+* 以上类型的一维数组
+
+### 4.3 原注解
+
+用来描述注解的注解
+
+`@Retention`：用于指定注解可以保留的域
+
+* `RetentionPolicy.CLASS`：注解记录在 `class` 文件中，运行 `java` 程序时，`JVM` 不会保留，这是默认值
+* `RetentionPolicy.RUNTIME`：注解记录在 `class` 文件中，运行 `java` 程序时，`JVM` 会保留注解，程序可以通过反射获取该注解
+* `RetentionPolicy.SOURCE`：编译时直接丢弃这种策略的注解
+
+
+
+
 
 
 
