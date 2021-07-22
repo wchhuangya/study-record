@@ -4239,6 +4239,132 @@ public class TestPerson {
 
 `Lambda` 表达式允许把函数作为一个方法的参数（函数作为方法参数传递），将代码像数据一样传递
 
+#### 2.1 基本语法
+
+```java
+<函数式接口> <变量名> = (参数1,参数2,...) -> {
+  // 方法体
+}
+```
+
+`Lambda` 引入了新的操作符：`->` （箭头操作符），它将表达式分成两部分
+
+* 左侧：（参数1, 参数2,...）表示参数列表
+* 右侧：`{}` 内部是方法体
+
+> 注意事项：
+>
+> * 形参列表的数据类型会自动推断
+> * 如果形参列表为空，只需保留 ()
+> * 如果形参只有 1 个，() 可以省略，只需要参数的名称即可
+> * 如果执行语句只有一句，且无返回值，{} 可以省略，若有返回值，则若想省略 {}，则必须同时省略 return，且执行语句也保证只有一句
+> * Lambda 不会生成一个单独的内部类文件（匿名内部类会生成一个 class 文件）
+
+#### 2.2 示例
+
+```java
+public class LambdaStudy {
+
+    public static void main(String[] args) {
+        anonymousInnerClass();
+    }
+
+    public static void anonymousInnerClass() {
+        // 原始写法
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("子线程执行了……");
+            }
+        };
+        new Thread(runnable).start();
+
+        // lambda表达式的简写
+        // 1. 省略方法的修饰符：访问权限、返回值、方法名，保留参数括号，加箭头函数，如果只有一句函数体，大括号也可以省略
+        Runnable runnable1 = ()->  System.out.println("子线程2执行了……");
+        new Thread(runnable1).start();
+
+        // 2. 不用申明变量，直接将刚刚写的表达式等号后面的内容写入 Thread 中写变量的地方即可，即：把lambda方法作为参数进行了传递
+        new Thread(()-> System.out.println("子线程3执行了……")).start();
+
+        // 原始写法
+        Comparator<String> com = new Comparator<>() {
+            @Override
+            public int compare(String o1, String o2) {
+                return o1.length() - o2.length();
+            }
+        };
+        TreeSet<String> treeSet = new TreeSet<>(com);
+        addData(treeSet);
+        printTreeSet(treeSet);
+
+        // 1. 省略方法的修饰符：访问权限、返回值、方法名，保留参数括号，加箭头函数
+        Comparator<String> com2 = (String o1, String o2) -> { return o1.compareTo(o2);} ;
+        treeSet = new TreeSet<>(com2);
+        addData(treeSet);
+        printTreeSet(treeSet);
+
+        // 2. 方法的参数类型也是确定的，所以省略；return 语句也可以省略；大括号也可以省略
+        Comparator<String> com3 = (o1, o2) -> o1.length() - o2.length();
+        treeSet = new TreeSet<>(com3);
+        addData(treeSet);
+        printTreeSet(treeSet);
+
+    }
+
+    private static void addData(TreeSet<String> treeSet) {
+        treeSet.add("bundle");
+        treeSet.add("kids");
+        treeSet.add("anonymous");
+        treeSet.add("catch");
+        treeSet.add("oil");
+    }
+
+    private static void printTreeSet(TreeSet<String> treeSet) {
+        for (String s : treeSet) {
+            System.out.println(s);
+        }
+    }
+}
+```
+
+### 3. 函数式接口
+
+* 如果一个接口只有一个抽象方法，则该接口称之为函数式接口，函数式接口可以使用 `Lambda` 表达式，`Lambda` 表达式会被匹配到这个抽象方法上
+* `@FunctionalInterface`：该注解用于检测接口是否符合函数式接口
+
+#### 3.1 示例
+
+```java
+@java.lang.FunctionalInterface
+public interface Usb {
+    void service();
+}
+
+public class FunctionalInterface {
+
+    public static void main(String[] args) {
+        // 原始写法
+        Usb mouse = new Usb() {
+            @Override
+            public void service() {
+                System.out.println("鼠标开始工作了……");
+            }
+        };
+
+        run(mouse);
+
+        // 函数式接口的写法
+        Usb fan = () -> System.out.println("风扇开始工作了……");
+        run(fan);
+    }
+
+    private static void run(Usb usb) {
+        usb.service();
+    }
+}
+```
+
 
 
 
