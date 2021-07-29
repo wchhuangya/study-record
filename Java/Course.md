@@ -758,7 +758,7 @@ public static void main(String[] args) {
 
     for (int i = 0; i < 5; i++) {
         System.out.println(arr[i])
-}
+		}
 }
 ```
 
@@ -14677,7 +14677,7 @@ public interface DepartmentDao {
 ### 1. 原生 Web 开发中存在的问题
 
 * 传统 `web` 开发存在硬编码所造成的过度程序耦合（例如：`Service` 中作为属性 `Dao` 对象）
-* 部分 `Java EE API` 较为复杂，使用效率低（例如：`JDBC` 开发步骤
+* 部分 `Java EE API` 较为复杂，使用效率低（例如：`JDBC` 开发步骤）
 * 侵入性强，移植性差（例如：`DAO` 实现的更换）
 
 ### 2. Spring 框架
@@ -14836,13 +14836,15 @@ public void testSpringFactory() {
 * `xmlns:xsi`：`XMLSchema-instance` 标签遵循 `schema` 标签标准
 * `xsi:schemaLocation`：`xsd` 文件位置，用以描述标签语义、属性、取值范围等
 
-### 7. IoC（Inversion of ）控制反转【重点】
+### 7. IoC（Inversion of Control）控制反转【重点】
 
 * 反转了依赖关系的满足方式，由之前的自己创建依赖对象，变为由工厂推送（变主动为被动，即反转）
 
 * 解决了具有依赖关系的组件之间的强耦合，使得项目形态更加稳健
 
 #### 7.1 项目中强耦合问题
+
+> 强耦合：在一个类中，明确引用了另外一个类
 
 ```java
 public class UserDaoImpl implements UserDao {...}
@@ -21579,3 +21581,4 @@ public class DemoDIYSinLine {
   * 使用 `ImageIO` 类来加载图片，得到 `Image` 对象
 
     `ImageIO.read(URL/File)`
+
