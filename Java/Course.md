@@ -15795,7 +15795,7 @@ password=xxxx
 
 * 扫描所有 `Dao` 接口，去构建 `Dao` 实现
 * 将 `Dao` 实现存入工厂管理
-* `Dao` 实现对象在工厂中的 `id` 是：**首字母小宝的接口的类名**，例如：`UserDao=>userDao, OrderDao=>orderDao`
+* `Dao` 实现对象在工厂中的 `id` 是：**首字母小写的接口的类名**，例如：`UserDao=>userDao, OrderDao=>orderDao`
 
 ```xml
 <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
