@@ -15377,7 +15377,7 @@ public void testCGLib() {
 
 * 连接点（`Joinpoint`）：连接点是程序类中客观存在的方法，可被 `Spring` 拦截并切入内容
 * 切入点（`Pointcut`）：被 `Spring` 切入连接点
-* 通知、增强（`Active`）：可以为切入点添加额外功能，分为：前置通知、后置通知、异常通知、环绕通知等
+* 通知、增强（`Advice`）：可以为切入点添加额外功能，分为：前置通知、后置通知、异常通知、环绕通知等
 * 目标对象（`Target`）：代理的目标对象
 * 引介（`Introduction`）：一种特殊的增强，可以在运行期为类动态添加 `Field` 和 `Method`
 * 织入（`Weaving`）：被 `AOP` 织入通知后，产生的结果类
@@ -15693,6 +15693,18 @@ password=xxxx
 ```
 
 ##### Druid 监控中心
+
+```xml
+<!--web.xml-->
+<servlet>
+		<servlet-name>DruidStatView</servlet-name>
+   	<servlet-class>com.alibaba.druid.support.http.StatViewServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+		<servlet-name>DruidStatView</servlet-name>
+  	<url-pattern>/druid/*</url-pattern>
+</servlet-mapping>
+```
 
 
 
@@ -16142,6 +16154,10 @@ public class TestSpringTest {
     <servlet>
         <servlet-name>mvc</servlet-name>
         <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+      		<param-name>contextConfigLocation</param-name>
+          <param-value>classpath:mvc.xml</param-value>
+      	</init-param>
 
         <!--懒汉/饿汉 加载-->
         <load-on-startup>1</load-on-startup>
