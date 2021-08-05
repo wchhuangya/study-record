@@ -19847,7 +19847,6 @@ public class JspController {
 * `SpringBoot/SpringCloud + Spring Security`
 
 > 注：以上只是一个推荐的组合而已，如果单纯从技术上来说，无论怎么组合，都是可以的
-> 
 ### 2. Hello World
 
 #### 2.1 创建项目
@@ -19897,6 +19896,17 @@ public class TestControlller {
 这是因为如果在项目中引入了 `spring security` 依赖后，所有的请求都会被 `spring security` 所接管，都会要求认证。
 
 > 默认用户名：user，在项目启动时，控制台会打印出：Using generated security password: xxx-xxx-xxx-xxx，引号后面的 xxx 就是为默认用户生成的密码
+
+### 3. SpringSecurity 基本原理
+
+`Spring Security` 本质是一个过滤器链。
+
+代码底层流程（重点看三个过滤器）：
+
+* `FilterSecurityInterceptor`：是一个方法级的权限过滤器，基本位于过滤器链的最底部
+* `ExceptionTranslationInterceptor`：是个异常过滤器，用来处理在认证授权过程中抛出的异常
+* `UsernamePasswordAuthenticationFilter`：对 `/login` 的 `POST` 请求做拦截，校验表单中用户名和密码
+
 
 
 
