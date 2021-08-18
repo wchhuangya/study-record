@@ -16115,9 +16115,7 @@ public class TestSpringTest {
 
 ### 2. 原始实现
 
-#### 2.1 编写基本的业务
-
-##### 2.1.1 Entity
+#### 2.1.1 Entity
 
 **创建表：**
 
@@ -16147,7 +16145,7 @@ public class Customer {
 
 > 注：这里使用了 `@Data` 注解，它由 `lombok` 插件提供，因此，需要在 `pom` 文件中引入相应的依赖
 
-##### 2.1.2 Dao
+#### 2.1.2 Dao
 
 编写 `Dao` 接口和实现类。本例中，操作数据库的工具类使用的是 `Apache` 的 `commons-dbutils`
 
@@ -16254,9 +16252,9 @@ jdbc.username=xxx
 jdbc.password=xxx
 ```
 
-> 在上面的代码中，进行了连接数据库的操作，并使用了 commons-dbutils ，记得在 pom 文件中引入这两个依赖
+> 在上面的代码中，进行了连接数据库（mysql-connector-java）的操作，并使用了 commons-dbutils ，记得在 pom 文件中引入这两个依赖
 
-##### 2.1.3 Service
+#### 2.1.3 Service
 
 `Service` 层现在就是简单地对 `Dao` 层的方法逐一进行实现：
 
@@ -16300,7 +16298,7 @@ public class CustomerServiceImpl implements CustomerService {
 }
 ```
 
-##### 2.1.4 测试
+#### 2.1.4 测试
 
 在测试包下，新建一个类，对 `Service` 中的方法进行测试：
 
@@ -16351,9 +16349,46 @@ public class TestPre {
 }
 ```
 
+> 注：记得在 pom 文件中引入 junit 依赖
+
 经过测试，`Service` 中的方法都可以执行并得到正确的结果
 
 但是，这样的写法在原来的章节中也分析过：`Service` 中持有了对 `CustomerDaoImpl` 的引用，即 `Service` 强依赖了 `CustomerDaoImpl`，这样的写法不利于后期的维护和修改，也违背了 “开闭原则”。下面这一节，就着手来修改这个问题
+
+### 3. Spring xml 实现
+
+根据上一章学过的知识可知，`Spring` 的 `bean` 容器和依赖注入等特性可以完美的解决强关联的问题。本节，就是用学过的 `spring` 相关知识对上一节的代码进行改造
+
+#### 3.1 引入依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-context</artifactId>
+    <version>5.2.9.RELEASE</version>
+</dependency>
+```
+
+#### 3.2 创建 bean 配置文件
+
+在 `src/main/resources` 目录下新建 `beans.xml` 文件：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+</beans>
+```
+
+> spring bean 文件的头内容不用记忆，可以：
+>
+> 1. 用的时候在网上即时查找（不推荐）
+> 2. 将正确的写法利用 idea 的模板功能保存下来，以后直接利用模板创建（新建模板的路径：File -> settings -> Editor -> File and Code Templates -> File -> +）
+> 3. 在 resources 目录上，点击右键 -> New -> XML Configuration File -> Spring Config
+
+#### 3.3 在 bean 配置文件中添加 bean 声明
 
 
 
