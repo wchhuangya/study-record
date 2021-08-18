@@ -16113,7 +16113,7 @@ public class TestSpringTest {
 
 > 项目基本的三层架构应该是：`dao service controller`，对应着 `MVC` 结构。因为本项目只是一个 `spring` 基本知识和原理的学习项目，所以没有表现层 `controller`
 
-### 2. 基于 xml 配置的实现
+### 2. 原始实现
 
 #### 2.1 编写基本的业务
 
@@ -16146,6 +16146,216 @@ public class Customer {
 ```
 
 > 注：这里使用了 `@Data` 注解，它由 `lombok` 插件提供，因此，需要在 `pom` 文件中引入相应的依赖
+
+##### 2.1.2 Dao
+
+编写 `Dao` 接口和实现类。本例中，操作数据库的工具类使用的是 `Apache` 的 `commons-dbutils`
+
+```java
+public interface CustomerDao {
+    Customer findOneById(Integer id);
+    List<Customer> findAll();
+    void add(Customer customer);
+    void update(Customer customer);
+    void delete(Integer id);
+}
+
+public class CustomerDaoImpl implements CustomerDao {
+
+    private QueryRunner runner = new QueryRunner();
+
+    @Override
+    public Customer findOneById(Integer id) {
+        try {
+            return runner.query(Conn.getConnection(), "select * from emp.customer where id=?", new BeanHandler<>(Customer.class), id);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public List<Customer> findAll() {
+        try {
+            return runner.query(Conn.getConnection(), "select * from emp.customer", new BeanListHandler<>(Customer.class));
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public void add(Customer customer) {
+        try {
+            runner.update(Conn.getConnection(), "insert into emp.customer (username, password, money) values (?, ?, ?)", customer.getUsername(), customer.getPassword(), customer.getMoney());
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    @Override
+    public void update(Customer customer) {
+        try {
+            runner.update(Conn.getConnection(), "update emp.customer set username=?, password=?, money=? where id=?", customer.getUsername(), customer.getPassword(), customer.getMoney(), customer.getId());
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    @Override
+    public void delete(Integer id) {
+        try {
+            runner.update(Conn.getConnection(), "delete from emp.customer where id=?", id);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
+```
+
+因为操作数据库时需要数据库的连接，所以，编写一个生成数据库连接的工具类：`Conn.java`：
+
+```java
+public class Conn {
+
+    private static Properties properties;
+
+    static {
+        try {
+            properties = new Properties();
+            properties.load(Conn.class.getClassLoader().getResourceAsStream("jdbc.properties"));
+            Class.forName(properties.getProperty("jdbc.driver"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("加载数据库配置文件失败！");
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+            throw new RuntimeException("数据库驱动不存在！");
+        }
+    }
+
+    public static Connection getConnection() {
+        try {
+            return DriverManager.getConnection(properties.getProperty("url"), properties.getProperty("username"), properties.getProperty("password"));
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return null;
+    }
+}
+```
+
+在建立数据库连接时，固定不变的字符串信息都写在了配置文件中，因此，新增一个 `jdbc.properties` 配置文件：
+
+```properties
+jdbc.driver=com.mysql.cj.jdbc.Driver
+jdbc.url=jdbc:mysql:///emp?useUnicode=true&characterEncoding=utf-8
+jdbc.username=xxx
+jdbc.password=xxx
+```
+
+> 在上面的代码中，进行了连接数据库的操作，并使用了 commons-dbutils ，记得在 pom 文件中引入这两个依赖
+
+##### 2.1.3 Service
+
+`Service` 层现在就是简单地对 `Dao` 层的方法逐一进行实现：
+
+```java
+public interface CustomerService {
+    Customer findOneById(Integer id);
+    List<Customer> findAll();
+    void add(Customer customer);
+    void update(Customer customer);
+    void delete(Integer id);
+}
+
+public class CustomerServiceImpl implements CustomerService {
+
+    private CustomerDao customerDao = new CustomerDaoImpl();
+
+    @Override
+    public Customer findOneById(Integer id) {
+        return customerDao.findOneById(id);
+    }
+
+    @Override
+    public List<Customer> findAll() {
+        return customerDao.findAll();
+    }
+
+    @Override
+    public void add(Customer customer) {
+        customerDao.add(customer);
+    }
+
+    @Override
+    public void update(Customer customer) {
+        customerDao.update(customer);
+    }
+
+    @Override
+    public void delete(Integer id) {
+        customerDao.delete(id);
+    }
+}
+```
+
+##### 2.1.4 测试
+
+在测试包下，新建一个类，对 `Service` 中的方法进行测试：
+
+```java
+public class TestPre {
+
+    private CustomerServiceImpl customerService;
+
+    @Before
+    public void init() {
+        customerService = new CustomerServiceImpl();
+    }
+    
+    @Test
+    public void testFindOne() {
+        Customer customer = customerService.findOneById(1);
+        System.out.println(customer);
+    }
+    
+    @Test
+    public void testFindAll() {
+        List<Customer> customers = customerService.findAll();
+        customers.forEach(System.out::println);
+    }
+
+    @Test
+    public void testAdd() {
+        Customer customer = new Customer();
+        customer.setUsername("甲方");
+        customer.setPassword("111111");
+        customer.setMoney(10000);
+        customerService.add(customer);
+    }
+    
+    @Test
+    public void testUpdate() {
+        Customer customer = customerService.findOneById(1);
+        customer.setPassword("123456");
+        customerService.update(customer);
+        System.out.println(customer);
+    }
+    
+    @Test
+    public void testDelete() {
+        customerService.delete(1);
+        customerService.findAll().forEach(System.out::println);
+    }
+}
+```
+
+经过测试，`Service` 中的方法都可以执行并得到正确的结果
+
+但是，这样的写法在原来的章节中也分析过：`Service` 中持有了对 `CustomerDaoImpl` 的引用，即 `Service` 强依赖了 `CustomerDaoImpl`，这样的写法不利于后期的维护和修改，也违背了 “开闭原则”。下面这一节，就着手来修改这个问题
+
+
 
 
 
