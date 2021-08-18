@@ -16103,6 +16103,52 @@ public class TestSpringTest {
 }
 ```
 
+## Spring 巩固
+
+本章内容以 ”银行转账“ 这个业务为基本业务进行展开，展示项目的三层架构、`Spring` 的基本配置和注入、单元测试类的写法、`Spring` 注解的使用、代理模式、`Spring AOP` 等方面的知识点，并使用 `Spring` 改写原来使用过的 `commons-dbutils`、`DBUtils` 等类，全方位的展示 `Spring` 的基本知识和在框架融合方面的强大之处
+
+### 1. 创建项目
+
+创建一个普通的 `Maven` 项目，`JDK` 使用 11。在 `src/main` 路径下创建包结构为：`com.ch.wchya.springstudy.dao/entity/service`，其它的没什么特别注意的
+
+> 项目基本的三层架构应该是：`dao service controller`，对应着 `MVC` 结构。因为本项目只是一个 `spring` 基本知识和原理的学习项目，所以没有表现层 `controller`
+
+### 2. 基于 xml 配置的实现
+
+#### 2.1 编写基本的业务
+
+##### 2.1.1 Entity
+
+**创建表：**
+
+```sql
+create table customer
+(
+    id       int auto_increment primary key,
+    username varchar(32) null comment '账号',
+    password varchar(16) null comment '密码',
+    money    int         null comment '余额'
+);
+```
+
+**实体：**
+
+```java
+@Data
+public class Customer {
+
+  private Long id;
+  private String username;
+  private String password;
+  private Integer money;
+
+}
+```
+
+> 注：这里使用了 `@Data` 注解，它由 `lombok` 插件提供，因此，需要在 `pom` 文件中引入相应的依赖
+
+
+
 ## 第三十三章 SpringMVC
 
 ### 1. 概述
